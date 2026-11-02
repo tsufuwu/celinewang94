@@ -192,6 +192,8 @@ export async function createOrUpdateStory(
           updatedAt: new Date(),
         });
       }
+    } else {
+      return { success: false, message: "Không tìm thấy kết nối D1 Database trên môi trường hiện tại." };
     }
   } catch (error: unknown) {
     console.error("Save story error:", error);

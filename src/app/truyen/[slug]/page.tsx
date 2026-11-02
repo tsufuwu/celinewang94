@@ -21,6 +21,8 @@ interface StoryDetailPageProps {
   params: Promise<{ slug: string }>;
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function StoryDetailPage({ params }: StoryDetailPageProps) {
   const { slug } = await params;
 

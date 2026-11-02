@@ -35,18 +35,28 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 2. Fallback for Local Development outside Cloudflare Worker
-    const uploadsDir = path.join(process.cwd(), "public", "uploads", "covers");
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-    }
-    const localFilePath = path.join(uploadsDir, fileName);
-    fs.writeFileSync(localFilePath, buffer);
+    // 2. Fallback: try saving locally if on Node/Local, otherwise return Base64 data URL for Cloudflare Worker
+    try {
+      const uploadsDir = path.join(process.cwd(), "public", "uploads", "covers");
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+      const localFilePath = path.join(uploadsDir, fileName);
+      fs.writeFileSync(localFilePath, buffer);
 
-    return NextResponse.json({
-      success: true,
-      url: `/uploads/covers/${fileName}`,
-    });
+      return NextResponse.json({
+        success: true,
+        url: `/uploads/covers/${fileName}`,
+      });
+    } catch {
+      // Running on Cloudflare Worker (read-only filesystem) without R2 binding:
+      // Return WebP Base64 Data URL directly, safely stored in D1 database
+      const base64Data = buffer.toString("base64");
+      return NextResponse.json({
+        success: true,
+        url: `data:image/webp;base64,${base64Data}`,
+      });
+    }
   } catch (error: unknown) {
     console.error("Cover upload error:", error);
     return NextResponse.json(

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     "Toàn bộ tác phẩm, bản dịch đam mỹ, văn học chọn lọc và dự án lưu trữ của Celine Wang tại Media naranja.",
 };
 
-export const revalidate = 60; // Revalidate every minute
+export const dynamic = "force-dynamic";
 
 export default async function KhoTruyenPage() {
   const stories = await getStories();

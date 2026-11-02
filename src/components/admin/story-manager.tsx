@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { compressImageToWebP } from "@/lib/client-image-compressor";
+import { compressImageToWebP, blobToBase64 } from "@/lib/client-image-compressor";
 import {
   createOrUpdateStory,
   deleteStory,
@@ -105,8 +105,8 @@ export function StoryManager({ initialStories }: StoryManagerProps) {
 
     try {
       const originalSizeKb = (file.size / 1024).toFixed(1);
-      // Canvas WebP compression in browser
-      const webpBlob = await compressImageToWebP(file, 800, 0.85);
+      // Canvas WebP compression in browser (600px width is ideal for book covers)
+      const webpBlob = await compressImageToWebP(file, 600, 0.82);
       const compressedSizeKb = (webpBlob.size / 1024).toFixed(1);
 
       setCompressedWebpBlob(webpBlob);
@@ -114,8 +114,10 @@ export function StoryManager({ initialStories }: StoryManagerProps) {
         `Đã nén Web Canvas API: ${originalSizeKb} KB ➜ ${compressedSizeKb} KB (.webp)`
       );
 
-      const previewUrl = URL.createObjectURL(webpBlob);
-      setCoverPreview(previewUrl);
+      // Convert to Base64 data URL immediately for reliable preview and instant fallback
+      const base64Url = await blobToBase64(webpBlob);
+      setCoverPreview(base64Url);
+      setCoverUrl(base64Url);
     } catch (err) {
       console.error("Canvas compression error:", err);
       alert("Lỗi nén ảnh qua Web Canvas API. Vui lòng thử lại với file khác.");
@@ -137,18 +139,29 @@ export function StoryManager({ initialStories }: StoryManagerProps) {
 
         // If client compressed a WebP blob, upload it to Cloudflare R2 / API
         if (compressedWebpBlob) {
-          const uploadData = new FormData();
-          uploadData.set("file", compressedWebpBlob, `${slug}.webp`);
-          uploadData.set("slug", slug || "cover");
+          try {
+            const uploadData = new FormData();
+            uploadData.set("file", compressedWebpBlob, `${slug}.webp`);
+            uploadData.set("slug", slug || "cover");
 
-          const res = await fetch("/api/upload/cover", {
-            method: "POST",
-            body: uploadData,
-          });
+            const res = await fetch("/api/upload/cover", {
+              method: "POST",
+              body: uploadData,
+            });
 
-          const uploadResult = await res.json();
-          if (uploadResult.success && uploadResult.url) {
-            finalCoverUrl = uploadResult.url;
+            if (res.ok) {
+              const uploadResult = await res.json();
+              if (uploadResult.success && uploadResult.url) {
+                finalCoverUrl = uploadResult.url;
+              }
+            }
+          } catch (uploadErr) {
+            console.warn("Cover upload API error, fallback to client Base64:", uploadErr);
+          }
+
+          // If upload to R2 wasn't available, guarantee we use the compressed Base64 WebP!
+          if (!finalCoverUrl || finalCoverUrl === editingStory?.coverUrl) {
+            finalCoverUrl = await blobToBase64(compressedWebpBlob);
           }
         }
 
@@ -487,9 +500,11 @@ export function StoryManager({ initialStories }: StoryManagerProps) {
                         name="coverUrl"
                         value={coverUrl}
                         onChange={(e) => {
-                          setCoverUrl(e.target.value);
-                          if (e.target.value.startsWith("http")) {
-                            setCoverPreview(e.target.value);
+                          const val = e.target.value;
+                          setCoverUrl(val);
+                          setCompressedWebpBlob(null);
+                          if (val.startsWith("http") || val.startsWith("data:")) {
+                            setCoverPreview(val);
                           }
                         }}
                         placeholder="https://..."

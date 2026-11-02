@@ -3,7 +3,7 @@ import { ArchiveHero } from "@/components/home/archive-hero";
 import { BentoSection } from "@/components/home/bento-section";
 import { StoryList } from "@/components/home/story-list";
 
-export const revalidate = 60; // ISR cache revalidation every minute
+export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const [stories, recentChapters] = await Promise.all([

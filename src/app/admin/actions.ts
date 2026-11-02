@@ -140,10 +140,32 @@ export async function createOrUpdateStory(
     const db = await getDb();
     if (db) {
       if (id) {
-        // Update
-        await db
-          .update(stories)
-          .set({
+        // Check if story with this ID already exists in D1 database
+        const existing = await db
+          .select({ id: stories.id })
+          .from(stories)
+          .where(eq(stories.id, id))
+          .limit(1);
+
+        if (existing && existing.length > 0) {
+          // Update existing row
+          await db
+            .update(stories)
+            .set({
+              title,
+              slug,
+              author,
+              description,
+              status,
+              tags,
+              coverUrl,
+              updatedAt: new Date(),
+            })
+            .where(eq(stories.id, id));
+        } else {
+          // If it was seeded/fallback story not yet in D1, insert it with the specified ID
+          await db.insert(stories).values({
+            id,
             title,
             slug,
             author,
@@ -151,11 +173,12 @@ export async function createOrUpdateStory(
             status,
             tags,
             coverUrl,
+            createdAt: new Date(),
             updatedAt: new Date(),
-          })
-          .where(eq(stories.id, id));
+          });
+        }
       } else {
-        // Create
+        // Create brand new story
         await db.insert(stories).values({
           id: generateId("story"),
           title,

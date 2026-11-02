@@ -57,7 +57,7 @@ export function InlineFootnote({ word, note, index }: InlineFootnoteProps) {
   return (
     <span
       ref={containerRef}
-      className="relative inline-block cursor-pointer select-text group/fn"
+      className="relative inline cursor-pointer select-text group/fn"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
@@ -74,29 +74,29 @@ export function InlineFootnote({ word, note, index }: InlineFootnoteProps) {
       aria-label={`Chú thích ${index ? `#${index}` : ""}: ${note}`}
     >
       {word ? (
-        <span className="inline-flex items-baseline">
-          {/* Annotated Word with dashed orange underline */}
-          <span className="border-b-2 border-dashed border-orange-500 hover:border-orange-600 font-medium text-foreground transition-colors decoration-slice">
+        <>
+          {/* Annotated Word with neat dashed underline that breaks naturally across lines without spacing bugs */}
+          <span className="underline decoration-dashed decoration-orange-500 decoration-1 underline-offset-4 hover:decoration-orange-600 font-medium text-foreground transition-colors">
             {word}
           </span>
-          {/* Subtle Orange Badge */}
-          <span className="inline-flex items-center justify-center align-super ml-0.5 px-1 py-0.2 text-[9px] sm:text-[10px] font-mono font-semibold leading-none rounded bg-[#FFEDD5] text-[#C2410C] dark:bg-orange-950/80 dark:text-orange-300 border border-orange-200/80 dark:border-orange-800/60 shadow-2xs group-hover/fn:bg-orange-200 transition-colors">
-            {index ?? <HelpCircle className="size-2.5" />}
-          </span>
-        </span>
+          {/* Compact, fixed-size superscript badge that never stretches */}
+          <sup className="inline-flex items-center justify-center ml-0.5 px-1 h-3.5 min-w-[14px] text-[9px] font-mono font-semibold rounded-full bg-[#FFEDD5] text-[#C2410C] dark:bg-orange-950/80 dark:text-orange-300 border border-orange-300/80 dark:border-orange-800/60 leading-none shadow-2xs select-none align-super group-hover/fn:bg-orange-200 transition-colors">
+            {index ?? <HelpCircle className="size-2" />}
+          </sup>
+        </>
       ) : (
         /* Standalone footnote indicator if no specific word was wrapped */
-        <span className="inline-flex items-center gap-0.5 align-baseline mx-0.5 px-1.5 py-0.5 rounded text-[10px] sm:text-[11px] font-mono leading-none bg-[#FFEDD5] text-[#C2410C] dark:bg-orange-950/80 dark:text-orange-300 border border-dashed border-orange-400 dark:border-orange-700 shadow-2xs hover:bg-orange-200 transition-colors">
+        <sup className="inline-flex items-center gap-0.5 mx-0.5 px-1.5 h-4 text-[10px] font-mono font-semibold rounded-full bg-[#FFEDD5] text-[#C2410C] dark:bg-orange-950/80 dark:text-orange-300 border border-dashed border-orange-400 dark:border-orange-700 leading-none shadow-2xs select-none align-super hover:bg-orange-200 transition-colors">
           <BookOpenText className="size-2.5" />
-          <span>{index ? `[${index}]` : "[chú thích]"}</span>
-        </span>
+          <span>{index ? `[${index}]` : "[*]"}</span>
+        </sup>
       )}
 
       {/* Hybrid Tooltip / Popover Bubble */}
       {isOpen && (
         <span
           onClick={(e) => e.stopPropagation()}
-          className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2.5 w-max min-w-[200px] max-w-[min(380px,calc(100vw-2rem))] p-3.5 rounded-2xl bg-[#FFF5EB] dark:bg-[#1E1815] text-[#281B12] dark:text-[#F7EDE6] border border-orange-300/80 dark:border-orange-800/70 shadow-xl shadow-orange-950/15 dark:shadow-black/60 text-left block normal-case font-normal animate-in fade-in-0 zoom-in-95 duration-150 backdrop-blur-xs cursor-default"
+          className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-max min-w-[200px] max-w-[min(360px,calc(100vw-2rem))] p-3.5 rounded-2xl bg-[#FFF5EB] dark:bg-[#1E1815] text-[#281B12] dark:text-[#F7EDE6] border border-orange-300/80 dark:border-orange-800/70 shadow-xl shadow-orange-950/15 dark:shadow-black/60 text-left block normal-case font-normal animate-in fade-in-0 zoom-in-95 duration-150 backdrop-blur-xs cursor-default whitespace-normal break-words"
         >
           {/* Header with Title and Close Button */}
           <span className="flex items-center justify-between gap-2 pb-1.5 mb-2 border-b border-orange-200/60 dark:border-orange-900/40 text-[11px] font-mono text-orange-800 dark:text-orange-300">
@@ -122,7 +122,7 @@ export function InlineFootnote({ word, note, index }: InlineFootnoteProps) {
           </span>
 
           {/* Explanation Text */}
-          <span className="block text-xs sm:text-[13px] leading-relaxed font-sans text-foreground/90 whitespace-normal select-text">
+          <span className="block text-xs sm:text-[13px] leading-relaxed font-sans text-foreground/90 select-text">
             {note}
           </span>
 
@@ -162,11 +162,6 @@ export function renderParagraphWithFootnotes(
   paragraphIndex: number,
   baseFootnoteIndex = 1
 ): React.ReactNode {
-  // Regex:
-  // 1: [bracketed phrase][[note]] -> Group 1 (word), Group 2 (note)
-  // 2: word[[note]] -> Group 3 (word), Group 4 (note)
-  // 3: [[note]] -> Group 5 (note)
-  // 4: word[efn_note]note[/efn_note] -> Group 6 (word optional), Group 7 (note)
   const regex =
     /(?:\[([^\]\n\r]+)\]\[\[(.*?)\]\])|(?:([^\s\[\]\(\)\.,!?:;«»""''…]+)\[\[(.*?)\]\])|(?:\[\[(.*?)\]\])|(?:([^\s\[\]\(\)\.,!?:;«»""''…]+)?\[efn_note\](.*?)\[\/efn_note\])/gu;
 

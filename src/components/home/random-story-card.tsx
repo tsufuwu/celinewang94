@@ -7,7 +7,6 @@ import { Sparkles, RefreshCw, BookOpen, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { StoryItem } from "@/lib/data";
-import { VISITOR_COUNT } from "@/lib/data";
 import { OrangeLogo } from "@/components/layout/orange-logo";
 
 interface RandomStoryCardProps {
@@ -53,30 +52,7 @@ export function RandomStoryCard({ stories }: RandomStoryCardProps) {
   };
 
   return (
-    <section className="relative my-8 sm:my-12 flex flex-col items-center">
-      {/* Visitor Counter Badge */}
-      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary border border-orange-200 dark:border-orange-900/40 text-xs font-mono text-orange-900 dark:text-orange-200 shadow-xs mb-4">
-        <span>🍊 Nhiệt liệt chào mừng</span>
-        <span className="font-bold text-primary">{VISITOR_COUNT}</span>
-        <span>quả cam tới chơi</span>
-      </div>
-
-      {/* Editorial subtitle */}
-      <div className="flex items-center gap-2 mb-2 text-xs tracking-widest uppercase font-mono text-muted-foreground">
-        <Sparkles className="size-3.5 text-primary animate-pulse" />
-        <span>Góc Thư Giãn</span>
-        <span className="text-border">•</span>
-        <span>Hôm Nay Đọc Gì Cùng Quả Cam?</span>
-      </div>
-
-      <h1 className="font-serif text-3xl sm:text-4xl text-center font-normal tracking-tight text-foreground max-w-xl mb-3">
-        Mỗi ngày một lát cam, xoa dịu những âu lo
-      </h1>
-
-      <p className="text-sm text-muted-foreground text-center max-w-md mb-8 leading-relaxed font-sans">
-        Hãy để trực giác dẫn lối. Chạm vào lá bài cam bên dưới để bói ngẫu nhiên một câu chuyện ấm áp cho tâm trạng hôm nay của bạn.
-      </p>
-
+    <section className="relative my-4 sm:my-6 flex flex-col items-center">
       {/* 3D Flip Card Container */}
       <div className="perspective-1000 w-full max-w-sm sm:max-w-md h-[450px] sm:h-[430px] select-none cursor-pointer">
         <div

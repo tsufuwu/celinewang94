@@ -1,5 +1,5 @@
 import { getStories, getRecentChapters } from "@/lib/data";
-import { RandomStoryCard } from "@/components/home/random-story-card";
+import { ArchiveHero } from "@/components/home/archive-hero";
 import { BentoSection } from "@/components/home/bento-section";
 import { StoryList } from "@/components/home/story-list";
 
@@ -13,8 +13,8 @@ export default async function HomePage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4">
-      {/* 1. Hero Area: "Hôm nay đọc gì cùng Quả Cam?" with 3D Flip Card */}
-      <RandomStoryCard stories={stories} />
+      {/* 1. Hero Spotlight Slider + Characters & Works + Heartfelt Memories */}
+      <ArchiveHero stories={stories} />
 
       {/* 2. Bento Stream: Recent Chapters + Reader Comments from WordPress */}
       <BentoSection chapters={recentChapters} />

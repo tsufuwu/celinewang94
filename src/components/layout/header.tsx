@@ -17,7 +17,7 @@ export function Header() {
 
   const navItems = [
     { label: "Trang chủ", href: "/", icon: BookOpen },
-    { label: "Kho truyện", href: "/#kho-truyen", icon: Library },
+    { label: "Kho truyện", href: "/kho-truyen", icon: Library },
     { label: "Trò chuyện", href: "/tro-chuyen", icon: MessageCircleHeart },
     { label: "Giới thiệu (CV)", href: "/gioi-thieu", icon: User },
   ];
@@ -51,8 +51,6 @@ export function Header() {
             const isActive =
               item.href === "/"
                 ? pathname === "/"
-                : item.href.startsWith("/#")
-                ? false
                 : pathname.startsWith(item.href);
             const Icon = item.icon;
             return (
@@ -95,8 +93,6 @@ export function Header() {
                     const isActive =
                       item.href === "/"
                         ? pathname === "/"
-                        : item.href.startsWith("/#")
-                        ? false
                         : pathname.startsWith(item.href);
                     const Icon = item.icon;
                     return (

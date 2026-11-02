@@ -75,7 +75,7 @@ export function StoryList({ initialStories }: StoryListProps) {
     selectedCategory !== "ALL" || searchQuery.trim() !== "" || selectedTags.length > 0;
 
   return (
-    <section className="my-16" id="archive-catalog">
+    <section className="my-16" id="kho-truyen">
       {/* Section Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 mb-8 border-b border-border/70">
         <div>

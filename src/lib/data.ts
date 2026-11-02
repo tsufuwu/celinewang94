@@ -289,15 +289,15 @@ export const CHAPTER_PARAGRAPHS_MAP: Record<string, { index: number; text: strin
   ch_omlay_1: [
     {
       index: 1,
-      text: "Mặt băng phẳng lặng như một tấm gương khổng lồ phản chiếu ánh đèn vòm nhà thi đấu. Từng luồng khí lạnh phả ra từ dưới lưỡi trượt mang theo cảm giác buốt giá nhưng cũng tỉnh táo đến kỳ lạ.",
+      text: "Mặt băng phẳng lặng như một tấm gương khổng lồ phản chiếu ánh đèn vòm nhà thi đấu. Từng luồng khí lạnh phả ra từ dưới [lưỡi trượt][[Lưỡi dao thép chuyên dụng gắn dưới đế giày trượt băng, có rãnh giữa để bám mặt băng]] mang theo cảm giác buốt giá nhưng cũng tỉnh táo đến kỳ lạ.",
     },
     {
       index: 2,
-      text: "Cậu khẽ cúi người, siết chặt dây giày trượt băng màu đen mờ. Mười năm qua, sân băng này chứng kiến từng vết xước trên đầu gối, từng giọt mồ hôi rơi xuống rồi lập tức đóng băng giữa mùa đông miền Bắc.",
+      text: "Cậu khẽ cúi người, siết chặt dây giày trượt băng màu đen mờ. Mười năm qua, [Sân băng Bolshoi][[Khu phức hợp thể thao băng nghệ thuật danh tiếng, nơi đào tạo nhiều vận động viên cự phách]] này chứng kiến từng vết xước trên đầu gối, từng giọt mồ hôi rơi xuống rồi lập tức đóng băng giữa mùa đông miền Bắc.",
     },
     {
       index: 3,
-      text: "Tiếng nhạc cất lên từ chiếc loa cũ kỹ góc khán đài — khúc nhạc dạo đầu của bản valse êm dịu. Cậu hít một hơi sâu, đạp mạnh chân phải, cả người lướt đi trên mặt băng như một cánh chim chao lượn trong gió sớm.",
+      text: "Tiếng nhạc cất lên từ chiếc loa cũ kỹ góc khán đài — khúc nhạc dạo đầu của bản valse êm dịu[efn_note]Giai điệu trích từ khúc Valse Hoa hồng của Tchaikovsky, bản nhạc bất hủ đồng hành cùng mùa thi đấu.[/efn_note]. Cậu hít một hơi sâu, đạp mạnh chân phải, cả người lướt đi trên mặt băng như một cánh chim chao lượn trong gió sớm.",
     },
     {
       index: 4,
@@ -331,7 +331,7 @@ export const CHAPTER_PARAGRAPHS_MAP: Record<string, { index: number; text: strin
     },
     {
       index: 5,
-      text: "Cú nhảy Axel 3 vòng rưỡi được thực hiện hoàn mỹ. Tiếng reo hò bùng nổ khắp khán phòng, và giữa muôn ngàn tiếng vỗ tay, cậu chỉ nhìn về một hướng duy nhất.",
+      text: "Cú nhảy [Axel ba vòng rưỡi][[Cú nhảy 3A (Triple Axel) - một trong những kỹ thuật khó và đòi hỏi thể lực cao nhất trong trượt băng đơn nam]] được thực hiện hoàn mỹ. Tiếng reo hò bùng nổ khắp khán phòng, và giữa muôn ngàn tiếng vỗ tay, cậu chỉ nhìn về một hướng duy nhất.",
     },
   ],
   ch_weibo_1: [
@@ -355,18 +355,22 @@ export const CHAPTER_PARAGRAPHS_MAP: Record<string, { index: number; text: strin
   ch_deprofundis_1: [
     {
       index: 1,
-      text: "Gửi Bosie, Sau một thời gian dài chờ đợi trong vô vọng, tôi quyết định viết cho cậu bức thư này, vì lợi ích của chính cậu cũng như của tôi...",
+      text: "Gửi Bosie[efn_note]Biệt danh thân mật của Lord Alfred Douglas, người tình trẻ của Oscar Wilde.[/efn_note], Sau một thời gian dài chờ đợi trong vô vọng, tôi quyết định viết cho cậu bức thư này, vì lợi ích của chính cậu cũng như của tôi...",
     },
     {
       index: 2,
-      text: "Nơi nào có đau khổ, nơi ấy là thánh địa thiêng liêng. Một ngày nào đó người đời sẽ nhận ra điều này. Họ sẽ hiểu rằng nỗi đau không bao giờ là vô nghĩa.",
+      text: "[De profundis][[Thành ngữ tiếng Latinh có nghĩa 'Từ vực sâu thẳm', lấy từ Thánh Vịnh 130 trong Kinh Thánh]] là tiếng khóc than và lời tự thú đau đớn nhất rút ra từ tận đáy tâm can của một linh hồn lưu đày giữa bốn bức tường giam lạnh lẽo.",
     },
     {
       index: 3,
-      text: "Nghệ thuật là một biểu hiện của tâm hồn; và tâm hồn không thể nào đạt tới độ sâu sắc tột cùng nếu chưa từng trải qua nỗi cô độc tột bậc giữa bốn bức tường giam cầm.",
+      text: "Nơi nào có đau khổ, nơi ấy là thánh địa thiêng liêng. Một ngày nào đó người đời sẽ nhận ra điều này. Họ sẽ hiểu rằng nỗi đau không bao giờ là vô nghĩa.",
     },
     {
       index: 4,
+      text: "Nghệ thuật là một biểu hiện của tâm hồn; và tâm hồn không thể nào đạt tới độ sâu sắc tột cùng nếu chưa từng trải qua nỗi cô độc tột bậc giữa bốn bức tường giam cầm.",
+    },
+    {
+      index: 5,
       text: "Tôi không oán hận những gì đã xảy ra. Sự đau đớn đã gột rửa trái tim tôi, dạy tôi cách tha thứ và tìm lại vẻ đẹp đích thực của sự tĩnh lặng.",
     },
   ],

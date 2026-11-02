@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { createParagraphComment, type ParagraphCommentItem } from "@/app/chuong/[id]/actions";
+import { stripFootnotes } from "./inline-footnote";
 
 interface ParagraphSheetProps {
   open: boolean;
@@ -119,7 +120,7 @@ export function ParagraphSheet({
               Trích dẫn đoạn văn:
             </span>
             <blockquote className="border-l-3 border-amber-500/80 bg-amber-50/50 dark:bg-amber-950/20 p-3.5 rounded-r-xl italic text-xs text-foreground/85 leading-relaxed font-serif max-h-36 overflow-y-auto">
-              &ldquo;{paragraphText}&rdquo;
+              &ldquo;{stripFootnotes(paragraphText)}&rdquo;
             </blockquote>
           </div>
 

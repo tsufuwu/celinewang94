@@ -22,6 +22,7 @@ import { ParagraphSheet } from "./paragraph-sheet";
 import { ReadingToolbar, type ReadingSettings } from "./reading-toolbar";
 import type { ParagraphCommentItem } from "@/app/chuong/[id]/actions";
 import { OrangeLogo } from "@/components/layout/orange-logo";
+import { renderParagraphWithFootnotes } from "./inline-footnote";
 
 export interface ParagraphData {
   index: number;
@@ -459,7 +460,7 @@ export function ChapterReader({
                 title="Bấm vào đoạn để xem bình luận hoặc báo lỗi chính tả"
               >
                 {/* Paragraph Content */}
-                <p className="text-justify indent-6 sm:indent-8">{p.text}</p>
+                <p className="text-justify indent-6 sm:indent-8">{renderParagraphWithFootnotes(p.text, p.index)}</p>
 
                 {/* Comment Bubble Indicator at the right-bottom of the paragraph */}
                 <div

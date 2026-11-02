@@ -57,9 +57,8 @@ export function RandomStoryCard({ stories }: RandomStoryCardProps) {
       <div className="perspective-1000 w-full max-w-sm sm:max-w-md h-[450px] sm:h-[430px] select-none cursor-pointer">
         <div
           onClick={handleCardClick}
-          className={`relative w-full h-full duration-700 ease-out transform-style-3d transition-transform shadow-lg hover:shadow-2xl rounded-3xl ${
-            isFlipped ? "rotate-y-180" : ""
-          }`}
+          className={`relative w-full h-full duration-700 ease-out transform-style-3d transition-transform shadow-lg hover:shadow-2xl rounded-3xl ${isFlipped ? "rotate-y-180" : ""
+            }`}
         >
           {/* FRONT FACE (Tarot / Archival Citrus Mystery Card) */}
           <div className="absolute inset-0 w-full h-full backface-hidden rounded-3xl border border-border/80 bg-gradient-to-b from-card via-card/95 to-secondary/40 p-8 flex flex-col items-center justify-between overflow-hidden group">

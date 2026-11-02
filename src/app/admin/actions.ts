@@ -1,0 +1,373 @@
+"use server";
+
+import { cookies } from "next/headers";
+import { revalidatePath } from "next/cache";
+import crypto from "crypto";
+import {
+  getDb,
+  stories,
+  chapters,
+  paragraphComments,
+  generateId,
+} from "@/db";
+import { eq, desc } from "drizzle-orm";
+import { FALLBACK_STORIES } from "@/lib/data";
+
+const COOKIE_NAME = "admin_auth_token";
+
+function getExpectedToken(): string {
+  const secret = process.env.ADMIN_PASSWORD || "admin_change_this_password";
+  return crypto.createHash("sha256").update(`admin_${secret}_salt`).digest("hex");
+}
+
+// ----------------------------------------------------
+// 1. AUTHENTICATION ACTIONS
+// ----------------------------------------------------
+
+export async function loginAdmin(password: string): Promise<{ success: boolean; message: string }> {
+  const adminPassword = process.env.ADMIN_PASSWORD;
+
+  if (!adminPassword) {
+    return { success: false, message: "Biến môi trường ADMIN_PASSWORD chưa được cấu hình." };
+  }
+
+  if (password.trim() !== adminPassword.trim()) {
+    return { success: false, message: "Mật khẩu Quản trị viên không chính xác!" };
+  }
+
+  const token = getExpectedToken();
+  const cookieStore = await cookies();
+  cookieStore.set(COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 7, // 7 days
+  });
+
+  return { success: true, message: "Đăng nhập thành công!" };
+}
+
+export async function logoutAdmin(): Promise<{ success: boolean }> {
+  const cookieStore = await cookies();
+  cookieStore.delete(COOKIE_NAME);
+  return { success: true };
+}
+
+export async function checkAdminAuth(): Promise<boolean> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(COOKIE_NAME)?.value;
+  if (!token) return false;
+  return token === getExpectedToken();
+}
+
+// ----------------------------------------------------
+// 2. STORY MANAGEMENT ACTIONS
+// ----------------------------------------------------
+
+export interface AdminStoryItem {
+  id: string;
+  slug: string;
+  title: string;
+  author: string;
+  coverUrl: string | null;
+  description: string | null;
+  status: "ONGOING" | "COMPLETED" | "DROPPED";
+  tags: string[];
+  createdAt: Date;
+  updatedAt: Date;
+  _count: {
+    chapters: number;
+    reviews: number;
+  };
+}
+
+export async function getAdminStories(): Promise<AdminStoryItem[]> {
+  try {
+    const db = await getDb();
+    if (db) {
+      const rows = await db.select().from(stories).orderBy(desc(stories.updatedAt));
+      const allChapters = await db.select({ storyId: chapters.storyId }).from(chapters);
+
+      if (rows && rows.length > 0) {
+        return rows.map((s) => {
+          const chCount = allChapters.filter((c) => c.storyId === s.id).length;
+          return {
+            ...s,
+            _count: {
+              chapters: chCount,
+              reviews: 0,
+            },
+          };
+        }) as unknown as AdminStoryItem[];
+      }
+    }
+  } catch (error) {
+    console.warn("D1 offline, returning fallback stories:", error);
+  }
+
+  return FALLBACK_STORIES.map((s) => ({
+    ...s,
+    _count: { chapters: s._count?.chapters || 0, reviews: s._count?.reviews || 0 },
+  }));
+}
+
+export async function createOrUpdateStory(
+  formData: FormData
+): Promise<{ success: boolean; message: string }> {
+  const isAuth = await checkAdminAuth();
+  if (!isAuth) return { success: false, message: "Bạn chưa đăng nhập Quản trị viên." };
+
+  const id = (formData.get("id") as string) || null;
+  const title = (formData.get("title") as string)?.trim();
+  const slug = (formData.get("slug") as string)?.trim().toLowerCase();
+  const author = (formData.get("author") as string)?.trim();
+  const description = (formData.get("description") as string)?.trim() || null;
+  const status = ((formData.get("status") as string) || "ONGOING") as "ONGOING" | "COMPLETED" | "DROPPED";
+  const tagsRaw = (formData.get("tags") as string) || "";
+  const coverUrl = (formData.get("coverUrl") as string)?.trim() || null;
+
+  if (!title || !slug || !author) {
+    return { success: false, message: "Vui lòng điền đầy đủ Tiêu đề, Đường dẫn (Slug) và Tác giả." };
+  }
+
+  const tags = tagsRaw
+    .split(",")
+    .map((t) => t.trim().replace(/^#/, ""))
+    .filter(Boolean);
+
+  try {
+    const db = await getDb();
+    if (db) {
+      if (id) {
+        // Update
+        await db
+          .update(stories)
+          .set({
+            title,
+            slug,
+            author,
+            description,
+            status,
+            tags,
+            coverUrl,
+            updatedAt: new Date(),
+          })
+          .where(eq(stories.id, id));
+      } else {
+        // Create
+        await db.insert(stories).values({
+          id: generateId("story"),
+          title,
+          slug,
+          author,
+          description,
+          status,
+          tags,
+          coverUrl,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+      }
+    }
+  } catch (error: unknown) {
+    console.error("Save story error:", error);
+    return { success: false, message: `Lỗi lưu truyện vào D1 Database: ${(error as Error)?.message || String(error)}` };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/admin");
+  revalidatePath(`/truyen/${slug}`);
+  return { success: true, message: id ? "Đã cập nhật truyện thành công!" : "Đã thêm truyện mới thành công!" };
+}
+
+export async function deleteStory(id: string): Promise<{ success: boolean; message: string }> {
+  const isAuth = await checkAdminAuth();
+  if (!isAuth) return { success: false, message: "Chưa xác thực quyền quản trị." };
+
+  try {
+    const db = await getDb();
+    if (db) {
+      await db.delete(stories).where(eq(stories.id, id));
+    }
+    revalidatePath("/");
+    revalidatePath("/admin");
+    return { success: true, message: "Đã xóa truyện thành công." };
+  } catch (error: unknown) {
+    return { success: false, message: `Lỗi xóa truyện: ${(error as Error)?.message || String(error)}` };
+  }
+}
+
+// ----------------------------------------------------
+// 3. TYPO REPORTS & CORRECTION ACTIONS
+// ----------------------------------------------------
+
+export interface TypoReportItem {
+  id: string;
+  chapterId: string;
+  paragraphIndex: number;
+  authorName: string;
+  content: string;
+  isResolved: boolean;
+  createdAt: Date;
+  chapter: {
+    id: string;
+    chapterNumber: number;
+    title: string;
+    story: {
+      id: string;
+      title: string;
+      slug: string;
+    };
+  };
+  currentParagraphText: string;
+}
+
+export async function getTypoReports(): Promise<TypoReportItem[]> {
+  try {
+    const db = await getDb();
+    if (db) {
+      const rows = await db
+        .select({
+          comment: paragraphComments,
+          chapter: chapters,
+          story: stories,
+        })
+        .from(paragraphComments)
+        .innerJoin(chapters, eq(paragraphComments.chapterId, chapters.id))
+        .innerJoin(stories, eq(chapters.storyId, stories.id))
+        .where(eq(paragraphComments.isTypoReport, true))
+        .orderBy(paragraphComments.isResolved, desc(paragraphComments.createdAt));
+
+      if (rows && rows.length > 0) {
+        return rows.map((r) => {
+          const pList = r.chapter.paragraphs || [];
+          const currentP = pList.find((p) => p.index === r.comment.paragraphIndex);
+
+          return {
+            id: r.comment.id,
+            chapterId: r.comment.chapterId,
+            paragraphIndex: r.comment.paragraphIndex,
+            authorName: r.comment.authorName,
+            content: r.comment.content,
+            isResolved: r.comment.isResolved,
+            createdAt: r.comment.createdAt,
+            chapter: {
+              id: r.chapter.id,
+              chapterNumber: r.chapter.chapterNumber,
+              title: r.chapter.title,
+              story: {
+                id: r.story.id,
+                title: r.story.title,
+                slug: r.story.slug,
+              },
+            },
+            currentParagraphText: currentP?.text || "(Không tìm thấy đoạn văn tương ứng)",
+          };
+        });
+      }
+    }
+  } catch (error) {
+    console.warn("D1 offline, returning empty or sample typo reports:", error);
+  }
+
+  return [
+    {
+      id: "typo_sample_1",
+      chapterId: "ch_1",
+      paragraphIndex: 2,
+      authorName: "Độc giả kỹ tính",
+      content: "Hình như đoạn này dùng từ 'râm ran' tả ve kêu ở đầu hạ sẽ hợp lý hơn từ 'rộn rã'.",
+      isResolved: false,
+      createdAt: new Date("2026-11-01T15:30:00Z"),
+      chapter: {
+        id: "ch_1",
+        chapterNumber: 24,
+        title: "Mùa hạ khép lại sau ô cửa",
+        story: {
+          id: "story_1",
+          title: "Khu Vườn Mùa Hạ Sau Cơn Mưa",
+          slug: "khu-vuon-mua-ha-sau-con-mua",
+        },
+      },
+      currentParagraphText:
+        "Tiếng nước sôi tí tách trên chiếc bếp đất nung reo vui, hương hoa nhài rộn rã hòa quyện cùng mùi giấy mới và mực tàu.",
+    },
+  ];
+}
+
+export async function resolveTypoAndFixParagraph(
+  commentId: string,
+  chapterId: string,
+  paragraphIndex: number,
+  newText: string
+): Promise<{ success: boolean; message: string }> {
+  const isAuth = await checkAdminAuth();
+  if (!isAuth) return { success: false, message: "Chưa xác thực quyền quản trị." };
+
+  if (!newText || newText.trim().length === 0) {
+    return { success: false, message: "Nội dung đoạn văn không được để trống." };
+  }
+
+  try {
+    const db = await getDb();
+    if (!db) {
+      return { success: false, message: "Không tìm thấy kết nối D1 Database." };
+    }
+
+    // 1. Fetch chapter
+    const rows = await db
+      .select({ paragraphs: chapters.paragraphs })
+      .from(chapters)
+      .where(eq(chapters.id, chapterId))
+      .limit(1);
+
+    if (rows.length === 0) {
+      return { success: false, message: "Không tìm thấy chương truyện này." };
+    }
+
+    const currentParagraphs = rows[0].paragraphs || [];
+    let updated = false;
+
+    const newParagraphs = currentParagraphs.map((p) => {
+      if (p.index === paragraphIndex) {
+        updated = true;
+        return { ...p, text: newText.trim() };
+      }
+      return p;
+    });
+
+    if (!updated) {
+      return { success: false, message: `Không tìm thấy đoạn văn số #${paragraphIndex} trong chương.` };
+    }
+
+    // 2. Update Chapter paragraphs in D1
+    await db
+      .update(chapters)
+      .set({
+        paragraphs: newParagraphs,
+        updatedAt: new Date(),
+      })
+      .where(eq(chapters.id, chapterId));
+
+    // 3. Mark typo report as resolved
+    await db
+      .update(paragraphComments)
+      .set({ isResolved: true })
+      .where(eq(paragraphComments.id, commentId));
+
+    revalidatePath(`/chuong/${chapterId}`);
+    revalidatePath("/admin");
+
+    return {
+      success: true,
+      message: `Đã sửa đoạn văn #${paragraphIndex} và đánh dấu đã xử lý thành công!`,
+    };
+  } catch (error: unknown) {
+    console.error("Resolve typo error:", error);
+    return {
+      success: false,
+      message: `Lỗi cập nhật: ${(error as Error)?.message || String(error)}`,
+    };
+  }
+}

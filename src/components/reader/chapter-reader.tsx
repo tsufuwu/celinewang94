@@ -1,0 +1,552 @@
+"use client";
+
+import * as React from "react";
+import Link from "next/link";
+import { useTheme } from "next-themes";
+import {
+  MessageSquare,
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  Bookmark,
+  Minimize2,
+  Flag,
+  Lock,
+  Unlock,
+  KeyRound,
+  HelpCircle,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ParagraphSheet } from "./paragraph-sheet";
+import { ReadingToolbar, type ReadingSettings } from "./reading-toolbar";
+import type { ParagraphCommentItem } from "@/app/chuong/[id]/actions";
+import { OrangeLogo } from "@/components/layout/orange-logo";
+
+export interface ParagraphData {
+  index: number;
+  text: string;
+}
+
+export interface ChapterData {
+  id: string;
+  chapterNumber: number;
+  title: string;
+  wordCount: number;
+  password?: string | null;
+  passwordHint?: string | null;
+  paragraphs: ParagraphData[];
+  story: {
+    id: string;
+    slug: string;
+    title: string;
+    author: string;
+  };
+}
+
+interface ChapterReaderProps {
+  chapter: ChapterData;
+  initialComments: ParagraphCommentItem[];
+  prevChapterId?: string | null;
+  nextChapterId?: string | null;
+}
+
+export function ChapterReader({
+  chapter,
+  initialComments,
+  prevChapterId,
+  nextChapterId,
+}: ChapterReaderProps) {
+  const { setTheme } = useTheme();
+
+  // Password Protection State
+  const [isUnlocked, setIsUnlocked] = React.useState<boolean>(() => {
+    if (!chapter.password) return true;
+    try {
+      return localStorage.getItem(`unlocked_chapter_${chapter.id}`) === "true";
+    } catch {
+      return false;
+    }
+  });
+  const [passwordInput, setPasswordInput] = React.useState("");
+  const [passwordError, setPasswordError] = React.useState(false);
+
+  const handleUnlock = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chapter.password) {
+      setIsUnlocked(true);
+      return;
+    }
+    const entered = passwordInput.trim().toLowerCase();
+    const target = chapter.password.trim().toLowerCase();
+
+    if (entered === target) {
+      try {
+        localStorage.setItem(`unlocked_chapter_${chapter.id}`, "true");
+      } catch {
+        // Ignored
+      }
+      setIsUnlocked(true);
+      setPasswordError(false);
+    } else {
+      setPasswordError(true);
+    }
+  };
+
+  // Comments state
+  const [comments, setComments] = React.useState<ParagraphCommentItem[]>(initialComments);
+
+  // Active paragraph for sheet
+  const [activeParagraph, setActiveParagraph] = React.useState<ParagraphData | null>(null);
+  const [isSheetOpen, setIsSheetOpen] = React.useState(false);
+
+  // Reading progress and settings
+  const [readingProgress, setReadingProgress] = React.useState(0);
+  const [resumePrompt, setResumePrompt] = React.useState<number | null>(null);
+  const [settings, setSettings] = React.useState<ReadingSettings>({
+    fontSize: 17,
+    lineHeight: "normal",
+    fontFamily: "serif",
+    themeMode: "light",
+    focusMode: false,
+  });
+
+  // Load saved reading settings from LocalStorage
+  React.useEffect(() => {
+    try {
+      const savedSettings = localStorage.getItem("reader_settings");
+      if (savedSettings) {
+        setSettings((prev) => ({ ...prev, ...JSON.parse(savedSettings) }));
+      }
+    } catch {
+      // LocalStorage access restricted or unavailable
+    }
+  }, []);
+
+  // Sync theme with settings
+  const handleUpdateSettings = (newSettings: Partial<ReadingSettings>) => {
+    setSettings((prev) => {
+      const updated = { ...prev, ...newSettings };
+      try {
+        localStorage.setItem("reader_settings", JSON.stringify(updated));
+      } catch {
+        // Ignored
+      }
+      if (newSettings.themeMode) {
+        if (newSettings.themeMode === "dark") {
+          setTheme("dark");
+        } else {
+          setTheme("light");
+        }
+      }
+      return updated;
+    });
+  };
+
+  // Open sheet for a paragraph
+  const handleOpenParagraphSheet = (p: ParagraphData) => {
+    setActiveParagraph(p);
+    setIsSheetOpen(true);
+  };
+
+  // Callback when a comment or typo report is added
+  const handleCommentAdded = (newComment: ParagraphCommentItem) => {
+    setComments((prev) => [...prev, newComment]);
+  };
+
+  // Calculate comments count per paragraph
+  const commentCountsByParagraph = React.useMemo(() => {
+    const map = new Map<number, { count: number; hasTypoReport: boolean }>();
+    comments.forEach((c) => {
+      const existing = map.get(c.paragraphIndex) || { count: 0, hasTypoReport: false };
+      map.set(c.paragraphIndex, {
+        count: existing.count + 1,
+        hasTypoReport: existing.hasTypoReport || c.isTypoReport,
+      });
+    });
+    return map;
+  }, [comments]);
+
+  // 1. IntersectionObserver to track reading progress & save to LocalStorage
+  React.useEffect(() => {
+    if (!isUnlocked) return;
+
+    const observerCallback: IntersectionObserverCallback = (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const indexAttr = entry.target.getAttribute("data-index");
+          if (indexAttr) {
+            const pIndex = parseInt(indexAttr, 10);
+            const total = chapter.paragraphs.length;
+            const progress = Math.min(100, Math.round((pIndex / total) * 100));
+            setReadingProgress(progress);
+
+            // Save to LocalStorage
+            try {
+              localStorage.setItem(
+                `reading_history_${chapter.id}`,
+                JSON.stringify({
+                  chapterId: chapter.id,
+                  paragraphIndex: pIndex,
+                  storySlug: chapter.story.slug,
+                  timestamp: Date.now(),
+                })
+              );
+            } catch {
+              // Ignore LocalStorage error
+            }
+          }
+        }
+      });
+    };
+
+    const observer = new IntersectionObserver(observerCallback, {
+      rootMargin: "-20% 0px -60% 0px",
+      threshold: 0.1,
+    });
+
+    const sections = document.querySelectorAll("section[data-index]");
+    sections.forEach((sec) => observer.observe(sec));
+
+    return () => {
+      sections.forEach((sec) => observer.unobserve(sec));
+    };
+  }, [isUnlocked, chapter.id, chapter.paragraphs.length, chapter.story.slug]);
+
+  // 2. Check for saved reading position on initial load
+  React.useEffect(() => {
+    if (!isUnlocked) return;
+    try {
+      const saved = localStorage.getItem(`reading_history_${chapter.id}`);
+      if (saved) {
+        const data = JSON.parse(saved);
+        if (data.paragraphIndex && data.paragraphIndex > 1) {
+          setResumePrompt(data.paragraphIndex);
+        }
+      }
+    } catch {
+      // Ignored
+    }
+  }, [isUnlocked, chapter.id]);
+
+  const scrollToParagraph = (index: number) => {
+    const el = document.getElementById(`p-${index}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      setResumePrompt(null);
+    }
+  };
+
+  // Font size mapping
+  const fontSizeClass =
+    settings.fontSize === 15
+      ? "text-sm sm:text-base"
+      : settings.fontSize === 17
+      ? "text-base sm:text-lg"
+      : settings.fontSize === 19
+      ? "text-lg sm:text-xl"
+      : "text-xl sm:text-2xl";
+
+  // Line height mapping
+  const lineHeightClass =
+    settings.lineHeight === "compact"
+      ? "leading-relaxed"
+      : settings.lineHeight === "loose"
+      ? "leading-[2.2] sm:leading-[2.4]"
+      : "leading-loose";
+
+  // Font family mapping
+  const fontFamilyClass = settings.fontFamily === "serif" ? "font-serif" : "font-sans";
+
+  // Theme mode container styling
+  const isSepia = settings.themeMode === "sepia";
+
+  // If chapter is locked by password
+  if (!isUnlocked) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center px-4 py-16">
+        <div className="w-full max-w-md p-8 rounded-3xl bg-card border border-border/80 shadow-xl text-center space-y-6">
+          <div className="size-16 rounded-3xl bg-secondary mx-auto flex items-center justify-center text-primary shadow-inner">
+            <Lock className="size-8" />
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary text-primary text-xs font-mono">
+              <OrangeLogo className="size-3.5" />
+              <span>Chương Cần Mật Khẩu</span>
+            </div>
+            <h2 className="font-serif text-2xl font-semibold text-foreground">
+              {chapter.title}
+            </h2>
+            <p className="text-xs text-muted-foreground font-mono">
+              {chapter.story.title} • {chapter.story.author}
+            </p>
+          </div>
+
+          {/* Hint Area */}
+          <div className="p-4 rounded-2xl bg-secondary/60 border border-orange-200/50 dark:border-orange-950/40 text-left space-y-1.5 text-xs">
+            <div className="flex items-center gap-1.5 font-semibold text-orange-800 dark:text-orange-300">
+              <HelpCircle className="size-3.5" />
+              <span>Gợi ý mật khẩu từ Celine:</span>
+            </div>
+            <p className="text-foreground/90 italic">
+              {chapter.passwordHint || "Tên trang web viết thường không cách (media...)"}
+            </p>
+          </div>
+
+          {/* Password Form */}
+          <form onSubmit={handleUnlock} className="space-y-3">
+            <div className="relative">
+              <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Input
+                type="text"
+                value={passwordInput}
+                onChange={(e) => {
+                  setPasswordInput(e.target.value);
+                  setPasswordError(false);
+                }}
+                placeholder="Nhập mật khẩu chương..."
+                className="pl-10 h-11 rounded-2xl bg-background border-border text-sm"
+                autoFocus
+              />
+            </div>
+
+            {passwordError && (
+              <p className="text-xs text-destructive text-left font-medium pl-1">
+                Sai mật khẩu rồi bạn ơi, thử lại xem nhé 🥺
+              </p>
+            )}
+
+            <Button
+              type="submit"
+              className="w-full h-11 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-sm shadow-xs"
+            >
+              <Unlock className="size-4 mr-2" />
+              Mở khóa đọc chương
+            </Button>
+          </form>
+
+          <div className="pt-2">
+            <Link
+              href="/"
+              className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+            >
+              <ArrowLeft className="size-3" /> Quay lại trang chủ
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`min-h-screen transition-colors duration-300 ${
+        isSepia ? "reader-sepia" : ""
+      }`}
+    >
+      {/* Reading Progress Top Bar */}
+      <div className="fixed top-0 left-0 right-0 h-1 z-50 bg-border/40">
+        <div
+          className="h-full bg-primary transition-all duration-300 ease-out"
+          style={{ width: `${readingProgress}%` }}
+        />
+      </div>
+
+      {/* Focus Mode Exit Pill */}
+      {settings.focusMode && (
+        <aside
+          aria-label="Thoát chế độ tập trung"
+          className="fixed top-4 right-4 z-50 animate-in fade-in duration-300"
+        >
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleUpdateSettings({ focusMode: false })}
+            className="rounded-full text-xs h-8 px-3 bg-background/80 backdrop-blur-md border-border/80 flex items-center gap-1.5 shadow-md"
+          >
+            <Minimize2 className="size-3.5" />
+            <span>Thoát chế độ tập trung</span>
+          </Button>
+        </aside>
+      )}
+
+      {/* Main Content Area */}
+      <main className="max-w-3xl mx-auto px-4 sm:px-8 py-8 sm:py-16">
+        {/* Navigation Bar (hidden in focus mode) */}
+        {!settings.focusMode && (
+          <nav
+            aria-label="Điều hướng chương"
+            className="flex items-center justify-between pb-6 mb-8 border-b border-border/60"
+          >
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="size-3.5" />
+              <span>Về trang chủ Media naranja</span>
+            </Link>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-mono text-muted-foreground truncate max-w-[200px] sm:max-w-xs">
+                {chapter.story.title}
+              </span>
+            </div>
+          </nav>
+        )}
+
+        {/* Resume reading prompt banner if reader has a saved bookmark */}
+        {resumePrompt && (
+          <aside
+            aria-label="Tiếp tục đọc dở"
+            className="mb-8 p-3.5 rounded-2xl bg-secondary/80 border border-orange-200 dark:border-orange-800/60 flex items-center justify-between gap-3 text-xs animate-in fade-in slide-in-from-top-2 duration-300 shadow-xs"
+          >
+            <div className="flex items-center gap-2 text-orange-950 dark:text-orange-200">
+              <Bookmark className="size-4 shrink-0 text-primary" />
+              <span>
+                Lần trước bạn đang đọc đến <strong>Đoạn #{resumePrompt}</strong>.
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                onClick={() => scrollToParagraph(resumePrompt)}
+                className="h-7 text-xs rounded-lg px-2.5 bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs"
+              >
+                Cuộn tới đoạn đang đọc
+              </Button>
+              <button
+                onClick={() => setResumePrompt(null)}
+                className="text-muted-foreground hover:text-foreground text-xs p-1"
+              >
+                Bỏ qua
+              </button>
+            </div>
+          </aside>
+        )}
+
+        {/* Chapter Header */}
+        <header className="text-center mb-12 sm:mb-16">
+          <span className="font-mono text-xs uppercase tracking-widest text-primary mb-2.5 block font-medium">
+            Chương {chapter.chapterNumber}
+          </span>
+          <h1 className="font-serif text-2xl sm:text-4xl text-foreground font-semibold mb-3.5 tracking-tight leading-snug">
+            {chapter.title}
+          </h1>
+          <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground font-mono">
+            <span>Tác giả: {chapter.story.author}</span>
+            <span>•</span>
+            <span>{chapter.wordCount.toLocaleString("vi-VN")} chữ</span>
+          </div>
+        </header>
+
+        {/* Paragraphs List */}
+        <article
+          className={`space-y-6 sm:space-y-8 text-foreground/90 transition-all duration-200 ${fontFamilyClass} ${fontSizeClass} ${lineHeightClass}`}
+        >
+          {chapter.paragraphs.map((p) => {
+            const commentMeta = commentCountsByParagraph.get(p.index);
+            const count = commentMeta?.count || 0;
+            const hasTypo = commentMeta?.hasTypoReport || false;
+
+            return (
+              <section
+                key={p.index}
+                id={`p-${p.index}`}
+                data-index={p.index}
+                className="group relative rounded-xl -mx-3 px-3 py-2 transition-colors duration-200 hover:bg-muted/50 cursor-pointer"
+                onClick={() => handleOpenParagraphSheet(p)}
+                title="Bấm vào đoạn để xem bình luận hoặc báo lỗi chính tả"
+              >
+                {/* Paragraph Content */}
+                <p className="text-justify indent-6 sm:indent-8">{p.text}</p>
+
+                {/* Comment Bubble Indicator at the right-bottom of the paragraph */}
+                <div
+                  className={`absolute right-1 bottom-1 transition-all duration-200 ${
+                    count > 0
+                      ? "opacity-90 scale-100"
+                      : "opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100"
+                  }`}
+                >
+                  <span
+                    className={`inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-full border shadow-xs transition-colors backdrop-blur-xs ${
+                      hasTypo
+                        ? "bg-rose-50 text-rose-800 border-rose-300 dark:bg-rose-950/70 dark:text-rose-200"
+                        : count > 0
+                        ? "bg-secondary text-primary border-orange-300 dark:border-orange-800"
+                        : "bg-secondary text-muted-foreground border-border/70 group-hover:border-border"
+                    }`}
+                  >
+                    {hasTypo ? (
+                      <Flag className="size-2.5 text-rose-600 dark:text-rose-400" />
+                    ) : (
+                      <MessageSquare className="size-2.5 text-primary" />
+                    )}
+                    <span>{count > 0 ? count : "Bình luận"}</span>
+                  </span>
+                </div>
+              </section>
+            );
+          })}
+        </article>
+
+        {/* Bottom Navigation Links */}
+        <footer className="mt-16 sm:mt-24 pt-8 border-t border-border/60 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            {prevChapterId ? (
+              <Link href={`/chuong/${prevChapterId}`}>
+                <Button variant="outline" size="sm" className="rounded-xl text-xs">
+                  <ChevronLeft className="size-3.5 mr-1" /> Chương trước
+                </Button>
+              </Link>
+            ) : (
+              <Button variant="outline" size="sm" disabled className="rounded-xl text-xs opacity-40">
+                <ChevronLeft className="size-3.5 mr-1" /> Đầu truyện
+              </Button>
+            )}
+
+            {nextChapterId ? (
+              <Link href={`/chuong/${nextChapterId}`}>
+                <Button size="sm" className="rounded-xl text-xs bg-primary hover:bg-primary/90 text-primary-foreground">
+                  Chương sau <ChevronRight className="size-3.5 ml-1" />
+                </Button>
+              </Link>
+            ) : (
+              <Button size="sm" disabled className="rounded-xl text-xs opacity-40">
+                Hết chương <ChevronRight className="size-3.5 ml-1" />
+              </Button>
+            )}
+          </div>
+
+          <Link href="/">
+            <Button variant="ghost" size="sm" className="rounded-xl text-xs text-muted-foreground hover:text-foreground">
+              Về kho truyện
+            </Button>
+          </Link>
+        </footer>
+      </main>
+
+      {/* Floating Toolbar (Font size, Spacing, Themes, Chapter nav) */}
+      <ReadingToolbar
+        settings={settings}
+        onUpdateSettings={handleUpdateSettings}
+        prevChapterId={prevChapterId}
+        nextChapterId={nextChapterId}
+      />
+
+      {/* Paragraph Comment & Typo Report Sheet */}
+      {activeParagraph && (
+        <ParagraphSheet
+          open={isSheetOpen}
+          onOpenChange={setIsSheetOpen}
+          chapterId={chapter.id}
+          paragraphIndex={activeParagraph.index}
+          paragraphText={activeParagraph.text}
+          comments={comments}
+          onCommentAdded={handleCommentAdded}
+        />
+      )}
+    </div>
+  );
+}

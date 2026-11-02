@@ -1,26 +1,134 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
+  --font-heading: var(--font-serif);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  /* Media Naranja - Warm Citrus Editorial (Light) */
+  --background: #FFFDF9;
+  --foreground: #281B12;
+  --card: #FFF5EB;
+  --card-foreground: #281B12;
+  --popover: #FFFDF9;
+  --popover-foreground: #281B12;
+  --primary: #F97316;
+  --primary-foreground: #FFFFFF;
+  --secondary: #FFEDD5;
+  --secondary-foreground: #9A3412;
+  --muted: #F7EEE5;
+  --muted-foreground: #7A6555;
+  --accent: #FED7AA;
+  --accent-foreground: #7C2D12;
+  --destructive: #EF4444;
+  --border: #F3E5D8;
+  --input: #F3E5D8;
+  --ring: #FB923C;
+  --radius: 0.85rem;
+}
+
+.dark {
+  /* Media Naranja - Đêm Hổ Phách (Dark) */
+  --background: #14100E;
+  --foreground: #F7EDE6;
+  --card: #1E1815;
+  --card-foreground: #F7EDE6;
+  --popover: #1E1815;
+  --popover-foreground: #F7EDE6;
+  --primary: #FB923C;
+  --primary-foreground: #14100E;
+  --secondary: #2C1F17;
+  --secondary-foreground: #FDBA74;
+  --muted: #251B16;
+  --muted-foreground: #A69285;
+  --accent: #3A261B;
+  --accent-foreground: #FED7AA;
+  --destructive: #F87171;
+  --border: #2E221B;
+  --input: #2E221B;
+  --ring: #F97316;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased transition-colors duration-300;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* 3D Card Flip utilities */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+/* Reader Cam Sepia Mode - Media naranja orange sepia tone */
+.reader-sepia {
+  background-color: #FFF8F0 !important;
+  color: #2C1A0E !important;
+}
+.reader-sepia-card {
+  background-color: #FFFAF5 !important;
+  border-color: #F3E0C8 !important;
+  color: #2C1A0E !important;
+}
+
+/* Selection styling - orange citrus */
+::selection {
+  background-color: #FED7AA;
+  color: #7C2D12;
 }

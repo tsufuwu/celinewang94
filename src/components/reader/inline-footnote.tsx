@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { BookOpenText, X, HelpCircle } from "lucide-react";
+import { ProtectedText } from "./protected-text";
 
 export interface InlineFootnoteProps {
   word?: string;
@@ -172,7 +173,14 @@ export function renderParagraphWithFootnotes(
 
   while ((match = regex.exec(text)) !== null) {
     if (match.index > lastIndex) {
-      elements.push(text.substring(lastIndex, match.index));
+      const plainSegment = text.substring(lastIndex, match.index);
+      elements.push(
+        <ProtectedText
+          key={`pt-${paragraphIndex}-${lastIndex}`}
+          text={plainSegment}
+          paragraphIndex={paragraphIndex}
+        />
+      );
     }
 
     const word = match[1] || match[3] || match[6] || "";
@@ -191,8 +199,19 @@ export function renderParagraphWithFootnotes(
   }
 
   if (lastIndex < text.length) {
-    elements.push(text.substring(lastIndex));
+    const plainSegment = text.substring(lastIndex);
+    elements.push(
+      <ProtectedText
+        key={`pt-${paragraphIndex}-${lastIndex}`}
+        text={plainSegment}
+        paragraphIndex={paragraphIndex}
+      />
+    );
   }
 
-  return elements.length > 0 ? elements : text;
+  return elements.length > 0 ? (
+    elements
+  ) : (
+    <ProtectedText text={text} paragraphIndex={paragraphIndex} />
+  );
 }

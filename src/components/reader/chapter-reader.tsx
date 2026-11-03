@@ -23,6 +23,7 @@ import { ReadingToolbar, type ReadingSettings } from "./reading-toolbar";
 import type { ParagraphCommentItem } from "@/app/chuong/[id]/actions";
 import { OrangeLogo } from "@/components/layout/orange-logo";
 import { renderParagraphWithFootnotes } from "./inline-footnote";
+import { AntiCopyShield } from "./anti-copy-shield";
 
 export interface ParagraphData {
   index: number;
@@ -341,11 +342,12 @@ export function ChapterReader({
   }
 
   return (
-    <div
-      className={`min-h-screen transition-colors duration-300 ${
-        isSepia ? "reader-sepia" : ""
-      }`}
-    >
+    <AntiCopyShield>
+      <div
+        className={`min-h-screen transition-colors duration-300 ${
+          isSepia ? "reader-sepia" : ""
+        }`}
+      >
       {/* Reading Progress Top Bar */}
       <div className="fixed top-0 left-0 right-0 h-1 z-50 bg-border/40">
         <div
@@ -549,5 +551,6 @@ export function ChapterReader({
         />
       )}
     </div>
-  );
+  </AntiCopyShield>
+);
 }

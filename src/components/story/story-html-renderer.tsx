@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { Lock, Disc3, Eye, EyeOff, ChevronDown, ChevronRight, Music, Film, BookOpen } from "lucide-react";
+import { AntiCopyShield } from "@/components/reader/anti-copy-shield";
 
 export interface StoryChapterItem {
   id: string;
@@ -367,46 +368,48 @@ export function StoryHtmlRenderer({
   }, [content, chapters]);
 
   return (
-    <div className="story-custom-article-wrapper w-full max-w-4xl mx-auto py-4">
-      {/* Scoped CSS if author specified custom styles */}
-      {customCss && <style dangerouslySetInnerHTML={{ __html: customCss }} />}
+    <AntiCopyShield>
+      <div className="story-custom-article-wrapper w-full max-w-4xl mx-auto py-4">
+        {/* Scoped CSS if author specified custom styles */}
+        {customCss && <style dangerouslySetInnerHTML={{ __html: customCss }} />}
 
-      {/* Global safety styles for custom HTML to prevent overflow or breaking layout */}
-      <style>{`
-        .story-custom-article-wrapper img {
-          max-width: 100% !important;
-          height: auto !important;
-          display: block;
-          margin-left: auto;
-          margin-right: auto;
-        }
-        .story-custom-article-wrapper iframe {
-          max-width: 100% !important;
-        }
-        .story-custom-article-wrapper a {
-          color: inherit;
-          text-decoration: underline;
-          text-decoration-color: rgba(249, 115, 22, 0.4);
-          text-underline-offset: 3px;
-          transition: all 0.2s ease;
-        }
-        .story-custom-article-wrapper a:hover {
-          color: #ea580c;
-          text-decoration-color: #ea580c;
-        }
-        .story-custom-article-wrapper details summary {
-          cursor: pointer;
-          user-select: none;
-        }
-        .story-custom-article-wrapper pre,
-        .story-custom-article-wrapper code {
-          max-width: 100%;
-          overflow-x: auto;
-        }
-      `}</style>
+        {/* Global safety styles for custom HTML to prevent overflow or breaking layout */}
+        <style>{`
+          .story-custom-article-wrapper img {
+            max-width: 100% !important;
+            height: auto !important;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+          }
+          .story-custom-article-wrapper iframe {
+            max-width: 100% !important;
+          }
+          .story-custom-article-wrapper a {
+            color: inherit;
+            text-decoration: underline;
+            text-decoration-color: rgba(249, 115, 22, 0.4);
+            text-underline-offset: 3px;
+            transition: all 0.2s ease;
+          }
+          .story-custom-article-wrapper a:hover {
+            color: #ea580c;
+            text-decoration-color: #ea580c;
+          }
+          .story-custom-article-wrapper details summary {
+            cursor: pointer;
+            user-select: none;
+          }
+          .story-custom-article-wrapper pre,
+          .story-custom-article-wrapper code {
+            max-width: 100%;
+            overflow-x: auto;
+          }
+        `}</style>
 
-      {/* Rendered HTML & Shortcode Blocks */}
-      <div className="space-y-4">{renderContent}</div>
-    </div>
+        {/* Rendered HTML & Shortcode Blocks */}
+        <div className="space-y-4">{renderContent}</div>
+      </div>
+    </AntiCopyShield>
   );
 }

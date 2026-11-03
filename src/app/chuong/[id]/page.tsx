@@ -17,6 +17,16 @@ export async function generateMetadata({ params }: ChapterPageProps): Promise<Me
   return {
     title: `${title} - Media naranja`,
     description: "Trải nghiệm đọc truyện thanh tịnh, tùy chỉnh phông chữ, màu sắc và thảo luận từng đoạn văn.",
+    robots: {
+      index: false,
+      follow: false,
+      noarchive: true,
+      nosnippet: true,
+    },
+    other: {
+      "brave-speedreader": "no",
+      "readability": "no",
+    },
   };
 }
 

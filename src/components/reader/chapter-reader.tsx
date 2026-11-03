@@ -544,27 +544,29 @@ export function ChapterReader({
 
                 {/* Comment Bubble Indicator at the right-bottom of the paragraph */}
                 <div
-                  className={`absolute right-1 bottom-1 transition-all duration-200 ${
+                  className={`absolute right-1 bottom-0.5 sm:bottom-1 transition-all duration-200 ${
                     count > 0
                       ? "opacity-90 scale-100"
-                      : "opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100"
+                      : "opacity-60 sm:opacity-0 sm:group-hover:opacity-100 scale-100 sm:scale-95 sm:group-hover:scale-100"
                   }`}
                 >
                   <span
-                    className={`inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-full border shadow-xs transition-colors backdrop-blur-xs ${
+                    className={`inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-mono px-1.5 sm:px-2 py-0.5 rounded-full border shadow-2xs transition-colors backdrop-blur-xs ${
                       hasTypo
                         ? "bg-rose-50 text-rose-800 border-rose-300 dark:bg-rose-950/70 dark:text-rose-200"
                         : count > 0
-                        ? "bg-secondary text-primary border-orange-300 dark:border-orange-800"
-                        : "bg-secondary text-muted-foreground border-border/70 group-hover:border-border"
+                        ? "bg-[#FAF5EE] text-[#E07B4C] border-[#E07B4C]/50 dark:bg-[#25201C] dark:text-[#E07B4C]"
+                        : "bg-[#FAF5EE]/90 dark:bg-[#25201C]/90 text-[#5C5146] dark:text-[#C4B9AD] border-[#2B2623]/30 hover:border-[#E07B4C] hover:text-[#E07B4C]"
                     }`}
                   >
                     {hasTypo ? (
                       <Flag className="size-2.5 text-rose-600 dark:text-rose-400" />
                     ) : (
-                      <MessageSquare className="size-2.5 text-primary" />
+                      <MessageSquare className="size-2.5 text-[#E07B4C]" />
                     )}
-                    <span>{count > 0 ? count : "Bình luận"}</span>
+                    <span className={count > 0 ? "" : "hidden sm:inline"}>
+                      {count > 0 ? count : "Bình luận"}
+                    </span>
                   </span>
                 </div>
               </section>

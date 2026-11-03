@@ -198,26 +198,11 @@
   -webkit-touch-callout: none !important;
 }
 
-/* 
- * CSS Pseudo-element Cloaking:
- * Text is stored in `data-c` attribute and rendered by CSS `::before`.
- * In the DOM tree, the elements contain NO text nodes!
- * Tools like Brave Speedreader, Mozilla Readability, and scrapers
- * see 0 words and cannot extract story text.
- */
-.protected-text-chunk {
-  display: inline;
+/* Reader selection lock */
+.select-none-touch {
+  -webkit-touch-callout: none !important;
   -webkit-user-select: none !important;
-  -moz-user-select: none !important;
   user-select: none !important;
-  pointer-events: none;
-}
-
-.protected-text-chunk::before {
-  content: attr(data-c);
-  display: inline;
-  white-space: pre-wrap;
-  pointer-events: none;
 }
 
 /* Print-to-PDF Blocker: blanks out page if user presses Print / Save as PDF */

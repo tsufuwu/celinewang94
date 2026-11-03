@@ -38,13 +38,13 @@ export function NotificationBell() {
       </Button>
 
       {isOpen && (
-        <div className="absolute right-0 top-11 w-80 p-3 rounded-2xl bg-card border border-border shadow-xl z-50 animate-in fade-in zoom-in-95 duration-150">
-          <div className="flex items-center justify-between px-2 py-1.5 border-b border-border/60 mb-2">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-              <Sparkles className="size-3.5 text-orange-500" />
+        <div className="fixed inset-x-3 top-14 sm:absolute sm:inset-auto sm:right-0 sm:top-11 w-auto sm:w-80 max-w-sm sm:max-w-none mx-auto sm:mx-0 p-3.5 rounded-2xl bg-[#FAF5EE] dark:bg-[#1F1B18] text-[#2B2623] dark:text-[#FAF5EE] border-2 border-[#2B2623] shadow-[3px_5px_0px_#2B2623] z-50 animate-in fade-in zoom-in-95 duration-150">
+          <div className="flex items-center justify-between px-2 py-1.5 border-b-2 border-[#2B2623]/20 mb-2">
+            <div className="flex items-center gap-1.5 text-xs font-serif font-bold text-foreground">
+              <Sparkles className="size-3.5 text-[#E07B4C]" />
               <span>Chương Mới Cập Nhật</span>
             </div>
-            <span className="text-[10px] font-mono text-muted-foreground uppercase">Hôm nay</span>
+            <span className="text-[10px] font-mono text-[#5C5146] dark:text-[#C4B9AD] uppercase font-bold">Hôm nay</span>
           </div>
 
           <div className="space-y-1">
@@ -53,28 +53,28 @@ export function NotificationBell() {
                 key={ch.id}
                 href={`/chuong/${ch.id}`}
                 onClick={() => setIsOpen(false)}
-                className="block p-2 rounded-xl hover:bg-muted transition-colors text-left group"
+                className="block p-2 rounded-xl hover:bg-[#E5DDD2] dark:hover:bg-[#2A2420] transition-colors text-left group"
               >
-                <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-0.5">
-                  <span className="font-medium text-orange-600 dark:text-orange-400">
+                <div className="flex items-center justify-between text-[11px] text-[#5C5146] dark:text-[#C4B9AD] mb-0.5">
+                  <span className="font-bold text-[#E07B4C]">
                     {ch.story.title}
                   </span>
-                  <span className="font-mono text-[10px]">Chương {ch.chapterNumber}</span>
+                  <span className="font-mono text-[10px] font-semibold">Chương {ch.chapterNumber}</span>
                 </div>
-                <div className="text-xs font-medium text-foreground truncate group-hover:text-primary transition-colors">
+                <div className="text-xs font-serif font-bold text-foreground truncate group-hover:text-[#E07B4C] transition-colors">
                   {ch.title}
                 </div>
               </Link>
             ))}
           </div>
 
-          <div className="pt-2 mt-1 border-t border-border/50 text-center">
+          <div className="pt-2 mt-1 border-t-2 border-[#2B2623]/20 text-center">
             <Link
-              href="/#moi-cap-nhat"
+              href="/kho-truyen"
               onClick={() => setIsOpen(false)}
-              className="text-[11px] text-muted-foreground hover:text-primary transition-colors inline-block font-medium"
+              className="text-[11px] font-mono font-bold text-[#E07B4C] hover:underline inline-block"
             >
-              Xem tất cả chương mới →
+              Xem tất cả trong thư viện →
             </Link>
           </div>
         </div>

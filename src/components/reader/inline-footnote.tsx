@@ -93,11 +93,11 @@ export function InlineFootnote({ word, note, index }: InlineFootnoteProps) {
         </sup>
       )}
 
-      {/* Hybrid Tooltip / Popover Bubble */}
+      {/* Hybrid Tooltip / Mobile Bottom Card */}
       {isOpen && (
         <span
           onClick={(e) => e.stopPropagation()}
-          className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-max min-w-[200px] max-w-[min(360px,calc(100vw-2rem))] p-3.5 rounded-2xl bg-[#FFF5EB] dark:bg-[#1E1815] text-[#281B12] dark:text-[#F7EDE6] border border-orange-300/80 dark:border-orange-800/70 shadow-xl shadow-orange-950/15 dark:shadow-black/60 text-left block normal-case font-normal animate-in fade-in-0 zoom-in-95 duration-150 backdrop-blur-xs cursor-default whitespace-normal break-words"
+          className="fixed inset-x-4 bottom-24 z-50 max-w-sm mx-auto sm:absolute sm:inset-auto sm:bottom-full sm:left-1/2 sm:-translate-x-1/2 sm:mb-2 w-auto sm:w-max sm:min-w-[220px] sm:max-w-[340px] p-3.5 sm:p-4 rounded-2xl bg-[#FFF5EB] dark:bg-[#1E1815] text-[#281B12] dark:text-[#F7EDE6] border-2 border-orange-300 dark:border-orange-800 shadow-2xl text-left block normal-case font-normal animate-in fade-in-0 slide-in-from-bottom-2 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-150 backdrop-blur-md cursor-default whitespace-normal break-words"
         >
           {/* Header with Title and Close Button */}
           <span className="flex items-center justify-between gap-2 pb-1.5 mb-2 border-b border-orange-200/60 dark:border-orange-900/40 text-[11px] font-mono text-orange-800 dark:text-orange-300">
@@ -115,7 +115,7 @@ export function InlineFootnote({ word, note, index }: InlineFootnoteProps) {
                 e.stopPropagation();
                 setIsOpen(false);
               }}
-              className="p-0.5 -mr-1 hover:bg-orange-200/60 dark:hover:bg-orange-900/60 rounded-md text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              className="p-1 -mr-1 hover:bg-orange-200/60 dark:hover:bg-orange-900/60 rounded-md text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               aria-label="Đóng chú thích"
             >
               <X className="size-3.5" />
@@ -127,8 +127,8 @@ export function InlineFootnote({ word, note, index }: InlineFootnoteProps) {
             {note}
           </span>
 
-          {/* Arrow Pointer */}
-          <span className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 w-2.5 h-2.5 rotate-45 bg-[#FFF5EB] dark:bg-[#1E1815] border-r border-b border-orange-300/80 dark:border-orange-800/70 block pointer-events-none" />
+          {/* Arrow Pointer (Desktop only) */}
+          <span className="hidden sm:block absolute top-full left-1/2 -translate-x-1/2 -mt-1 w-2.5 h-2.5 rotate-45 bg-[#FFF5EB] dark:bg-[#1E1815] border-r border-b border-orange-300/80 dark:border-orange-800/70 pointer-events-none" />
         </span>
       )}
     </span>

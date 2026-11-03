@@ -1,5 +1,5 @@
 import { getDb, stories, chapters, siteSettings } from "@/db";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 
 export type StoryCategory = "Full" | "Đang cook" | "Dịch" | "Fanfic";
 
@@ -486,20 +486,34 @@ export async function getStories(): Promise<StoryItem[]> {
   try {
     const db = await getDb();
     if (db) {
-      const rows = await db.select().from(stories).orderBy(desc(stories.updatedAt));
+      const rows = await db
+        .select({
+          story: stories,
+          chapterCount: sql<number>`count(${chapters.id})`,
+        })
+        .from(stories)
+        .leftJoin(chapters, eq(chapters.storyId, stories.id))
+        .groupBy(stories.id)
+        .orderBy(desc(stories.updatedAt));
+
       if (rows && rows.length > 0) {
         return rows.map((r) => {
+          const s = r.story;
           // Infer category from tags
-          const tags = (r.tags as string[]) || [];
+          const tags = (s.tags as string[]) || [];
           let category: StoryCategory = "Đang cook";
-          if (tags.includes("Full") || r.status === "COMPLETED") category = "Full";
+          if (tags.includes("Full") || s.status === "COMPLETED") category = "Full";
           else if (tags.includes("Dịch")) category = "Dịch";
           else if (tags.includes("Fanfic")) category = "Fanfic";
 
           return {
-            ...r,
+            ...s,
             category,
             tags,
+            _count: {
+              chapters: Number(r.chapterCount || 0),
+              reviews: 0,
+            },
           } as unknown as StoryItem;
         });
       }

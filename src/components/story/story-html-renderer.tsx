@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Lock, Disc3, Eye, EyeOff, ChevronDown, ChevronRight, Music, Film, BookOpen } from "lucide-react";
 import { AntiCopyShield } from "@/components/reader/anti-copy-shield";
 
@@ -277,7 +278,77 @@ export function StoryHtmlRenderer({
   content,
   customCss,
   chapters = [],
+  storySlug,
 }: StoryHtmlRendererProps) {
+  const router = useRouter();
+
+  const handleContainerClick = React.useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const target = (e.target as HTMLElement).closest("a");
+      if (!target) return;
+      const href = target.getAttribute("href");
+      if (!href) return;
+
+      // 1. If internal app link, let Next router handle it smoothly
+      if (href.startsWith("/chuong/") || href.startsWith("/truyen/") || href === "/" || href.startsWith("/kho-truyen")) {
+        e.preventDefault();
+        router.push(href);
+        return;
+      }
+
+      // 2. Intercept any residual WordPress link to avoid leaving the app
+      if (href.includes("celinewang94.wordpress.com")) {
+        e.preventDefault();
+        try {
+          const url = new URL(href);
+          const parts = url.pathname.replace(/\/+$/, "").split("/").filter(Boolean);
+          const lastPart = parts[parts.length - 1] || "";
+
+          if (lastPart.includes("om-lay-trong-luc")) {
+            router.push("/truyen/om-lay-trong-luc");
+            return;
+          }
+          if (lastPart.includes("sternstunde")) {
+            router.push("/truyen/sternstunde");
+            return;
+          }
+          if (lastPart.includes("de-profundis")) {
+            router.push("/truyen/de-profundis");
+            return;
+          }
+          if (lastPart.includes("mat-bao")) {
+            router.push("/truyen/mat-bao");
+            return;
+          }
+          if (lastPart.includes("gio-tin-phong")) {
+            router.push("/truyen/gio-tin-phong-thoi-ve-phia-bien");
+            return;
+          }
+          if (lastPart.includes("bay-buc-thu")) {
+            router.push("/truyen/bay-buc-thu-duoc-gui-den-sau-cai-chet-cua-ke-hoang-tuong");
+            return;
+          }
+
+          // Match chapter numbers from URL (e.g., chuong-1, chuong-10, eg-chuong-44)
+          const numMatch = lastPart.match(/chuong-(\d+)/);
+          if (numMatch && chapters && chapters.length > 0) {
+            const num = parseInt(numMatch[1], 10);
+            const ch = chapters.find((c) => c.chapterNumber === num);
+            if (ch) {
+              router.push(`/chuong/${ch.id}`);
+              return;
+            }
+          }
+
+          router.push(storySlug ? `/truyen/${storySlug}` : "/kho-truyen");
+        } catch {
+          router.push("/kho-truyen");
+        }
+      }
+    },
+    [router, chapters, storySlug]
+  );
+
   // Process the content: split by shortcodes and render corresponding React blocks
   const renderContent = React.useMemo(() => {
     if (!content) return null;
@@ -369,7 +440,10 @@ export function StoryHtmlRenderer({
 
   return (
     <AntiCopyShield>
-      <div className="story-custom-article-wrapper w-full max-w-4xl mx-auto py-4">
+      <div
+        className="story-custom-article-wrapper w-full max-w-4xl mx-auto py-4"
+        onClick={handleContainerClick}
+      >
         {/* Scoped CSS if author specified custom styles */}
         {customCss && <style dangerouslySetInnerHTML={{ __html: customCss }} />}
 

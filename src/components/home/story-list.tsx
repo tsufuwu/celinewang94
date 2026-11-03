@@ -145,7 +145,14 @@ export function StoryList({ initialStories }: StoryListProps) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredStories.map((story) => {
-            const firstChapterLink = `/chuong/ch_${story.slug.replace(/-/g, "_")}_1`;
+            const storyDetailLink = `/truyen/${story.slug}`;
+            const chapterCountLabel =
+              typeof story._count?.chapters === "number" && story._count.chapters > 0
+                ? `${story._count.chapters} chương`
+                : story.status === "COMPLETED"
+                ? "Trọn bộ"
+                : "Đang cập nhật";
+
             return (
               <div
                 key={story.id}
@@ -158,13 +165,16 @@ export function StoryList({ initialStories }: StoryListProps) {
                       {story.category}
                     </span>
                     <span className="text-xs font-mono font-bold text-[#5C5146] dark:text-[#C4B9AD]">
-                      {story._count?.chapters || 10}+ chương
+                      {chapterCountLabel}
                     </span>
                   </div>
 
                   {/* Middle: Cover & Details */}
                   <div className="flex gap-4 mb-4">
-                    <div className="relative w-24 h-32 shrink-0 rounded-[12px] overflow-hidden bg-[#EFE8DE] dark:bg-[#1A1614] border border-[#2B2623]/40 shadow-xs">
+                    <Link
+                      href={storyDetailLink}
+                      className="block relative w-24 h-32 shrink-0 rounded-[12px] overflow-hidden bg-[#EFE8DE] dark:bg-[#1A1614] border border-[#2B2623]/40 shadow-xs group-hover:border-[#E07B4C] transition-colors"
+                    >
                       {story.coverUrl ? (
                         <Image
                           src={story.coverUrl}
@@ -179,12 +189,14 @@ export function StoryList({ initialStories }: StoryListProps) {
                           <BookOpen className="size-6" />
                         </div>
                       )}
-                    </div>
+                    </Link>
 
                     <div className="flex-1 min-w-0 flex flex-col justify-start">
-                      <h3 className="font-serif text-base sm:text-lg font-bold text-[#2B2623] dark:text-[#FAF5EE] group-hover:text-[#E07B4C] transition-colors line-clamp-2 mb-1">
-                        {story.title}
-                      </h3>
+                      <Link href={storyDetailLink}>
+                        <h3 className="font-serif text-base sm:text-lg font-bold text-[#2B2623] dark:text-[#FAF5EE] group-hover:text-[#E07B4C] transition-colors line-clamp-2 mb-1">
+                          {story.title}
+                        </h3>
+                      </Link>
                       <p className="text-xs text-[#E07B4C] font-semibold mb-2">
                         {story.author}
                       </p>
@@ -214,10 +226,10 @@ export function StoryList({ initialStories }: StoryListProps) {
                     Cập nhật gần đây
                   </span>
                   <Link
-                    href={firstChapterLink}
+                    href={storyDetailLink}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] bg-[#E07B4C] hover:bg-[#DC7648] text-white border-2 border-[#2B2623] shadow-[1.5px_2px_0px_#2B2623] active:translate-x-[1px] active:translate-y-[2px] active:shadow-none text-xs font-bold transition-all"
                   >
-                    <span>Bắt đầu đọc</span>
+                    <span>Mục lục &amp; Đọc</span>
                     <ArrowRight className="size-3.5" />
                   </Link>
                 </div>

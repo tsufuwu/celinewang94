@@ -1,14 +1,12 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { BookOpen, ArrowLeft, ListOrdered } from "lucide-react";
+import { BookOpen, ListOrdered, Lock, Sparkles, ChevronRight, Edit3 } from "lucide-react";
 import { getDb, stories, chapters } from "@/db";
 import { eq, asc } from "drizzle-orm";
 import { FALLBACK_STORIES, type StoryItem } from "@/lib/data";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StoryHtmlRenderer } from "@/components/story/story-html-renderer";
-import { Edit3 } from "lucide-react";
 
 interface ChapterItem {
   id: string;
@@ -132,27 +130,45 @@ export default async function StoryDetailPage({ params }: StoryDetailPageProps) 
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-      {/* Top Navigation & Studio Edit Shortcut */}
-      <div className="flex items-center justify-between gap-4 mb-6">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors font-mono"
-        >
-          <ArrowLeft className="size-3.5" />
-          <span>Quay lại trang chủ</span>
-        </Link>
+      {/* Top Breadcrumbs & Studio Edit Shortcut */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-[#2B2623]/15">
+        <nav className="flex items-center gap-1.5 text-xs font-mono text-[#5C5146] dark:text-[#C4B9AD]" aria-label="Breadcrumb">
+          <Link href="/" className="hover:text-[#E07B4C] transition-colors">
+            Trang chủ
+          </Link>
+          <ChevronRight className="size-3 text-[#5C5146]/50" />
+          <Link href="/kho-truyen" className="hover:text-[#E07B4C] transition-colors">
+            Thư viện
+          </Link>
+          <ChevronRight className="size-3 text-[#5C5146]/50" />
+          <span className="text-[#2B2623] dark:text-[#FAF5EE] font-bold truncate max-w-[200px] sm:max-w-xs">
+            {story.title}
+          </span>
+        </nav>
 
-        <Link
-          href={`/admin/editor?storyId=${story.id}`}
-          className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-600 dark:text-orange-400 hover:bg-orange-500/20 transition-all font-mono shadow-xs"
-        >
-          <Edit3 className="size-3.5" />
-          <span>Mở Studio Editor</span>
-        </Link>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          {chaptersList.length > 0 && (
+            <Link
+              href={`/chuong/${chaptersList[0].id}`}
+              className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-[10px] bg-[#E07B4C] text-white font-bold border-2 border-[#2B2623] shadow-[1.5px_2px_0px_#2B2623] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none hover:bg-[#DC7648] transition-all font-mono"
+            >
+              <span>Đọc từ Chương 1</span>
+              <ChevronRight className="size-3.5" />
+            </Link>
+          )}
+
+          <Link
+            href={`/admin/editor?storyId=${story.id}`}
+            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-[10px] border-2 border-[#2B2623] bg-[#FAF5EE] dark:bg-[#2A2420] text-[#2B2623] dark:text-[#FAF5EE] hover:bg-[#E5DDD2] transition-all font-mono shadow-[1.5px_2px_0px_#2B2623]"
+          >
+            <Edit3 className="size-3.5" />
+            <span className="hidden sm:inline">Studio Editor</span>
+          </Link>
+        </div>
       </div>
 
+      {/* 1. Story Intro: Custom Artistic HTML layout or standard fallback hero */}
       {story.contentHtml ? (
-        /* 1. Custom Artistic Studio Render (Render toàn bộ bản dựng HTML nghệ thuật 100%) */
         <div className="space-y-6">
           <StoryHtmlRenderer
             content={story.contentHtml}
@@ -162,110 +178,139 @@ export default async function StoryDetailPage({ params }: StoryDetailPageProps) 
           />
         </div>
       ) : (
-        /* 2. Fallback Standard View for stories without custom HTML */
-        <>
-          {/* Story Info Hero */}
-          <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 bg-card p-6 sm:p-8 rounded-3xl border border-border/70 shadow-xs mb-10">
-            <div className="relative w-40 h-56 sm:w-48 sm:h-64 shrink-0 mx-auto sm:mx-0 rounded-2xl overflow-hidden bg-muted border border-border/80 shadow-md">
-              {story.coverUrl ? (
-                <Image
-                  src={story.coverUrl}
-                  alt={story.title}
-                  fill
-                  sizes="192px"
-                  unoptimized={story.coverUrl.startsWith("data:")}
-                  className="object-cover"
-                  priority
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                  <BookOpen className="size-8" />
-                </div>
+        <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 bg-[#FAF5EE] dark:bg-[#1F1B18] p-6 sm:p-8 rounded-[24px] border-2 border-[#2B2623] shadow-[3px_5px_0px_#2B2623] mb-10">
+          <div className="relative w-40 h-56 sm:w-48 sm:h-64 shrink-0 mx-auto sm:mx-0 rounded-[16px] overflow-hidden bg-[#EFE8DE] dark:bg-[#1A1614] border-2 border-[#2B2623] shadow-[2px_3px_0px_#2B2623]">
+            {story.coverUrl ? (
+              <Image
+                src={story.coverUrl}
+                alt={story.title}
+                fill
+                sizes="192px"
+                unoptimized={story.coverUrl.startsWith("data:")}
+                className="object-cover"
+                priority
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-[#5C5146]">
+                <BookOpen className="size-8" />
+              </div>
+            )}
+          </div>
+
+          <div className="flex-1 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-[10px] font-bold font-mono px-2.5 py-0.5 rounded-[8px] bg-[#BDCEAF] text-[#2B2623] border border-[#2B2623]/40">
+                  {categoryLabel}
+                </span>
+                <span className="text-xs font-mono font-bold text-[#5C5146] dark:text-[#C4B9AD]">
+                  {chaptersList.length} chương
+                </span>
+              </div>
+
+              <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#2B2623] dark:text-[#FAF5EE] mb-1.5 tracking-tight">
+                {story.title}
+              </h1>
+              <p className="text-xs sm:text-sm text-[#E07B4C] font-semibold mb-3">
+                Tác giả: <span className="font-bold underline underline-offset-2">{story.author}</span>
+              </p>
+
+              <div className="flex flex-wrap gap-1.5 mb-4">
+                {story.tags.map((tag: string) => (
+                  <span
+                    key={tag}
+                    className="text-[11px] px-2.5 py-0.5 rounded-[6px] bg-[#E5DDD2] dark:bg-[#3D352E] text-[#5C5146] dark:text-[#FAF5EE] font-bold font-mono"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+
+              <p className="text-xs sm:text-sm text-[#5C5146] dark:text-[#C4B9AD] leading-relaxed font-sans italic border-l-3 border-[#E07B4C] pl-3.5 my-3">
+                {story.description || "Không có tóm tắt."}
+              </p>
+            </div>
+
+            <div className="pt-4 flex gap-3">
+              {chaptersList.length > 0 && (
+                <Link href={`/chuong/${chaptersList[0].id}`}>
+                  <Button className="rounded-[12px] bg-[#E07B4C] hover:bg-[#DC7648] text-white border-2 border-[#2B2623] shadow-[2px_2px_0px_#2B2623] font-bold text-xs h-9 px-4">
+                    Đọc từ chương đầu
+                  </Button>
+                </Link>
               )}
             </div>
+          </div>
+        </div>
+      )}
 
-            <div className="flex-1 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge
-                    variant="outline"
-                    className="text-[10px] font-medium bg-secondary text-primary border-orange-300 dark:border-orange-800"
-                  >
-                    {categoryLabel}
-                  </Badge>
-                  <span className="text-xs font-mono text-muted-foreground">
-                    {chaptersList.length} chương
+      {/* 2. Interactive Chapter List: ALWAYS displayed below story intro */}
+      <div className="mt-12 rounded-[24px] bg-[#FAF5EE] dark:bg-[#1F1B18] border-2 border-[#2B2623] shadow-[3px_5px_0px_#2B2623] p-6 sm:p-8" id="muc-luc">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-6 border-b-2 border-[#2B2623]/20 gap-3">
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[8px] bg-[#BDCEAF] text-[#2B2623] border border-[#2B2623]/40 text-[10px] font-mono font-bold uppercase tracking-wider mb-2">
+              <Sparkles className="size-3 text-[#2B2623]" />
+              <span>MỤC LỤC TÁC PHẨM</span>
+            </div>
+            <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#2B2623] dark:text-[#FAF5EE] flex items-center gap-2">
+              <ListOrdered className="size-5 text-[#E07B4C]" />
+              <span>Danh Sách Các Chương ({chaptersList.length})</span>
+            </h2>
+          </div>
+
+          {chaptersList.length > 0 && (
+            <Link
+              href={`/chuong/${chaptersList[0].id}`}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-[12px] bg-[#E07B4C] hover:bg-[#DC7648] text-white border-2 border-[#2B2623] shadow-[2px_2px_0px_#2B2623] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none text-xs font-bold transition-all self-start sm:self-auto"
+            >
+              <span>Bắt đầu đọc Chương 1</span>
+              <ChevronRight className="size-3.5" />
+            </Link>
+          )}
+        </div>
+
+        {chaptersList.length > 0 ? (
+          <div className="divide-y divide-[#2B2623]/15">
+            {chaptersList.map((ch) => (
+              <Link
+                key={ch.id}
+                href={`/chuong/${ch.id}`}
+                className="py-3.5 px-3 -mx-3 rounded-[12px] flex items-center justify-between hover:bg-[#E5DDD2]/50 dark:hover:bg-[#2A2420] transition-colors group"
+              >
+                <div className="flex items-center gap-3 min-w-0 pr-3">
+                  <span className="font-mono text-xs px-2.5 py-1 rounded-[8px] bg-[#E5DDD2] dark:bg-[#3D352E] text-[#2B2623] dark:text-[#FAF5EE] font-bold border border-[#2B2623]/30 shrink-0">
+                    #{ch.chapterNumber}
+                  </span>
+                  <span className="font-serif text-sm sm:text-base font-bold text-[#2B2623] dark:text-[#FAF5EE] group-hover:text-[#E07B4C] transition-colors truncate">
+                    {ch.title}
                   </span>
                 </div>
 
-                <h1 className="font-serif text-2xl sm:text-3xl font-medium text-foreground mb-1.5 tracking-tight">
-                  {story.title}
-                </h1>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Tác giả: <span className="font-medium text-primary">{story.author}</span>
-                </p>
-
-                <div className="flex flex-wrap gap-1.5 mb-4">
-                  {story.tags.map((tag: string) => (
-                    <span
-                      key={tag}
-                      className="text-xs px-2.5 py-1 rounded-full bg-secondary/80 text-muted-foreground"
-                    >
-                      #{tag}
+                <div className="flex items-center gap-3 shrink-0">
+                  {ch.password && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-mono font-bold px-2 py-0.5 rounded-[6px] bg-[#E07B4C]/15 text-[#E07B4C] border border-[#E07B4C]/40">
+                      <Lock className="size-3" />
+                      <span>Pass</span>
                     </span>
-                  ))}
-                </div>
-
-                <p className="text-sm text-muted-foreground/90 leading-relaxed font-sans italic border-l-2 border-border/80 pl-3.5 my-3">
-                  {story.description || "Không có tóm tắt."}
-                </p>
-              </div>
-
-              <div className="pt-4 flex gap-3">
-                {chaptersList.length > 0 && (
-                  <Link href={`/chuong/${chaptersList[0].id}`}>
-                    <Button className="rounded-xl text-xs h-9 px-4">
-                      Đọc từ chương đầu
-                    </Button>
-                  </Link>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Chapters list */}
-          <div className="bg-card p-6 sm:p-8 rounded-3xl border border-border/70 shadow-xs">
-            <div className="flex items-center gap-2 pb-4 mb-4 border-b border-border/60">
-              <ListOrdered className="size-4 text-primary" />
-              <h2 className="font-serif text-xl font-medium text-foreground">
-                Danh Sách Các Chương ({chaptersList.length})
-              </h2>
-            </div>
-
-            <div className="divide-y divide-border/50">
-              {chaptersList.map((ch) => (
-                <Link
-                  key={ch.id}
-                  href={`/chuong/${ch.id}`}
-                  className="py-3 px-3 -mx-3 rounded-xl flex items-center justify-between hover:bg-muted/50 transition-colors group"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="font-mono text-xs px-2 py-0.5 rounded-md bg-secondary text-muted-foreground">
-                      Chương {ch.chapterNumber}
-                    </span>
-                    <span className="font-serif text-sm font-medium text-foreground group-hover:text-primary transition-colors">
-                      {ch.title}
-                    </span>
-                  </div>
-                  <span className="text-xs font-mono text-muted-foreground">
+                  )}
+                  <span className="text-xs font-mono font-semibold text-[#5C5146] dark:text-[#C4B9AD]">
                     {ch.wordCount ? `${ch.wordCount.toLocaleString("vi-VN")} chữ` : "Đọc →"}
                   </span>
-                </Link>
-              ))}
-            </div>
+                </div>
+              </Link>
+            ))}
           </div>
-        </>
-      )}
+        ) : (
+          <div className="text-center py-10 px-4 rounded-[16px] border-2 border-dashed border-[#2B2623]/30 bg-[#FAF5EE]/50">
+            <p className="font-serif text-base font-bold text-[#2B2623] dark:text-[#FAF5EE] mb-1">
+              Tác phẩm trọn bộ dạng một chương / thư từ
+            </p>
+            <p className="text-xs text-[#5C5146] dark:text-[#C4B9AD]">
+              Toàn bộ nội dung của tác phẩm đã được trình bày trọn vẹn ở phần bài đọc phía trên. Chúc bạn có những phút giây thưởng thức êm dịu!
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

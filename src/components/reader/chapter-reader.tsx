@@ -24,6 +24,7 @@ import type { ParagraphCommentItem } from "@/app/chuong/[id]/actions";
 import { OrangeLogo } from "@/components/layout/orange-logo";
 import { renderParagraphWithFootnotes } from "./inline-footnote";
 import { AntiCopyShield } from "./anti-copy-shield";
+import { useAuth } from "@/components/auth/auth-context";
 
 export interface ParagraphData {
   index: number;
@@ -60,6 +61,7 @@ export function ChapterReader({
   nextChapterId,
 }: ChapterReaderProps) {
   const { setTheme } = useTheme();
+  const { user, isChapterUnlocked, saveUnlockedChapter } = useAuth();
 
   // Password Protection State
   const [isUnlocked, setIsUnlocked] = React.useState<boolean>(() => {
@@ -70,6 +72,14 @@ export function ChapterReader({
       return false;
     }
   });
+
+  // Auto unlock if user account already unlocked this chapter in D1
+  React.useEffect(() => {
+    if (chapter.password && isChapterUnlocked(chapter.id)) {
+      setIsUnlocked(true);
+    }
+  }, [chapter.password, chapter.id, isChapterUnlocked]);
+
   const [passwordInput, setPasswordInput] = React.useState("");
   const [passwordError, setPasswordError] = React.useState(false);
 
@@ -88,6 +98,8 @@ export function ChapterReader({
       } catch {
         // Ignored
       }
+      // Save permanently to user account if logged in
+      saveUnlockedChapter(chapter.id);
       setIsUnlocked(true);
       setPasswordError(false);
     } else {
@@ -105,6 +117,9 @@ export function ChapterReader({
   // Reading progress and settings
   const [readingProgress, setReadingProgress] = React.useState(0);
   const [resumePrompt, setResumePrompt] = React.useState<number | null>(null);
+  const [bookmarkSavedMsg, setBookmarkSavedMsg] = React.useState(false);
+  const currentParagraphIndexRef = React.useRef(0);
+  const lastSyncTimeRef = React.useRef(Date.now());
   const [settings, setSettings] = React.useState<ReadingSettings>({
     fontSize: 17,
     lineHeight: "normal",
@@ -179,11 +194,12 @@ export function ChapterReader({
           const indexAttr = entry.target.getAttribute("data-index");
           if (indexAttr) {
             const pIndex = parseInt(indexAttr, 10);
+            currentParagraphIndexRef.current = pIndex;
             const total = chapter.paragraphs.length;
             const progress = Math.min(100, Math.round((pIndex / total) * 100));
             setReadingProgress(progress);
 
-            // Save to LocalStorage
+            // Save to LocalStorage (0 D1 reads/writes during scroll)
             try {
               localStorage.setItem(
                 `reading_history_${chapter.id}`,
@@ -215,7 +231,7 @@ export function ChapterReader({
     };
   }, [isUnlocked, chapter.id, chapter.paragraphs.length, chapter.story.slug]);
 
-  // 2. Check for saved reading position on initial load
+  // 2. Check for saved reading position on initial load (LocalStorage or D1 Cloud)
   React.useEffect(() => {
     if (!isUnlocked) return;
     try {
@@ -224,12 +240,74 @@ export function ChapterReader({
         const data = JSON.parse(saved);
         if (data.paragraphIndex && data.paragraphIndex > 1) {
           setResumePrompt(data.paragraphIndex);
+          return;
         }
       }
     } catch {
       // Ignored
     }
-  }, [isUnlocked, chapter.id]);
+
+    // If logged in member, check Cloudflare D1 reading progress
+    if (user) {
+      fetch(`/api/user/reading-progress?storyId=${chapter.story.id}`)
+        .then((r) => r.json())
+        .then((data: { progress?: { chapterId: string; paragraphIndex: number } | null }) => {
+          if (
+            data?.progress &&
+            data.progress.chapterId === chapter.id &&
+            data.progress.paragraphIndex > 1
+          ) {
+            setResumePrompt(data.progress.paragraphIndex);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [isUnlocked, user, chapter.story.id, chapter.id]);
+
+  // Sync progress to D1 Cloud (called on chapter transition, bookmark, or tab hidden)
+  const syncProgressToD1 = React.useCallback(
+    (pIndex: number) => {
+      if (!user) return;
+      try {
+        fetch("/api/user/reading-progress", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            storyId: chapter.story.id,
+            chapterId: chapter.id,
+            paragraphIndex: pIndex,
+          }),
+          keepalive: true,
+        }).catch(() => {});
+      } catch {
+        // Ignored
+      }
+    },
+    [user, chapter.story.id, chapter.id]
+  );
+
+  // Sync when leaving page or tab becomes hidden (with 60s debounce)
+  React.useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        const now = Date.now();
+        if (now - lastSyncTimeRef.current >= 60000) {
+          syncProgressToD1(currentParagraphIndexRef.current);
+          lastSyncTimeRef.current = now;
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [syncProgressToD1]);
+
+  const handleManualBookmark = () => {
+    syncProgressToD1(currentParagraphIndexRef.current);
+    setBookmarkSavedMsg(true);
+    setTimeout(() => setBookmarkSavedMsg(false), 2000);
+  };
 
   const scrollToParagraph = (index: number) => {
     const el = document.getElementById(`p-${index}`);
@@ -498,7 +576,10 @@ export function ChapterReader({
         <footer className="mt-16 sm:mt-24 pt-8 border-t border-border/60 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             {prevChapterId ? (
-              <Link href={`/chuong/${prevChapterId}`}>
+              <Link
+                href={`/chuong/${prevChapterId}`}
+                onClick={() => syncProgressToD1(currentParagraphIndexRef.current)}
+              >
                 <Button variant="outline" size="sm" className="rounded-xl text-xs">
                   <ChevronLeft className="size-3.5 mr-1" /> Chương trước
                 </Button>
@@ -510,7 +591,10 @@ export function ChapterReader({
             )}
 
             {nextChapterId ? (
-              <Link href={`/chuong/${nextChapterId}`}>
+              <Link
+                href={`/chuong/${nextChapterId}`}
+                onClick={() => syncProgressToD1(currentParagraphIndexRef.current)}
+              >
                 <Button size="sm" className="rounded-xl text-xs bg-primary hover:bg-primary/90 text-primary-foreground">
                   Chương sau <ChevronRight className="size-3.5 ml-1" />
                 </Button>
@@ -522,11 +606,26 @@ export function ChapterReader({
             )}
           </div>
 
-          <Link href="/">
-            <Button variant="ghost" size="sm" className="rounded-xl text-xs text-muted-foreground hover:text-foreground">
-              Về thư viện
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            {user && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleManualBookmark}
+                className="rounded-xl text-xs flex items-center gap-1.5 border-[#E07B4C]/40 text-[#E07B4C] hover:bg-[#E07B4C]/10 transition-colors"
+                title="Lưu tiến độ đọc lên tài khoản Google của bạn"
+              >
+                <Bookmark className="size-3.5 fill-current" />
+                <span>{bookmarkSavedMsg ? "Đã lưu vào tài khoản!" : "Đánh dấu đang đọc"}</span>
+              </Button>
+            )}
+
+            <Link href="/">
+              <Button variant="ghost" size="sm" className="rounded-xl text-xs text-muted-foreground hover:text-foreground">
+                Về thư viện
+              </Button>
+            </Link>
+          </div>
         </footer>
       </main>
 

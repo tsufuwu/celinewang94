@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { createParagraphComment, type ParagraphCommentItem } from "@/app/chuong/[id]/actions";
 import { stripFootnotes } from "./inline-footnote";
+import { useAuth } from "@/components/auth/auth-context";
 
 interface ParagraphSheetProps {
   open: boolean;
@@ -29,8 +30,15 @@ export function ParagraphSheet({
   comments,
   onCommentAdded,
 }: ParagraphSheetProps) {
-  const [authorName, setAuthorName] = React.useState("");
+  const { user } = useAuth();
+  const [authorName, setAuthorName] = React.useState(user?.nickname || user?.name || "");
   const [content, setContent] = React.useState("");
+
+  React.useEffect(() => {
+    if (user && !authorName) {
+      setAuthorName(user.nickname || user.name || "");
+    }
+  }, [user, authorName]);
   const [isTypoReport, setIsTypoReport] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [feedback, setFeedback] = React.useState<{ type: "success" | "error"; text: string } | null>(null);

@@ -174,4 +174,48 @@ export const siteSettings = sqliteTable("site_settings", {
     .$defaultFn(() => new Date()),
 });
 
+// 8. Users Table (Google OAuth Members & Admins)
+export const users = sqliteTable("users", {
+  id: text("id").primaryKey(), // Google Sub or custom ID
+  email: text("email").notNull().unique(),
+  name: text("name"),
+  nickname: text("nickname"),
+  image: text("image"),
+  role: text("role", { enum: ["USER", "ADMIN"] }).notNull().default("USER"),
+  unlockedChapters: text("unlocked_chapters", { mode: "json" })
+    .$type<string[]>()
+    .notNull()
+    .default(sql`'[]'`),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
+// 9. Reading Progress Table
+export const readingProgress = sqliteTable(
+  "reading_progress",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => generateId("rp")),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    storyId: text("story_id")
+      .notNull()
+      .references(() => stories.id, { onDelete: "cascade" }),
+    chapterId: text("chapter_id")
+      .notNull()
+      .references(() => chapters.id, { onDelete: "cascade" }),
+    paragraphIndex: integer("paragraph_index").notNull().default(0),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (table) => [
+    index("rp_user_story_idx").on(table.userId, table.storyId),
+    index("rp_user_chapter_idx").on(table.userId, table.chapterId),
+  ]
+);
+
 

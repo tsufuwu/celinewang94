@@ -1,11 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { Lock, AlertTriangle } from "lucide-react";
+import { Lock } from "lucide-react";
 
 export function AntiCopyShield({ children }: { children: React.ReactNode }) {
   const [toastMessage, setToastMessage] = React.useState<string | null>(null);
-  const [isDevToolsOpen, setIsDevToolsOpen] = React.useState(false);
   const toastTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const showToast = React.useCallback((msg: string) => {
@@ -51,7 +50,7 @@ export function AntiCopyShield({ children }: { children: React.ReactNode }) {
       e.preventDefault();
     };
 
-    // 4. Keyboard Shortcuts Interception (Ctrl+C, Ctrl+A, Ctrl+U, Ctrl+S, Ctrl+P, F12, DevTools)
+    // 4. Keyboard Shortcuts Interception (Ctrl+C, Ctrl+A, Ctrl+U, Ctrl+S, Ctrl+P)
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
@@ -59,20 +58,6 @@ export function AntiCopyShield({ children }: { children: React.ReactNode }) {
       const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
       const modifier = isMac ? e.metaKey : e.ctrlKey;
       const key = e.key.toLowerCase();
-
-      // Block F12
-      if (e.key === "F12") {
-        e.preventDefault();
-        showToast("⚠️ Chức năng kiểm tra mã nguồn đã bị vô hiệu hóa.");
-        return;
-      }
-
-      // Block Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C (DevTools)
-      if (modifier && e.shiftKey && ["i", "j", "c"].includes(key)) {
-        e.preventDefault();
-        showToast("⚠️ Chức năng kiểm tra mã nguồn đã bị vô hiệu hóa.");
-        return;
-      }
 
       // Block Ctrl+C (Copy)
       if (modifier && key === "c") {
@@ -109,27 +94,12 @@ export function AntiCopyShield({ children }: { children: React.ReactNode }) {
       }
     };
 
-    // 5. DevTools Detector (Window boundary differential)
-    const checkDevTools = () => {
-      const threshold = 170;
-      const widthDiff = window.outerWidth - window.innerWidth > threshold;
-      const heightDiff = window.outerHeight - window.innerHeight > threshold;
-      if (widthDiff || heightDiff) {
-        setIsDevToolsOpen(true);
-      } else {
-        setIsDevToolsOpen(false);
-      }
-    };
-
     window.addEventListener("contextmenu", handleContextMenu);
     window.addEventListener("copy", handleCopyCut);
     window.addEventListener("cut", handleCopyCut);
     window.addEventListener("selectstart", handleSelectStart);
     window.addEventListener("dragstart", handleDragStart);
     window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("resize", checkDevTools);
-
-    const intervalId = setInterval(checkDevTools, 1500);
 
     return () => {
       window.removeEventListener("contextmenu", handleContextMenu);
@@ -138,34 +108,11 @@ export function AntiCopyShield({ children }: { children: React.ReactNode }) {
       window.removeEventListener("selectstart", handleSelectStart);
       window.removeEventListener("dragstart", handleDragStart);
       window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("resize", checkDevTools);
-      clearInterval(intervalId);
     };
   }, [showToast]);
 
   return (
     <div className="relative protected-chapter-reader select-none">
-      {/* DevTools Active Blur & Warning Barrier */}
-      {isDevToolsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-md text-center select-none animate-in fade-in duration-200">
-          <div className="max-w-md p-6 rounded-[20px] bg-[#FAF5EE] dark:bg-[#1F1B18] border-2 border-[#2B2623] shadow-[4px_6px_0px_#2B2623] text-[#2B2623] dark:text-[#FAF5EE]">
-            <div className="size-12 rounded-full bg-[#EBBAB5] border-2 border-[#2B2623] mx-auto flex items-center justify-center text-[#2B2623] mb-3">
-              <AlertTriangle className="size-6 text-[#E0534C]" />
-            </div>
-            <h3 className="font-serif text-lg font-bold mb-1.5">
-              Phát hiện công cụ kiểm tra (Developer Tools)
-            </h3>
-            <p className="text-xs text-[#5C5146] dark:text-[#C4B9AD] leading-relaxed mb-4">
-              Nội dung tại <strong>Media Naranja</strong> được bảo vệ bản quyền. Vui lòng đóng
-              cửa sổ Developer Tools để tiếp tục thưởng thức chương truyện.
-            </p>
-            <div className="p-3 rounded-[10px] bg-[#F4DFAD] border border-[#2B2623] text-[11px] font-mono font-semibold text-[#2B2623]">
-              ars longa, vita brevis • cảm ơn bạn đã tôn trọng công sức dịch giả
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Retro Floating Toast Notification */}
       {toastMessage && (
         <aside

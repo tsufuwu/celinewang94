@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getDb, guestbookPosts, generateId } from "@/db";
 import { desc, isNull } from "drizzle-orm";
+import { getAuthSession } from "@/lib/auth";
 
 export interface GuestbookItem {
   id: string;
@@ -116,12 +117,14 @@ export async function createGuestbookPost(
     return { success: false, message: "Nội dung lời nhắn không được để trống." };
   }
 
+  const session = await getAuthSession();
   const serverAdminPassword = process.env.ADMIN_PASSWORD;
   const isPinProvided = Boolean(adminPin && adminPin.trim().length > 0);
   const isAdmin = Boolean(
-    isPinProvided &&
-    serverAdminPassword &&
-    adminPin.trim() === serverAdminPassword.trim()
+    (session && session.role === "ADMIN") ||
+    (isPinProvided &&
+      serverAdminPassword &&
+      adminPin.trim() === serverAdminPassword.trim())
   );
 
   if (isPinProvided && !isAdmin) {

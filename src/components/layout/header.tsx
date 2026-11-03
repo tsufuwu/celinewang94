@@ -10,6 +10,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/s
 import { OrangeLogo } from "./orange-logo";
 import { BgmPlayer } from "@/components/media/bgm-player";
 import { NotificationBell } from "./notification-bell";
+import { UserNav } from "@/components/auth/user-nav";
 
 export function Header() {
   const pathname = usePathname();
@@ -67,11 +68,12 @@ export function Header() {
           })}
         </nav>
 
-        {/* Right Actions: BGM, Notification Bell, Theme, Mobile Menu */}
+        {/* Right Actions: BGM, Notification Bell, Theme, UserNav, Mobile Menu */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <BgmPlayer />
           <NotificationBell />
           <ThemeToggle />
+          <UserNav />
 
           {/* Mobile Sheet Trigger */}
           <div className="md:hidden">

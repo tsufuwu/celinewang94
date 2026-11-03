@@ -13,6 +13,7 @@ import {
   siteSettings,
 } from "@/db";
 import { eq, desc, asc } from "drizzle-orm";
+import { getAuthSession } from "@/lib/auth";
 import {
   FALLBACK_STORIES,
   DEFAULT_CELINE_PROFILE,
@@ -66,6 +67,10 @@ export async function logoutAdmin(): Promise<{ success: boolean }> {
 }
 
 export async function checkAdminAuth(): Promise<boolean> {
+  const session = await getAuthSession();
+  if (session && session.role === "ADMIN") {
+    return true;
+  }
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   if (!token) return false;

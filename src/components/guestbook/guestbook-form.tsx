@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { createGuestbookPost, type ActionResponse } from "@/app/tro-chuyen/actions";
+import { useAuth } from "@/components/auth/auth-context";
 
 interface GuestbookFormProps {
   parentId?: string | null;
@@ -14,6 +15,7 @@ interface GuestbookFormProps {
 }
 
 export function GuestbookForm({ parentId = null, onSuccess, isReply = false }: GuestbookFormProps) {
+  const { user } = useAuth();
   const [showAdminPin, setShowAdminPin] = React.useState(false);
   const [state, setState] = React.useState<ActionResponse | null>(null);
   const [isPending, startTransition] = React.useTransition();
@@ -102,6 +104,7 @@ export function GuestbookForm({ parentId = null, onSuccess, isReply = false }: G
               name="authorName"
               required
               maxLength={50}
+              defaultValue={user?.nickname || user?.name || ""}
               placeholder="Ví dụ: Độc giả qua đường..."
               className="h-9 rounded-xl bg-background border-border/80 text-sm"
             />

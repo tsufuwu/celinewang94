@@ -7,6 +7,8 @@ import { Footer } from "@/components/layout/footer";
 import { BgmProvider } from "@/components/media/bgm-context";
 import { BgmModal } from "@/components/media/bgm-modal";
 import { getBgmPlaylistSetting } from "@/app/admin/actions";
+import { getAuthSession } from "@/lib/auth";
+import { AuthProvider } from "@/components/auth/auth-context";
 
 const sans = Plus_Jakarta_Sans({
   subsets: ["latin", "vietnamese"],
@@ -42,7 +44,10 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const bgmSetting = await getBgmPlaylistSetting();
+  const [bgmSetting, sessionUser] = await Promise.all([
+    getBgmPlaylistSetting(),
+    getAuthSession(),
+  ]);
 
   return (
     <html lang="vi" suppressHydrationWarning className={`${sans.variable} ${serif.variable}`}>
@@ -59,12 +64,14 @@ export default async function RootLayout({
       </head>
       <body className="min-h-screen flex flex-col font-sans selection:bg-[#F4DFAD] selection:text-[#2B2623] bg-[#FAF5EE] dark:bg-[#1A1614] text-[#2B2623] dark:text-[#FAF5EE]">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <BgmProvider initialPlaylistId={bgmSetting.playlistId}>
-            <Header />
-            <main className="flex-1">{children}</main>
-            <Footer />
-            <BgmModal />
-          </BgmProvider>
+          <AuthProvider initialUser={sessionUser}>
+            <BgmProvider initialPlaylistId={bgmSetting.playlistId}>
+              <Header />
+              <main className="flex-1">{children}</main>
+              <Footer />
+              <BgmModal />
+            </BgmProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

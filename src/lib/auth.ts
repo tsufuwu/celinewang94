@@ -1,0 +1,95 @@
+import { SignJWT, jwtVerify } from "jose";
+import { cookies } from "next/headers";
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+  nickname?: string;
+  image?: string;
+  role: "USER" | "ADMIN";
+  unlockedChapters: string[];
+}
+
+const JWT_SECRET_STRING =
+  process.env.AUTH_SECRET ||
+  process.env.JWT_SECRET ||
+  "medianaranja_secret_salt_2026_super_secure_key_change_in_production";
+
+const JWT_KEY = new TextEncoder().encode(JWT_SECRET_STRING);
+export const AUTH_COOKIE_NAME = "mn_auth_token";
+
+/**
+ * Checks if an email is in the ADMIN_EMAILS environment variable list.
+ */
+export function checkIsAdminEmail(email?: string | null): boolean {
+  if (!email) return false;
+  const adminEmailsEnv = process.env.ADMIN_EMAILS || "";
+  const adminList = adminEmailsEnv
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  
+  // Default fallback if env not yet set
+  if (adminList.length === 0) {
+    return email.toLowerCase() === "celinewang94@gmail.com";
+  }
+  return adminList.includes(email.toLowerCase());
+}
+
+/**
+ * Signs a JWT token containing user session details.
+ * Strategy: "jwt" - 0 D1 reads on requests.
+ */
+export async function signAuthToken(user: AuthUser): Promise<string> {
+  return await new SignJWT({
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    nickname: user.nickname || user.name,
+    image: user.image || "",
+    role: user.role,
+    unlockedChapters: user.unlockedChapters || [],
+  })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("30d")
+    .sign(JWT_KEY);
+}
+
+/**
+ * Verifies a JWT token and returns AuthUser payload or null if invalid.
+ */
+export async function verifyAuthToken(token?: string | null): Promise<AuthUser | null> {
+  if (!token) return null;
+  try {
+    const { payload } = await jwtVerify(token, JWT_KEY);
+    return {
+      id: String(payload.id),
+      email: String(payload.email),
+      name: String(payload.name || ""),
+      nickname: payload.nickname ? String(payload.nickname) : undefined,
+      image: payload.image ? String(payload.image) : undefined,
+      role: (payload.role === "ADMIN" ? "ADMIN" : "USER") as "USER" | "ADMIN",
+      unlockedChapters: Array.isArray(payload.unlockedChapters)
+        ? (payload.unlockedChapters as string[])
+        : [],
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Server-side helper to get current session from HTTP cookie (0 D1 Database reads).
+ */
+export async function getAuthSession(): Promise<AuthUser | null> {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get(AUTH_COOKIE_NAME)?.value;
+    return await verifyAuthToken(token);
+  } catch {
+    return null;
+  }
+}
+

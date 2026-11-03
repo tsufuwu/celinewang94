@@ -10,6 +10,11 @@ binding = "DB"
 database_name = "web-doc-truyen-db"
 database_id = "ce320f32-ae04-46a6-8421-1e5fad0ae28a" # Thay bằng D1 ID thật từ npx wrangler d1 create web-doc-truyen-db
 
+# 2. Environment Variables
+[vars]
+ADMIN_EMAILS = "celinewang94@gmail.com"
+AUTH_SECRET = "medianaranja_jwt_secret_salt_2026_super_secure_key"
+
 # 2. Cloudflare R2 Bucket binding for Book Covers (Bỏ comment nếu đã kích hoạt R2 trên Cloudflare Dashboard)
 # [[r2_buckets]]
 # binding = "COVERS_BUCKET"

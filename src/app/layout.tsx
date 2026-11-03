@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { BgmFloatingButton } from "@/components/media/bgm-floating-button";
 
 const sans = Plus_Jakarta_Sans({
   subsets: ["latin", "vietnamese"],
@@ -30,11 +31,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" suppressHydrationWarning className={`${sans.variable} ${serif.variable}`}>
-      <body className="min-h-screen flex flex-col font-sans selection:bg-orange-200/50 selection:text-orange-950 dark:selection:bg-orange-900/40 dark:selection:text-orange-100">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="min-h-screen flex flex-col font-sans selection:bg-[#F4DFAD] selection:text-[#2B2623] bg-[#FAF5EE] dark:bg-[#1A1614] text-[#2B2623] dark:text-[#FAF5EE]">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <Header />
           <main className="flex-1">{children}</main>
           <Footer />
+          <BgmFloatingButton />
         </ThemeProvider>
       </body>
     </html>

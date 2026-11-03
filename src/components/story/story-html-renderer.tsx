@@ -276,7 +276,6 @@ export function StoryHtmlRenderer({
   content,
   customCss,
   chapters = [],
-  storySlug = "",
 }: StoryHtmlRendererProps) {
   // Process the content: split by shortcodes and render corresponding React blocks
   const renderContent = React.useMemo(() => {
@@ -365,7 +364,7 @@ export function StoryHtmlRenderer({
         />
       );
     });
-  }, [content, chapters, storySlug]);
+  }, [content, chapters]);
 
   return (
     <div className="story-custom-article-wrapper w-full max-w-4xl mx-auto py-4">

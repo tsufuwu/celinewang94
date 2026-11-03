@@ -31,40 +31,36 @@ export default async function KhoTruyenPage() {
       </nav>
 
       {/* Hero Banner Header for Library Archive */}
-      <div className="relative rounded-3xl bg-card border border-border/80 p-6 sm:p-10 mb-8 overflow-hidden shadow-xs">
-        {/* Ambient Warm Gradient Accent */}
-        <div className="absolute -top-16 -right-16 size-48 rounded-full bg-orange-500/10 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-16 -left-16 size-48 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
-
+      <div className="relative rounded-[20px] bg-[#FAF5EE] dark:bg-[#1F1B18] border-2 border-[#2B2623] shadow-[3px_5px_0px_#2B2623] p-6 sm:p-10 mb-8 overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-3 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary border border-orange-200/60 dark:border-orange-950/40 text-[11px] font-mono text-orange-800 dark:text-orange-300">
-              <Sparkles className="size-3 text-primary" />
-              <span>ARS LONGA, VITA BREVIS • THƯ VIỆN CHỌN LỌC</span>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[10px] bg-[#BDCEAF] text-[#2B2623] border-2 border-[#2B2623] shadow-[2px_3px_0px_#2B2623] text-xs font-bold uppercase tracking-wider select-none">
+              <Sparkles className="size-3.5 text-[#2B2623]" />
+              <span>ARS LONGA, VITA BREVIS · THƯ VIỆN CHỌN LỌC</span>
             </div>
 
-            <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-medium tracking-tight text-foreground">
-              Kho Truyện & Tác Phẩm
+            <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-[#2B2623] dark:text-[#FAF5EE]">
+              Kho Truyện &amp; Tác Phẩm
             </h1>
 
-            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed font-sans font-normal">
+            <p className="text-sm sm:text-base text-[#5C5146] dark:text-[#C4B9AD] leading-relaxed font-sans font-normal">
               Nơi lưu trữ những bộ truyện hoàn thành, các bản dịch công phu và những bản thảo đang được ấp ủ bởi Celine Wang. Dùng thanh tìm kiếm và bộ lọc thẻ bên dưới để tìm câu chuyện phù hợp với tâm trạng của bạn.
             </p>
           </div>
 
           {/* Quick Stats Box */}
-          <div className="flex sm:flex-col gap-3 shrink-0 self-start md:self-auto bg-muted/40 p-4 rounded-2xl border border-border/60">
+          <div className="flex sm:flex-col gap-3 shrink-0 self-start md:self-auto bg-[#E5DDD2] dark:bg-[#2A2420] p-4 rounded-[14px] border-2 border-[#2B2623] shadow-[2px_3px_0px_#2B2623]">
             <div className="flex items-center gap-3">
-              <div className="size-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+              <div className="size-10 rounded-[10px] bg-[#E07B4C] text-white border-2 border-[#2B2623] flex items-center justify-center">
                 <BookOpen className="size-5" />
               </div>
               <div>
-                <span className="text-xs font-mono text-muted-foreground block">Tổng số tác phẩm</span>
-                <span className="font-serif text-xl font-bold text-foreground">{stories.length} bộ truyện</span>
+                <span className="text-xs font-mono text-[#5C5146] dark:text-[#C4B9AD] block font-semibold">Tổng số tác phẩm</span>
+                <span className="font-serif text-xl font-bold text-[#2B2623] dark:text-[#FAF5EE]">{stories.length} bộ truyện</span>
               </div>
             </div>
 
-            <div className="hidden sm:flex items-center gap-2 pt-2 border-t border-border/60 text-[11px] font-mono text-muted-foreground">
+            <div className="hidden sm:flex items-center gap-2 pt-2 border-t border-[#2B2623]/20 text-[11px] font-mono text-[#5C5146] dark:text-[#C4B9AD] font-semibold">
               <OrangeLogo className="size-3.5" />
               <span>Cập nhật liên tục từ tác giả</span>
             </div>

@@ -77,37 +77,37 @@ export function StoryList({ initialStories }: StoryListProps) {
   return (
     <section className="my-16" id="kho-truyen">
       {/* Section Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 mb-8 border-b border-border/70">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 mb-8 border-b-2 border-[#2B2623]/20">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-orange-700 dark:text-orange-400 mb-1">
-            <Layers className="size-3.5" />
-            <span>Kệ Sách Của Celine</span>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[8px] bg-[#BDCEAF] text-[#2B2623] border-2 border-[#2B2623] shadow-[1.5px_2px_0px_#2B2623] text-[10px] font-mono font-bold uppercase tracking-wider mb-2">
+            <Layers className="size-3 text-[#2B2623]" />
+            <span>KỆ SÁCH CỦA CELINE</span>
           </div>
-          <h2 className="font-serif text-2xl sm:text-3xl text-foreground font-semibold tracking-tight">
-            Kho Truyện & Tác Phẩm
+          <h2 className="font-serif text-2xl sm:text-3xl text-[#2B2623] dark:text-[#FAF5EE] font-bold tracking-tight">
+            Kho Truyện &amp; Tác Phẩm
           </h2>
         </div>
 
         {/* Story Count Pill */}
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary border border-orange-200/60 dark:border-orange-950/40 text-xs font-mono text-orange-800 dark:text-orange-300 self-start sm:self-auto">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[12px] bg-[#E5DDD2] dark:bg-[#3D352E] border-2 border-[#2B2623] shadow-[2px_3px_0px_#2B2623] text-xs font-mono text-[#5C5146] dark:text-[#FAF5EE] font-bold self-start sm:self-auto">
           <span>Tìm thấy</span>
-          <span className="font-bold text-primary">{filteredStories.length}</span>
+          <span className="text-[#E07B4C] font-extrabold">{filteredStories.length}</span>
           <span>bộ truyện</span>
         </div>
       </div>
 
-      {/* Category Tabs (Full, Đang cook, Dịch, Fanfic) */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-3 mb-6 scrollbar-none">
+      {/* Category Navigation Pills (Squircle: borderless, #E5DDD2 active, font-bold) */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-6 scrollbar-none">
         {CATEGORIES.map((cat) => {
           const isSelected = selectedCategory === cat.value;
           return (
             <button
               key={cat.value}
               onClick={() => setSelectedCategory(cat.value)}
-              className={`px-4 py-2 rounded-2xl text-xs sm:text-sm font-medium transition-all shrink-0 ${
+              className={`px-5 py-2.5 rounded-[18px] text-xs sm:text-sm font-bold transition-all shrink-0 cursor-pointer ${
                 isSelected
-                  ? "bg-primary text-primary-foreground shadow-xs font-semibold"
-                  : "bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+                  ? "bg-[#E5DDD2] text-[#5C5146] shadow-none"
+                  : "bg-transparent text-[#5C5146]/70 hover:bg-[#E5DDD2]/50 hover:text-[#5C5146]"
               }`}
             >
               {cat.label}
@@ -119,17 +119,17 @@ export function StoryList({ initialStories }: StoryListProps) {
       {/* Search Bar & Tag Toggle Controls */}
       <div className="flex flex-col gap-4 mb-8">
         <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-[#5C5146] pointer-events-none" />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Tìm theo tên truyện, tác giả (larivegauche, Oscar Wilde, Trĩ Sở...)"
-            className="pl-10 pr-10 h-11 rounded-2xl bg-card border-border/80 text-sm focus-visible:ring-primary shadow-xs"
+            className="pl-11 pr-10 h-12 rounded-[14px] bg-[#FDFBF7] dark:bg-[#241F1C] border-2 border-[#2B2623] shadow-[2px_3px_0px_#2B2623] text-sm text-[#2B2623] dark:text-[#FAF5EE] placeholder:text-[#5C5146]/60 focus-visible:ring-0 focus-visible:border-[#2B2623]"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#5C5146] hover:text-[#2B2623] p-1"
             >
               <X className="size-4" />
             </button>
@@ -137,24 +137,24 @@ export function StoryList({ initialStories }: StoryListProps) {
         </div>
 
         {/* Multi-Tag Filtering Cloud */}
-        <div className="flex flex-wrap items-center gap-1.5 pt-1">
-          <span className="text-xs font-mono text-muted-foreground mr-1 flex items-center gap-1">
-            <Filter className="size-3" />
-            Lọc theo Tag:
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          <span className="text-xs font-mono font-bold text-[#5C5146] dark:text-[#C4B9AD] flex items-center gap-1 mr-1">
+            <Filter className="size-3 text-[#E07B4C]" />
+            Tags:
           </span>
           {allTags.map((tag) => {
-            const isSelected = selectedTags.includes(tag);
+            const isTagActive = selectedTags.includes(tag);
             return (
               <button
                 key={tag}
                 onClick={() => handleToggleTag(tag)}
-                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs transition-all ${
-                  isSelected
-                    ? "bg-primary text-primary-foreground font-medium shadow-xs"
-                    : "bg-secondary/70 hover:bg-secondary text-secondary-foreground border border-orange-200/50 dark:border-orange-950/40"
+                className={`inline-flex items-center gap-1 px-3 py-1 rounded-[10px] text-xs font-mono font-bold transition-all cursor-pointer ${
+                  isTagActive
+                    ? "bg-[#E07B4C] text-white border-2 border-[#2B2623] shadow-[1.5px_2px_0px_#2B2623]"
+                    : "bg-[#FDFBF7] dark:bg-[#241F1C] text-[#5C5146] dark:text-[#C4B9AD] border border-[#2B2623]/30 hover:border-[#2B2623]"
                 }`}
               >
-                {isSelected && <Check className="size-3 stroke-[2.5]" />}
+                {isTagActive && <Check className="size-3" />}
                 <span>#{tag}</span>
               </button>
             );
@@ -165,7 +165,7 @@ export function StoryList({ initialStories }: StoryListProps) {
               variant="ghost"
               size="sm"
               onClick={handleClearFilters}
-              className="text-xs h-7 px-2.5 text-muted-foreground hover:text-destructive rounded-xl ml-auto"
+              className="text-xs font-mono font-bold text-[#E07B4C] hover:bg-[#E07B4C]/10 h-7 px-2.5 rounded-[8px]"
             >
               <X className="size-3 mr-1" />
               Xóa bộ lọc
@@ -176,21 +176,19 @@ export function StoryList({ initialStories }: StoryListProps) {
 
       {/* Story Grid */}
       {filteredStories.length === 0 ? (
-        <div className="text-center py-16 px-4 rounded-3xl border border-dashed border-border bg-card/50">
-          <p className="font-serif text-lg text-foreground mb-1">
+        <div className="text-center py-16 px-4 rounded-[20px] border-2 border-dashed border-[#2B2623]/30 bg-[#FDFBF7] dark:bg-[#241F1C]">
+          <p className="font-serif text-lg font-bold text-[#2B2623] dark:text-[#FAF5EE] mb-1">
             Chưa tìm thấy truyện nào khớp với bộ lọc
           </p>
-          <p className="text-xs text-muted-foreground mb-4">
+          <p className="text-xs text-[#5C5146] dark:text-[#C4B9AD] mb-4">
             Thử gỡ bớt tag hoặc xóa từ khóa tìm kiếm xem sao bạn nhé.
           </p>
-          <Button
-            variant="outline"
-            size="sm"
+          <button
             onClick={handleClearFilters}
-            className="rounded-xl text-xs"
+            className="px-4 py-2 rounded-[12px] bg-[#E5DDD2] text-[#5C5146] border-2 border-[#2B2623] shadow-[2px_3px_0px_#2B2623] text-xs font-bold"
           >
             Đặt lại bộ lọc
-          </Button>
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -199,22 +197,22 @@ export function StoryList({ initialStories }: StoryListProps) {
             return (
               <div
                 key={story.id}
-                className="group flex flex-col justify-between rounded-3xl bg-card border border-border/80 hover:border-primary/50 hover:shadow-lg transition-all duration-300 p-5 overflow-hidden"
+                className="group flex flex-col justify-between rounded-[20px] bg-[#FDFBF7] dark:bg-[#241F1C] border-2 border-[#2B2623] shadow-[2px_4px_0px_#2B2623] hover:translate-x-[0.5px] hover:translate-y-[1px] hover:shadow-[1.5px_3px_0px_#2B2623] active:translate-x-[2px] active:translate-y-[4px] active:shadow-none transition-all duration-200 p-5 overflow-hidden"
               >
                 <div>
                   {/* Top: Category & Chapter Count */}
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-secondary text-primary font-semibold border border-orange-200/60 dark:border-orange-900/40">
+                    <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-[8px] bg-[#BDCEAF] text-[#2B2623] font-bold border border-[#2B2623]/40">
                       {story.category}
                     </span>
-                    <span className="text-xs font-mono text-muted-foreground">
+                    <span className="text-xs font-mono font-bold text-[#5C5146] dark:text-[#C4B9AD]">
                       {story._count?.chapters || 10}+ chương
                     </span>
                   </div>
 
                   {/* Middle: Cover & Details */}
                   <div className="flex gap-4 mb-4">
-                    <div className="relative w-24 h-32 shrink-0 rounded-2xl overflow-hidden bg-muted border border-border/60 shadow-sm">
+                    <div className="relative w-24 h-32 shrink-0 rounded-[12px] overflow-hidden bg-[#EFE8DE] dark:bg-[#1A1614] border border-[#2B2623]/40 shadow-xs">
                       {story.coverUrl ? (
                         <Image
                           src={story.coverUrl}
@@ -224,17 +222,17 @@ export function StoryList({ initialStories }: StoryListProps) {
                           className="object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                        <div className="w-full h-full flex items-center justify-center text-[#5C5146]">
                           <BookOpen className="size-6" />
                         </div>
                       )}
                     </div>
 
                     <div className="flex-1 min-w-0 flex flex-col justify-start">
-                      <h3 className="font-serif text-base sm:text-lg font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2 mb-1">
+                      <h3 className="font-serif text-base sm:text-lg font-bold text-[#2B2623] dark:text-[#FAF5EE] group-hover:text-[#E07B4C] transition-colors line-clamp-2 mb-1">
                         {story.title}
                       </h3>
-                      <p className="text-xs text-orange-700 dark:text-orange-400 font-medium mb-2">
+                      <p className="text-xs text-[#E07B4C] font-semibold mb-2">
                         {story.author}
                       </p>
 
@@ -242,7 +240,7 @@ export function StoryList({ initialStories }: StoryListProps) {
                         {story.tags.slice(0, 3).map((tag) => (
                           <span
                             key={tag}
-                            className="text-[10px] px-2 py-0.5 rounded-md bg-secondary/80 text-secondary-foreground font-medium"
+                            className="text-[10px] px-2 py-0.5 rounded-[6px] bg-[#E5DDD2] dark:bg-[#3D352E] text-[#5C5146] dark:text-[#FAF5EE] font-bold"
                           >
                             #{tag}
                           </span>
@@ -252,19 +250,19 @@ export function StoryList({ initialStories }: StoryListProps) {
                   </div>
 
                   {/* Synopsis Description */}
-                  <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3 mb-4">
+                  <p className="text-xs text-[#5C5146] dark:text-[#C4B9AD] leading-relaxed line-clamp-3 mb-4 font-sans">
                     {story.description}
                   </p>
                 </div>
 
                 {/* Footer Action */}
-                <div className="pt-3 border-t border-border/60 flex items-center justify-between">
-                  <span className="text-[11px] font-mono text-muted-foreground">
+                <div className="pt-3 border-t border-[#2B2623]/15 flex items-center justify-between">
+                  <span className="text-[11px] font-mono font-semibold text-[#5C5146] dark:text-[#C4B9AD]">
                     Cập nhật gần đây
                   </span>
                   <Link
                     href={firstChapterLink}
-                    className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:translate-x-0.5 transition-transform"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] bg-[#E07B4C] hover:bg-[#DC7648] text-white border-2 border-[#2B2623] shadow-[1.5px_2px_0px_#2B2623] active:translate-x-[1px] active:translate-y-[2px] active:shadow-none text-xs font-bold transition-all"
                   >
                     <span>Bắt đầu đọc</span>
                     <ArrowRight className="size-3.5" />

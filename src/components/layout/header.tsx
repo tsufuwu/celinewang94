@@ -46,7 +46,7 @@ export function Header() {
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-1">
+        <nav className="hidden md:flex items-center gap-1.5">
           {navItems.map((item) => {
             const isActive =
               item.href === "/"
@@ -57,13 +57,13 @@ export function Header() {
               <Link
                 key={item.label}
                 href={item.href}
-                className={`relative px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5 ${
+                className={`relative px-5 py-2.5 rounded-[18px] text-xs sm:text-sm transition-all flex items-center gap-2 border-0 shadow-none font-bold ${
                   isActive
-                    ? "bg-secondary text-primary font-semibold shadow-xs"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/70"
+                    ? "bg-[#E5DDD2] dark:bg-[#2B2521] text-[#5C5146] dark:text-[#E5DDD2]"
+                    : "text-[#6B5E54] dark:text-[#A6998D] hover:text-[#2B2623] dark:hover:text-[#FAF5EE] hover:bg-[#EFE8DE] dark:hover:bg-[#241E1A]"
                 }`}
               >
-                <Icon className="size-3.5" />
+                <Icon className="size-4" />
                 <span>{item.label}</span>
               </Link>
             );

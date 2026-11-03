@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -7,9 +8,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-serif: var(--font-serif);
-  --font-heading: var(--font-serif);
+  --font-sans: 'Be Vietnam Pro', sans-serif;
+  --font-heading: 'Be Vietnam Pro', sans-serif;
+  --font-serif: var(--font-serif, 'Be Vietnam Pro', sans-serif);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -34,101 +35,151 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
 :root {
-  /* Media Naranja - Warm Citrus Editorial (Light) */
-  --background: #FFFDF9;
-  --foreground: #281B12;
-  --card: #FFF5EB;
-  --card-foreground: #281B12;
-  --popover: #FFFDF9;
-  --popover-foreground: #281B12;
-  --primary: #F97316;
+  /* Flat Pastel Monochrome & Retro Polaroid Palette */
+  --bg-cream: #FAF5EE;
+  --text-ink: #2B2623;
+  --text-taupe: #5C5146;
+  --pastel-taupe: #E5DDD2;
+  --border-ink: #2B2623;
+  --pastel-orange: #E07B4C;
+  --pastel-sage: #BDCEAF;
+  --pastel-peach: #EBBAB5;
+  --pastel-butter: #F4DFAD;
+  --pastel-olive: #E2D8C0;
+  --washi-tape: rgba(232, 159, 113, 0.7);
+
+  /* Next.js / Tailwind System tokens (100% Solid Flat Colors) */
+  --background: #FAF5EE;
+  --foreground: #2B2623;
+  --card: #FDFBF7;
+  --card-foreground: #2B2623;
+  --popover: #FAF5EE;
+  --popover-foreground: #2B2623;
+  --primary: #E07B4C;
   --primary-foreground: #FFFFFF;
-  --secondary: #FFEDD5;
-  --secondary-foreground: #9A3412;
-  --muted: #F7EEE5;
-  --muted-foreground: #7A6555;
-  --accent: #FED7AA;
-  --accent-foreground: #7C2D12;
-  --destructive: #EF4444;
-  --border: #F3E5D8;
-  --input: #F3E5D8;
-  --ring: #FB923C;
-  --radius: 0.85rem;
+  --secondary: #E5DDD2;
+  --secondary-foreground: #5C5146;
+  --muted: #EFE8DE;
+  --muted-foreground: #6B5E54;
+  --accent: #F4DFAD;
+  --accent-foreground: #2B2623;
+  --destructive: #E0534C;
+  --border: #2B2623;
+  --input: #E5DDD2;
+  --ring: #E07B4C;
+  --radius: 14px;
 }
 
 .dark {
-  /* Media Naranja - Đêm Hổ Phách (Dark) */
-  --background: #14100E;
-  --foreground: #F7EDE6;
-  --card: #1E1815;
-  --card-foreground: #F7EDE6;
-  --popover: #1E1815;
-  --popover-foreground: #F7EDE6;
-  --primary: #FB923C;
-  --primary-foreground: #14100E;
-  --secondary: #2C1F17;
-  --secondary-foreground: #FDBA74;
-  --muted: #251B16;
-  --muted-foreground: #A69285;
-  --accent: #3A261B;
-  --accent-foreground: #FED7AA;
+  /* Noir Dark Flat Palette (No gradients, warm charcoal & muted pastel accents) */
+  --bg-cream: #1A1614;
+  --text-ink: #FAF5EE;
+  --text-taupe: #C4B9AD;
+  --pastel-taupe: #2B2521;
+  --border-ink: #FAF5EE;
+  --pastel-orange: #E07B4C;
+  --pastel-sage: #384530;
+  --pastel-peach: #4C302D;
+  --pastel-butter: #473B25;
+  --pastel-olive: #332E25;
+  --washi-tape: rgba(224, 123, 76, 0.6);
+
+  --background: #1A1614;
+  --foreground: #FAF5EE;
+  --card: #241F1C;
+  --card-foreground: #FAF5EE;
+  --popover: #241F1C;
+  --popover-foreground: #FAF5EE;
+  --primary: #E07B4C;
+  --primary-foreground: #1A1614;
+  --secondary: #2B2521;
+  --secondary-foreground: #C4B9AD;
+  --muted: #241E1A;
+  --muted-foreground: #A6998D;
+  --accent: #473B25;
+  --accent-foreground: #FAF5EE;
   --destructive: #F87171;
-  --border: #2E221B;
-  --input: #2E221B;
-  --ring: #F97316;
+  --border: #423832;
+  --input: #2B2521;
+  --ring: #E07B4C;
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    border-color: var(--border);
   }
 
   body {
-    @apply bg-background text-foreground antialiased transition-colors duration-300;
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+    letter-spacing: -0.01em;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
   }
 }
 
-/* 3D Card Flip utilities */
-.perspective-1000 {
-  perspective: 1000px;
+/* -------------------------------------------------------------------------- */
+/* Retro Polaroid & Flat Pastel Utility Classes                              */
+/* -------------------------------------------------------------------------- */
+
+/* 1. Navigation Pill: border: none, rounded-[18px], px-5 py-2.5, #E5DDD2 */
+.nav-pill {
+  border: none !important;
+  box-shadow: none !important;
+  background-color: #E5DDD2 !important;
+  color: #5C5146 !important;
+  font-weight: 700 !important;
+  border-radius: 18px !important;
+  padding: 10px 20px !important;
+  transition: all 0.15s ease-in-out;
 }
 
-.transform-style-3d {
-  transform-style: preserve-3d;
+.nav-pill:hover {
+  background-color: #DBD1C4 !important;
 }
 
-.backface-hidden {
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
+/* 2. Hard-Edge Pastel Button & Cards */
+.btn-retro-hard {
+  border: 2px solid #2B2623 !important;
+  box-shadow: 2px 4px 0px #2B2623 !important;
+  border-radius: 14px;
+  font-weight: 700;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
 
-.rotate-y-180 {
-  transform: rotateY(180deg);
+.btn-retro-hard:hover {
+  transform: translate(0.5px, 1px);
+  box-shadow: 1.5px 3px 0px #2B2623 !important;
 }
 
-/* Reader Cam Sepia Mode - Media naranja orange sepia tone */
-.reader-sepia {
-  background-color: #FFF8F0 !important;
-  color: #2C1A0E !important;
-}
-.reader-sepia-card {
-  background-color: #FFFAF5 !important;
-  border-color: #F3E0C8 !important;
-  color: #2C1A0E !important;
+.btn-retro-hard:active {
+  transform: translate(2px, 4px) !important;
+  box-shadow: 0px 0px 0px #2B2623 !important;
 }
 
-/* Selection styling - orange citrus */
-::selection {
-  background-color: #FED7AA;
-  color: #7C2D12;
+/* 3. Small Retro Sticker Badge */
+.sticker-retro {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 2px solid #2B2623 !important;
+  box-shadow: 2px 3px 0px #2B2623 !important;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 11px;
+  padding: 4px 10px;
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+
+/* 4. Strict Ban on Gradients */
+[class*="bg-gradient-"],
+[class*="from-"],
+[class*="to-"],
+[class*="via-"] {
+  background-image: none !important;
 }

@@ -22,6 +22,17 @@ export const metadata: Metadata = {
   title: "Media naranja | ars longa, vita brevis – nghệ thuật trường tồn, cuộc đời ngắn ngủi",
   description:
     "Ngôi nhà nhỏ của Celine Wang - Nơi lưu giữ những mẩu truyện dịu dàng, bản dịch và tản văn tràn ngập sắc cam ấm áp.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png", sizes: "192x192" },
+      { url: "/cropped-cropped-cropped-medianaranja.webp", type: "image/webp" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({

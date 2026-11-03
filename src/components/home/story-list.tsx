@@ -219,6 +219,7 @@ export function StoryList({ initialStories }: StoryListProps) {
                           alt={story.title}
                           fill
                           sizes="96px"
+                          unoptimized={story.coverUrl.startsWith("data:")}
                           className="object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                       ) : (

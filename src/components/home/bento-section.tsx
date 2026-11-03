@@ -51,6 +51,7 @@ export function BentoSection({ chapters }: BentoSectionProps) {
                       alt={chapter.story.title}
                       fill
                       sizes="56px"
+                      unoptimized={chapter.story.coverUrl.startsWith("data:")}
                       className="object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   ) : (

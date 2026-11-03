@@ -40,7 +40,28 @@ const MEMORIES = [
   },
 ];
 
-export function ArchiveHero({}: ArchiveHeroProps) {
+export function ArchiveHero({ stories = [] }: ArchiveHeroProps) {
+  // Find "Ôm Lấy Trọng Lực" dynamically from stories passed from DB
+  const omLayStory = stories.find(
+    (s) => s.slug === "om-lay-trong-luc" || s.id === "story_om_lay_trong_luc"
+  );
+
+  // Find second story for collage or fallback
+  const secondStory = stories.find(
+    (s) =>
+      s.slug !== "om-lay-trong-luc" &&
+      s.id !== "story_om_lay_trong_luc" &&
+      Boolean(s.coverUrl)
+  );
+
+  const photo1Src =
+    omLayStory?.coverUrl ||
+    "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=600&q=80";
+
+  const photo2Src =
+    secondStory?.coverUrl ||
+    "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80";
+
   return (
     <div className="space-y-16 sm:space-y-24 my-4 sm:my-8">
       {/* ========================================================
@@ -83,7 +104,7 @@ export function ArchiveHero({}: ArchiveHeroProps) {
               </Link>
 
               <Link
-                href="/truyen/om-lay-trong-luc"
+                href={`/truyen/${omLayStory?.slug || "om-lay-trong-luc"}`}
                 className="inline-flex items-center gap-2 px-5 py-3 rounded-[14px] bg-[#E5DDD2] dark:bg-[#3D352E] hover:bg-[#DBD1C4] text-[#5C5146] dark:text-[#FAF5EE] border-2 border-[#2B2623] shadow-[2px_4px_0px_#2B2623] active:translate-x-[2px] active:translate-y-[4px] active:shadow-none text-xs sm:text-sm font-bold transition-all"
               >
                 <span>Vào đọc Ôm Lấy Trọng Lực</span>
@@ -91,18 +112,20 @@ export function ArchiveHero({}: ArchiveHeroProps) {
             </div>
           </div>
 
-          {/* Right Column: Polaroid Scrapbook Collage */}
+          {/* Right Column: Polaroid Scrapbook Collage (Clickable Polaroid Cards with Story Cover) */}
           <div className="lg:col-span-5 flex justify-center z-10 overflow-hidden py-4">
             <PolaroidCollage
               photo1={{
-                src: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=600&q=80",
-                alt: "Ôm Lấy Trọng Lực",
+                src: photo1Src,
+                alt: omLayStory?.title || "Ôm Lấy Trọng Lực",
                 caption: "#OmLayTrongLuc",
+                href: `/truyen/${omLayStory?.slug || "om-lay-trong-luc"}`,
               }}
               photo2={{
-                src: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80",
-                alt: "Bảy Bức Thư",
-                caption: "#MediaNaranja",
+                src: photo2Src,
+                alt: secondStory?.title || "Media Naranja Archive",
+                caption: secondStory?.title ? `#${secondStory.title.replace(/\s+/g, "")}` : "#MediaNaranja",
+                href: secondStory ? `/truyen/${secondStory.slug}` : "/kho-truyen",
               }}
               topSticker="orange vibes"
               bottomSticker="100% đam mê!"

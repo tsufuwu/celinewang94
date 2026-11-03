@@ -173,6 +173,7 @@ export default async function StoryDetailPage({ params }: StoryDetailPageProps) 
                   alt={story.title}
                   fill
                   sizes="192px"
+                  unoptimized={story.coverUrl.startsWith("data:")}
                   className="object-cover"
                   priority
                 />

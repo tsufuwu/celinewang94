@@ -239,6 +239,7 @@ export function StoryManager({ initialStories }: StoryManagerProps) {
                         alt={story.title}
                         fill
                         sizes="80px"
+                        unoptimized={story.coverUrl.startsWith("data:")}
                         className="object-cover"
                       />
                     ) : (

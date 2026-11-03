@@ -76,3 +76,4 @@ for (let i = 0; i < data.paragraphComments.length; i += PC_CHUNK) {
 }
 
 console.log('All SQL chunks generated successfully!');
+

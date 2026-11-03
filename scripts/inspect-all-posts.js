@@ -25,3 +25,4 @@ posts.forEach((p, i) => {
   });
   console.log(`${i+1}. [${p['wp:status']}] [pass: ${p['wp:post_password'] || ''}] [cats: ${cats.join(',')}] "${p.title}"`);
 });
+

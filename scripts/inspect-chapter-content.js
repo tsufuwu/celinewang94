@@ -35,3 +35,4 @@ if (ch1) {
     console.log(`Footnote ${i+1}:`, $(el).text().trim());
   });
 }
+

@@ -33,3 +33,4 @@ chunks.forEach((chunk, index) => {
 });
 
 console.log('\nAll local chunks loaded successfully!');
+

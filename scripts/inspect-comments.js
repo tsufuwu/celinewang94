@@ -43,3 +43,4 @@ items.forEach(item => {
 console.log(`Total comments: ${totalComments}, Approved: ${approvedComments}, By Celine: ${celineComments}`);
 console.log('Items with approved comments:', commentsByItem.length);
 commentsByItem.slice(0, 15).forEach(c => console.log(`[${c.type}] [${c.id}] "${c.title}" -> ${c.approved} approved`));
+

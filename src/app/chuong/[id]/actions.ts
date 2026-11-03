@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getDb, paragraphComments, generateId } from "@/db";
 import { eq } from "drizzle-orm";
+import { getAuthSession } from "@/lib/auth";
 
 export interface ParagraphCommentItem {
   id: string;
@@ -82,7 +83,18 @@ export async function createParagraphComment(
   content: string,
   isTypoReport: boolean
 ): Promise<CommentActionResult> {
-  if (!authorName || authorName.trim().length === 0) {
+  const user = await getAuthSession();
+  let finalAuthorName = authorName ? authorName.trim() : "";
+
+  if (user) {
+    // If logged in via Google OAuth, locked to authenticated identity
+    finalAuthorName = user.nickname || user.name || finalAuthorName || "Thành viên Google";
+    if (user.role === "ADMIN" && !finalAuthorName.startsWith("[Admin]")) {
+      finalAuthorName = `[Admin] ${finalAuthorName}`;
+    }
+  }
+
+  if (!finalAuthorName || finalAuthorName.length === 0) {
     return { success: false, message: "Vui lòng nhập tên hoặc biệt danh của bạn." };
   }
 
@@ -94,7 +106,7 @@ export async function createParagraphComment(
     id: generateId("pc"),
     chapterId,
     paragraphIndex,
-    authorName: authorName.trim(),
+    authorName: finalAuthorName,
     content: content.trim(),
     isTypoReport,
     isResolved: false,

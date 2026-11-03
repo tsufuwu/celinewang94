@@ -38,3 +38,4 @@ data.stories.forEach(s => {
 
 fs.writeFileSync(path.join(OUTPUT_DIR, 'chunk_00_stories.sql'), p0Sql);
 console.log('Regenerated chunk_00_stories.sql successfully!');
+

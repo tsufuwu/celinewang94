@@ -18,3 +18,4 @@ function splitIntoSqlChunks(id, field, fullString, maxChunkLen = 30000) {
 const testStatements = splitIntoSqlChunks('story_om_lay', 'content_html', 'a'.repeat(85000));
 console.log('Generated statements:', testStatements.length);
 testStatements.forEach((s, idx) => console.log(`Statement ${idx+1} length: ${s.length}`));
+

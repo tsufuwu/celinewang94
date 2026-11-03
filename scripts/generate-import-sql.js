@@ -424,3 +424,4 @@ console.log(`Paragraph Comments: ${data.paragraphComments.length}`);
 console.log(`Total Comments Imported: ${data.totalComments}`);
 
 module.exports = { parseXmlData, escapeSql };
+

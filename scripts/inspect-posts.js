@@ -49,3 +49,4 @@ sampleTitles.slice(0, 30).forEach((p, idx) => {
 const passPosts = sampleTitles.filter(p => p.hasPassword);
 console.log(`\nTotal posts with passwords: ${passPosts.length}`);
 console.log('Sample passwords:', passPosts.slice(0, 10).map(p => `"${p.title}" -> "${p.password}"`));
+

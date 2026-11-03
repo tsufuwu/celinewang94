@@ -4,7 +4,7 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "./auth-context";
-import { ShieldCheck, LogOut, Edit3, User, Sparkles, Check, X } from "lucide-react";
+import { ShieldCheck, LogOut, Edit3, Sparkles, Check, X } from "lucide-react";
 
 function GoogleIcon({ className = "size-4" }: { className?: string }) {
   return (

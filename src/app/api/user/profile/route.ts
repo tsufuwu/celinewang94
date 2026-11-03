@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     });
 
     return res;
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: "Lỗi cập nhật hồ sơ." }, { status: 500 });
   }
 }

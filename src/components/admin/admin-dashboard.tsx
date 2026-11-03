@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { StoryManager } from "./story-manager";
 import { EpubImporter } from "./epub-importer";
+import { WordPressImporter } from "./wordpress-importer";
 import { TypoManager } from "./typo-manager";
 import { ProfileManager } from "./profile-manager";
 import { BgmManager } from "./bgm-manager";
@@ -42,7 +43,7 @@ export function AdminDashboard({
   bgmSetting,
 }: AdminDashboardProps) {
   const [activeTab, setActiveTab] = React.useState<
-    "stories" | "profile" | "bgm" | "epub" | "typos"
+    "stories" | "profile" | "bgm" | "wordpress" | "epub" | "typos"
   >("stories");
   const [isLoggingOut, setIsLoggingOut] = React.useState(false);
 
@@ -154,6 +155,18 @@ export function AdminDashboard({
         </button>
 
         <button
+          onClick={() => setActiveTab("wordpress")}
+          className={`py-2 px-3 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5 shrink-0 ${
+            activeTab === "wordpress"
+              ? "bg-card text-foreground shadow-xs font-semibold text-orange-600"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <FileUp className="size-3.5 text-orange-600" />
+          <span>Import WordPress (.xml)</span>
+        </button>
+
+        <button
           onClick={() => setActiveTab("epub")}
           className={`py-2 px-3 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5 shrink-0 ${
             activeTab === "epub"
@@ -188,6 +201,7 @@ export function AdminDashboard({
         {activeTab === "stories" && <StoryManager initialStories={stories} />}
         {activeTab === "profile" && <ProfileManager initialProfile={profile} />}
         {activeTab === "bgm" && <BgmManager initialPlaylistSetting={bgmSetting} />}
+        {activeTab === "wordpress" && <WordPressImporter stories={stories} />}
         {activeTab === "epub" && <EpubImporter stories={stories} />}
         {activeTab === "typos" && <TypoManager initialReports={typoReports} />}
       </div>

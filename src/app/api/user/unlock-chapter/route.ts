@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true, unlockedChapters: Array.from(currentUnlocked) });
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: "Lỗi lưu chương đã mở." }, { status: 500 });
   }
 }

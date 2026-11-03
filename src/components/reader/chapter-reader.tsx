@@ -524,7 +524,7 @@ export function ChapterReader({
 
           <Link href="/">
             <Button variant="ghost" size="sm" className="rounded-xl text-xs text-muted-foreground hover:text-foreground">
-              Về kho truyện
+              Về thư viện
             </Button>
           </Link>
         </footer>

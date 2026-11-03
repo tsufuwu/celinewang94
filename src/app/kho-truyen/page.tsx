@@ -6,7 +6,7 @@ import { Library, ChevronRight, BookOpen, Sparkles } from "lucide-react";
 import { OrangeLogo } from "@/components/layout/orange-logo";
 
 export const metadata: Metadata = {
-  title: "Kho Truyện & Tác Phẩm | Media naranja",
+  title: "Thư Viện & Tác Phẩm | Media naranja",
   description:
     "Toàn bộ tác phẩm, bản dịch đam mỹ, văn học chọn lọc và dự án lưu trữ của Celine Wang tại Media naranja.",
 };
@@ -26,7 +26,7 @@ export default async function KhoTruyenPage() {
         <ChevronRight className="size-3 text-muted-foreground/60" />
         <span className="text-foreground font-medium flex items-center gap-1">
           <Library className="size-3.5 text-primary" />
-          <span>Kho truyện</span>
+          <span>Thư viện</span>
         </span>
       </nav>
 
@@ -40,7 +40,7 @@ export default async function KhoTruyenPage() {
             </div>
 
             <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-[#2B2623] dark:text-[#FAF5EE]">
-              Kho Truyện &amp; Tác Phẩm
+              Thư Viện &amp; Tác Phẩm
             </h1>
 
             <p className="text-sm sm:text-base text-[#5C5146] dark:text-[#C4B9AD] leading-relaxed font-sans font-normal">

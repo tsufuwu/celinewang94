@@ -59,7 +59,7 @@ export function StoryList({ initialStories }: StoryListProps) {
             <span>KỆ SÁCH CỦA CELINE</span>
           </div>
           <h2 className="font-serif text-2xl sm:text-3xl text-[#2B2623] dark:text-[#FAF5EE] font-bold tracking-tight">
-            Kho Truyện &amp; Tác Phẩm
+            Thư Viện &amp; Tác Phẩm
           </h2>
         </div>
 

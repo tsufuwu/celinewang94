@@ -70,7 +70,7 @@ export function ArchiveHero({ stories = [] }: ArchiveHeroProps) {
       <section className="relative w-full rounded-[24px] bg-[#FAF5EE] dark:bg-[#1F1B18] border-2 border-[#2B2623] shadow-[3px_5px_0px_#2B2623] p-6 sm:p-10 lg:p-14 overflow-hidden">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
           {/* Left Column: Editorial Headline & Actions */}
-          <div className="lg:col-span-7 flex flex-col items-start gap-4 z-10">
+          <div className="lg:col-span-5 flex flex-col items-start gap-4 z-10">
             {/* Sage Green Sticker */}
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[10px] bg-[#BDCEAF] text-[#2B2623] border-2 border-[#2B2623] shadow-[2px_3px_0px_#2B2623] text-xs font-bold uppercase tracking-wider select-none">
               <Sparkles className="size-3.5 text-[#2B2623]" />
@@ -93,8 +93,8 @@ export function ArchiveHero({ stories = [] }: ArchiveHeroProps) {
             </p>
           </div>
 
-          {/* Right Column: Polaroid Scrapbook Collage (Clickable Polaroid Cards with Story Cover) */}
-          <div className="lg:col-span-5 flex justify-center z-10 overflow-hidden py-4">
+          {/* Right Column: Polaroid Gallery (Parallel side-by-side, no overlap, Celine Wang palette) */}
+          <div className="lg:col-span-7 flex justify-center z-10 py-2">
             <PolaroidCollage
               photo1={{
                 src: photo1Src,
@@ -108,7 +108,7 @@ export function ArchiveHero({ stories = [] }: ArchiveHeroProps) {
                 caption: secondStory?.title ? `#${secondStory.title.replace(/\s+/g, "")}` : "#MediaNaranja",
                 href: secondStory ? `/truyen/${secondStory.slug}` : "/kho-truyen",
               }}
-              topSticker="orange vibes"
+              topSticker="citrus archive"
             />
           </div>
         </div>
@@ -127,9 +127,6 @@ export function ArchiveHero({ stories = [] }: ArchiveHeroProps) {
               Ký Ức Rung Động
             </h2>
           </div>
-          <span className="text-xs font-mono font-semibold text-[#5C5146] dark:text-[#C4B9AD] hidden sm:inline-block">
-            Mỗi câu chữ, một lát cam xoa dịu
-          </span>
         </div>
 
         {/* 3 Retro Quote Cards */}

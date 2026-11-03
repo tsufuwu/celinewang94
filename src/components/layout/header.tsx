@@ -17,7 +17,7 @@ export function Header() {
 
   const navItems = [
     { label: "Trang chủ", href: "/", icon: BookOpen },
-    { label: "Kho truyện", href: "/kho-truyen", icon: Library },
+    { label: "Thư viện", href: "/kho-truyen", icon: Library },
     { label: "Trò chuyện", href: "/tro-chuyen", icon: MessageCircleHeart },
     { label: "Giới thiệu (CV)", href: "/gioi-thieu", icon: User },
   ];
@@ -55,11 +55,10 @@ export function Header() {
               <Link
                 key={item.label}
                 href={item.href}
-                className={`relative px-3.5 py-1.5 rounded-[12px] text-xs sm:text-[13px] whitespace-nowrap shrink-0 transition-all flex items-center gap-1.5 border-0 shadow-none font-semibold ${
-                  isActive
+                className={`relative px-3.5 py-1.5 rounded-[12px] text-xs sm:text-[13px] whitespace-nowrap shrink-0 transition-all flex items-center gap-1.5 border-0 shadow-none font-semibold ${isActive
                     ? "bg-[#E5DDD2] dark:bg-[#2B2521] text-[#5C5146] dark:text-[#E5DDD2]"
                     : "text-[#6B5E54] dark:text-[#A6998D] hover:text-[#2B2623] dark:hover:text-[#FAF5EE] hover:bg-[#EFE8DE]/80 dark:hover:bg-[#241E1A]"
-                }`}
+                  }`}
               >
                 <Icon className="size-3.5 shrink-0" />
                 <span>{item.label}</span>
@@ -98,11 +97,10 @@ export function Header() {
                         key={item.label}
                         href={item.href}
                         onClick={() => setIsOpen(false)}
-                        className={`px-4 py-2.5 rounded-[12px] text-sm flex items-center gap-3 font-semibold transition-all ${
-                          isActive
+                        className={`px-4 py-2.5 rounded-[12px] text-sm flex items-center gap-3 font-semibold transition-all ${isActive
                             ? "bg-[#E5DDD2] dark:bg-[#2B2521] text-[#5C5146] dark:text-[#E5DDD2]"
                             : "text-[#6B5E54] dark:text-[#A6998D] hover:bg-[#EFE8DE]/70"
-                        }`}
+                          }`}
                       >
                         <Icon className="size-4 shrink-0" />
                         <span>{item.label}</span>

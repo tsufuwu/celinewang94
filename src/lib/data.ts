@@ -1,4 +1,4 @@
-import { getDb, stories, chapters } from "@/db";
+import { getDb, stories, chapters, siteSettings } from "@/db";
 import { desc, eq } from "drizzle-orm";
 
 export type StoryCategory = "Full" | "Đang cook" | "Dịch" | "Fanfic";
@@ -51,7 +51,44 @@ export interface SidebarCommentItem {
 
 export const VISITOR_COUNT = "282 309";
 
-export const CELINE_PROFILE = {
+export interface ProfileExperience {
+  id: string;
+  title: string;
+  company: string;
+  time: string;
+  description: string;
+}
+
+export interface ProfileProject {
+  id: string;
+  badge: string;
+  title: string;
+  author: string;
+  description: string;
+  link: string;
+}
+
+export interface CelineProfileData {
+  name: string;
+  tagline: string;
+  bio: string;
+  location: string;
+  avatar: string;
+  coverImage: string;
+  socials: {
+    tiktok: { handle: string; label: string; url: string };
+    threads: { handle: string; label: string; url: string };
+    facebook?: { handle: string; label: string; url: string };
+  };
+  editorNote: string;
+  license: string;
+  licenseNote?: string;
+  experiences: ProfileExperience[];
+  projects: ProfileProject[];
+  tags: string[];
+}
+
+export const DEFAULT_CELINE_PROFILE: CelineProfileData = {
   name: "Celine Wang",
   tagline: "ars longa, vita brevis – nghệ thuật trường tồn, cuộc đời ngắn ngủi",
   bio: "chụp goods part-time | tui nghỉ edit rồi nhé | chia sẻ tài liệu học tập",
@@ -65,7 +102,94 @@ export const CELINE_PROFILE = {
   },
   editorNote: "Tuy có biết tiếng sương sương nhưng trình độ có hạn, phụ thuộc nhiều vào từ điển nên chỉ có thể đảm bảo bản chuyển ngữ sát nghĩa nhất có thể (trong phạm vi năng lực của mình), chứ đúng hoàn toàn thì không, vậy nên xin đừng khắt khe quá nhé ˶ˆ꒳ˆ˵",
   license: "CC BY-NC-SA 4.0",
+  licenseNote: "Tất cả các bản dịch, hình ảnh và bài viết trên Media naranja được chia sẻ phi thương mại. Vui lòng không reup hoặc sao chép bản dịch khi chưa có sự đồng ý của Celine. Cảm ơn các bạn đã luôn tôn trọng công sức của người làm truyện.",
+  experiences: [
+    {
+      id: "exp-1",
+      title: "Chụp Goods Part-time & Visual Archivist",
+      company: "Media Naranja Studio",
+      time: "Vĩnh cửu • Trái Đất",
+      description: "Lưu giữ và chia sẻ những khoảnh khắc đẹp của các ấn phẩm sách, truyện tranh, artbook và goods sưu tầm. Chia sẻ tình yêu đối với nghệ thuật thị giác và vẻ đẹp của văn hóa đọc.",
+    },
+    {
+      id: "exp-2",
+      title: "Nói Nhảm, Uống Trà & Mơ Mộng Chuyên Nghiệp",
+      company: "Celine Wang Headquarters",
+      time: "Toàn thời gian",
+      description: "Viết blog tản văn, lắng nghe tiếng lòng của các quả cam ghé chơi, ngắm hoàng hôn và tự nhủ rằng cuộc sống luôn dịu dàng nếu ta nhìn nó qua lăng kính ấm áp.",
+    },
+  ],
+  projects: [
+    {
+      id: "proj-1",
+      badge: "[FULL] Edit",
+      title: "Ôm Lấy Trọng Lực",
+      author: "larivegauche",
+      description: "Bộ truyện trượt băng nghệ thuật gắn bó sâu sắc nhất với nhà Cam. 101 chương + 3 ngoại truyện + nhật ký xuất bản.",
+      link: "/truyen/om-lay-trong-luc",
+    },
+    {
+      id: "proj-2",
+      badge: "[Dịch] Văn học cổ điển",
+      title: "De profundis",
+      author: "Oscar Wilde",
+      description: "Bản dịch bức thư bất hủ từ ngục Reading, thể hiện chiều sâu tâm tưởng và vẻ đẹp trác tuyệt của ngôn từ.",
+      link: "/truyen/de-profundis",
+    },
+  ],
+  tags: [
+    "Thích đọc triện gây",
+    "Người lười",
+    "Hay mơ mộng",
+    "Nghiện màu cam",
+    "Chụp ảnh sách",
+    "Thích nghe Erik Satie",
+    "Lắng nghe & Thấu cảm",
+    "Hạt cam ngọt ngào",
+  ],
 };
+
+export const CELINE_PROFILE = DEFAULT_CELINE_PROFILE;
+
+export interface BgmTrackItem {
+  id: string;
+  title: string;
+  artist: string;
+  youtubeId: string;
+}
+
+export const DEFAULT_BGM_PLAYLIST: BgmTrackItem[] = [
+  {
+    id: "bgm-1",
+    title: "Gymnopédie No. 1",
+    artist: "Erik Satie",
+    youtubeId: "S-Xm7s9eGuU",
+  },
+  {
+    id: "bgm-2",
+    title: "Clair de Lune",
+    artist: "Claude Debussy",
+    youtubeId: "WNcsUNKlAKw",
+  },
+  {
+    id: "bgm-3",
+    title: "Lofi Hip Hop Radio (Beats to Relax)",
+    artist: "Lofi Girl",
+    youtubeId: "jfKfPfyJRdk",
+  },
+  {
+    id: "bgm-4",
+    title: "Studio Ghibli Relaxing Piano",
+    artist: "Peaceful Piano",
+    youtubeId: "0Ww8L7Z5x0M",
+  },
+  {
+    id: "bgm-5",
+    title: "Canon in D",
+    artist: "Johann Pachelbel",
+    youtubeId: "NlprozGcs80",
+  },
+];
 
 export const RECENT_SIDEBAR_COMMENTS: SidebarCommentItem[] = [
   {
@@ -441,4 +565,46 @@ export async function getRecentChapters(limit: number = 6): Promise<RecentChapte
     console.warn("Could not query D1 recent chapters, using fallback items:", error);
   }
   return FALLBACK_RECENT_CHAPTERS.slice(0, limit);
+}
+
+export async function getProfileSettings(): Promise<CelineProfileData> {
+  try {
+    const db = await getDb();
+    if (db) {
+      const rows = await db
+        .select()
+        .from(siteSettings)
+        .where(eq(siteSettings.key, "celine_profile"))
+        .limit(1);
+      if (rows && rows.length > 0 && rows[0].value) {
+        const parsed = JSON.parse(rows[0].value);
+        return { ...DEFAULT_CELINE_PROFILE, ...parsed };
+      }
+    }
+  } catch (error) {
+    console.warn("Could not query D1 profile, using default:", error);
+  }
+  return DEFAULT_CELINE_PROFILE;
+}
+
+export async function getBgmPlaylist(): Promise<BgmTrackItem[]> {
+  try {
+    const db = await getDb();
+    if (db) {
+      const rows = await db
+        .select()
+        .from(siteSettings)
+        .where(eq(siteSettings.key, "bgm_playlist"))
+        .limit(1);
+      if (rows && rows.length > 0 && rows[0].value) {
+        const parsed = JSON.parse(rows[0].value);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    }
+  } catch (error) {
+    console.warn("Could not query D1 BGM playlist, using default:", error);
+  }
+  return DEFAULT_BGM_PLAYLIST;
 }

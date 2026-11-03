@@ -165,4 +165,13 @@ export const editorTemplates = sqliteTable(
   }
 );
 
+// 7. Site Settings Table (Profile, BGM, Theme, etc.)
+export const siteSettings = sqliteTable("site_settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
 

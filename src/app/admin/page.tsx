@@ -1,11 +1,17 @@
 import { Metadata } from "next";
-import { checkAdminAuth, getAdminStories, getTypoReports } from "./actions";
+import {
+  checkAdminAuth,
+  getAdminStories,
+  getTypoReports,
+  getAdminProfileSettings,
+  getAdminBgmPlaylist,
+} from "./actions";
 import { AdminLogin } from "@/components/admin/admin-login";
 import { AdminDashboard } from "@/components/admin/admin-dashboard";
 
 export const metadata: Metadata = {
   title: "Quản Trị Hệ Thống | Thư Viện Nhỏ",
-  description: "Trang quản lý tác phẩm, bóc tách EPUB và xử lý báo lỗi chính tả.",
+  description: "Trang quản lý tác phẩm, bóc tách EPUB, chỉnh trang Giới Thiệu (CV) & Nhạc Nền.",
 };
 
 export const dynamic = "force-dynamic";
@@ -17,11 +23,20 @@ export default async function AdminPage() {
     return <AdminLogin />;
   }
 
-  const [stories, typoReports] = await Promise.all([
+  const [stories, typoReports, profile, bgmPlaylist] = await Promise.all([
     getAdminStories(),
     getTypoReports(),
+    getAdminProfileSettings(),
+    getAdminBgmPlaylist(),
   ]);
 
-  return <AdminDashboard stories={stories} typoReports={typoReports} />;
+  return (
+    <AdminDashboard
+      stories={stories}
+      typoReports={typoReports}
+      profile={profile}
+      bgmPlaylist={bgmPlaylist}
+    />
+  );
 }
 

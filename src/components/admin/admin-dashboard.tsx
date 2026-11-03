@@ -8,21 +8,40 @@ import {
   Flag,
   LogOut,
   ExternalLink,
+  User,
+  Disc3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StoryManager } from "./story-manager";
 import { EpubImporter } from "./epub-importer";
 import { TypoManager } from "./typo-manager";
-import { logoutAdmin, type AdminStoryItem, type TypoReportItem } from "@/app/admin/actions";
+import { ProfileManager } from "./profile-manager";
+import { BgmManager } from "./bgm-manager";
+import {
+  logoutAdmin,
+  type AdminStoryItem,
+  type TypoReportItem,
+  type CelineProfileData,
+  type BgmTrackItem,
+} from "@/app/admin/actions";
 import { OrangeLogo } from "@/components/layout/orange-logo";
 
 interface AdminDashboardProps {
   stories: AdminStoryItem[];
   typoReports: TypoReportItem[];
+  profile: CelineProfileData;
+  bgmPlaylist: BgmTrackItem[];
 }
 
-export function AdminDashboard({ stories, typoReports }: AdminDashboardProps) {
-  const [activeTab, setActiveTab] = React.useState<"stories" | "epub" | "typos">("stories");
+export function AdminDashboard({
+  stories,
+  typoReports,
+  profile,
+  bgmPlaylist,
+}: AdminDashboardProps) {
+  const [activeTab, setActiveTab] = React.useState<
+    "stories" | "profile" | "bgm" | "epub" | "typos"
+  >("stories");
   const [isLoggingOut, setIsLoggingOut] = React.useState(false);
 
   const unresolvedTypos = typoReports.filter((r) => !r.isResolved).length;
@@ -51,13 +70,13 @@ export function AdminDashboard({ stories, typoReports }: AdminDashboardProps) {
               </span>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Hệ thống quản lý tác phẩm, bóc tách EPUB và xử lý báo lỗi chính tả.
+              Hệ thống quản lý tác phẩm, bóc tách EPUB, chỉnh trang Giới Thiệu (CV) &amp; Nhạc Nền.
             </p>
           </div>
         </div>
 
         {/* Quick Nav & Logout */}
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-end pt-2 sm:pt-0 border-t sm:border-0 border-border/50">
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-end pt-2 sm:pt-0 border-t sm:border-0 border-border/50 flex-wrap">
           <Link href="/admin/editor">
             <Button
               size="sm"
@@ -92,22 +111,49 @@ export function AdminDashboard({ stories, typoReports }: AdminDashboardProps) {
       </header>
 
       {/* Tabs Navigation */}
-      <nav aria-label="Menu chức năng quản trị" className="flex items-center gap-1.5 p-1 rounded-2xl bg-secondary/80 border border-border/60 max-w-xl mb-8">
+      <nav
+        aria-label="Menu chức năng quản trị"
+        className="flex items-center gap-1.5 p-1 rounded-2xl bg-secondary/80 border border-border/60 max-w-3xl mb-8 overflow-x-auto scrollbar-none"
+      >
         <button
           onClick={() => setActiveTab("stories")}
-          className={`flex-1 py-2 px-3 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-2 ${
+          className={`py-2 px-3 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5 shrink-0 ${
             activeTab === "stories"
               ? "bg-card text-foreground shadow-xs font-semibold"
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
           <BookOpen className="size-3.5" />
-          <span>Quản lý Truyện ({stories.length})</span>
+          <span>Tác Phẩm ({stories.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("profile")}
+          className={`py-2 px-3 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5 shrink-0 ${
+            activeTab === "profile"
+              ? "bg-card text-foreground shadow-xs font-semibold text-[#E07B4C]"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <User className="size-3.5 text-[#E07B4C]" />
+          <span>Giới Thiệu (CV)</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("bgm")}
+          className={`py-2 px-3 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5 shrink-0 ${
+            activeTab === "bgm"
+              ? "bg-card text-foreground shadow-xs font-semibold text-[#E07B4C]"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Disc3 className="size-3.5 text-[#E07B4C]" />
+          <span>Nhạc Nền ({bgmPlaylist.length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab("epub")}
-          className={`flex-1 py-2 px-3 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-2 ${
+          className={`py-2 px-3 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5 shrink-0 ${
             activeTab === "epub"
               ? "bg-card text-foreground shadow-xs font-semibold"
               : "text-muted-foreground hover:text-foreground"
@@ -119,7 +165,7 @@ export function AdminDashboard({ stories, typoReports }: AdminDashboardProps) {
 
         <button
           onClick={() => setActiveTab("typos")}
-          className={`flex-1 py-2 px-3 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-2 ${
+          className={`py-2 px-3 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5 shrink-0 ${
             activeTab === "typos"
               ? "bg-card text-foreground shadow-xs font-semibold"
               : "text-muted-foreground hover:text-foreground"
@@ -138,10 +184,11 @@ export function AdminDashboard({ stories, typoReports }: AdminDashboardProps) {
       {/* Tab Panels */}
       <div>
         {activeTab === "stories" && <StoryManager initialStories={stories} />}
+        {activeTab === "profile" && <ProfileManager initialProfile={profile} />}
+        {activeTab === "bgm" && <BgmManager initialPlaylist={bgmPlaylist} />}
         {activeTab === "epub" && <EpubImporter stories={stories} />}
         {activeTab === "typos" && <TypoManager initialReports={typoReports} />}
       </div>
     </div>
   );
 }
-

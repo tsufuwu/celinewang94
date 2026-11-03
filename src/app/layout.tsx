@@ -5,6 +5,8 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { BgmFloatingButton } from "@/components/media/bgm-floating-button";
+import { BgmProvider } from "@/components/media/bgm-context";
+import { BgmModal } from "@/components/media/bgm-modal";
 
 const sans = Plus_Jakarta_Sans({
   subsets: ["latin", "vietnamese"],
@@ -52,10 +54,13 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen flex flex-col font-sans selection:bg-[#F4DFAD] selection:text-[#2B2623] bg-[#FAF5EE] dark:bg-[#1A1614] text-[#2B2623] dark:text-[#FAF5EE]">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
-          <BgmFloatingButton />
+          <BgmProvider>
+            <Header />
+            <main className="flex-1">{children}</main>
+            <Footer />
+            <BgmFloatingButton />
+            <BgmModal />
+          </BgmProvider>
         </ThemeProvider>
       </body>
     </html>

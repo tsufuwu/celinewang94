@@ -10,9 +10,18 @@ import {
   paragraphComments,
   generateId,
   editorTemplates,
+  siteSettings,
 } from "@/db";
 import { eq, desc, asc } from "drizzle-orm";
-import { FALLBACK_STORIES } from "@/lib/data";
+import {
+  FALLBACK_STORIES,
+  DEFAULT_CELINE_PROFILE,
+  DEFAULT_BGM_PLAYLIST,
+  type CelineProfileData,
+  type BgmTrackItem,
+} from "@/lib/data";
+
+export type { CelineProfileData, BgmTrackItem, ProfileExperience, ProfileProject } from "@/lib/data";
 
 const COOKIE_NAME = "admin_auth_token";
 
@@ -584,6 +593,130 @@ export async function saveEditorTemplate(
     };
   } catch (error: unknown) {
     return { success: false, message: `Lỗi lưu mẫu: ${(error as Error)?.message || String(error)}` };
+  }
+}
+
+// ----------------------------------------------------
+// 7. PROFILE & CV SETTINGS ACTIONS
+// ----------------------------------------------------
+
+export async function getAdminProfileSettings(): Promise<CelineProfileData> {
+  try {
+    const db = await getDb();
+    if (db) {
+      const rows = await db
+        .select()
+        .from(siteSettings)
+        .where(eq(siteSettings.key, "celine_profile"))
+        .limit(1);
+      if (rows && rows.length > 0 && rows[0].value) {
+        const parsed = JSON.parse(rows[0].value);
+        return { ...DEFAULT_CELINE_PROFILE, ...parsed };
+      }
+    }
+  } catch (error) {
+    console.warn("Could not query D1 admin profile:", error);
+  }
+  return DEFAULT_CELINE_PROFILE;
+}
+
+export async function saveProfileSettings(
+  profileData: CelineProfileData
+): Promise<{ success: boolean; message: string }> {
+  const isAuth = await checkAdminAuth();
+  if (!isAuth) return { success: false, message: "Chưa xác thực quyền quản trị." };
+
+  try {
+    const db = await getDb();
+    if (!db) return { success: false, message: "Không thể kết nối D1 Database." };
+
+    const jsonValue = JSON.stringify(profileData);
+    const now = new Date();
+
+    await db
+      .insert(siteSettings)
+      .values({
+        key: "celine_profile",
+        value: jsonValue,
+        updatedAt: now,
+      })
+      .onConflictDoUpdate({
+        target: siteSettings.key,
+        set: {
+          value: jsonValue,
+          updatedAt: now,
+        },
+      });
+
+    revalidatePath("/gioi-thieu");
+    return { success: true, message: "Đã lưu thông tin Giới Thiệu (CV) thành công!" };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      message: `Lỗi lưu Giới Thiệu: ${(error as Error)?.message || String(error)}`,
+    };
+  }
+}
+
+// ----------------------------------------------------
+// 8. BGM SETTINGS ACTIONS
+// ----------------------------------------------------
+
+export async function getAdminBgmPlaylist(): Promise<BgmTrackItem[]> {
+  try {
+    const db = await getDb();
+    if (db) {
+      const rows = await db
+        .select()
+        .from(siteSettings)
+        .where(eq(siteSettings.key, "bgm_playlist"))
+        .limit(1);
+      if (rows && rows.length > 0 && rows[0].value) {
+        const parsed = JSON.parse(rows[0].value);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    }
+  } catch (error) {
+    console.warn("Could not query D1 admin BGM playlist:", error);
+  }
+  return DEFAULT_BGM_PLAYLIST;
+}
+
+export async function saveBgmPlaylist(
+  tracks: BgmTrackItem[]
+): Promise<{ success: boolean; message: string }> {
+  const isAuth = await checkAdminAuth();
+  if (!isAuth) return { success: false, message: "Chưa xác thực quyền quản trị." };
+
+  try {
+    const db = await getDb();
+    if (!db) return { success: false, message: "Không thể kết nối D1 Database." };
+
+    const jsonValue = JSON.stringify(tracks);
+    const now = new Date();
+
+    await db
+      .insert(siteSettings)
+      .values({
+        key: "bgm_playlist",
+        value: jsonValue,
+        updatedAt: now,
+      })
+      .onConflictDoUpdate({
+        target: siteSettings.key,
+        set: {
+          value: jsonValue,
+          updatedAt: now,
+        },
+      });
+
+    revalidatePath("/");
+    return { success: true, message: "Đã cập nhật danh sách Nhạc Nền (BGM) thành công!" };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      message: `Lỗi lưu danh sách BGM: ${(error as Error)?.message || String(error)}`,
+    };
   }
 }
 

@@ -58,6 +58,15 @@ export function AdminDashboard({ stories, typoReports }: AdminDashboardProps) {
 
         {/* Quick Nav & Logout */}
         <div className="flex items-center gap-2 w-full sm:w-auto justify-end pt-2 sm:pt-0 border-t sm:border-0 border-border/50">
+          <Link href="/admin/editor">
+            <Button
+              size="sm"
+              className="rounded-xl text-xs h-8 px-3.5 bg-orange-600 hover:bg-orange-700 text-white flex items-center gap-1.5 shadow-xs font-medium"
+            >
+              <span>✨ Studio Editor</span>
+            </Button>
+          </Link>
+
           <Link href="/" target="_blank">
             <Button
               variant="outline"

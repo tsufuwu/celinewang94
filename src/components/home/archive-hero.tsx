@@ -126,7 +126,7 @@ const MEMORIES: MemoryItem[] = [
   },
 ];
 
-export function ArchiveHero({ stories: _stories }: ArchiveHeroProps) {
+export function ArchiveHero(_props: ArchiveHeroProps) {
   const [currentSlide, setCurrentSlide] = React.useState(0);
   const [isPaused, setIsPaused] = React.useState(false);
 

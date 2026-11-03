@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   AlertCircle,
   X,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -296,6 +297,17 @@ export function StoryManager({ initialStories }: StoryManagerProps) {
                 </Link>
 
                 <div className="flex items-center gap-1">
+                  <Link href={`/admin/editor?storyId=${story.id}`}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-950/40"
+                      title="Mở trong Studio Editor"
+                    >
+                      <Sparkles className="size-3 mr-1 text-orange-500" />
+                      <span>Studio</span>
+                    </Button>
+                  </Link>
                   <Button
                     variant="ghost"
                     size="sm"

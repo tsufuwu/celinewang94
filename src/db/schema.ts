@@ -17,6 +17,8 @@ export const stories = sqliteTable(
     author: text("author").notNull(),
     coverUrl: text("cover_url"),
     description: text("description"),
+    contentHtml: text("content_html"),
+    customCss: text("custom_css"),
     status: text("status", { enum: ["ONGOING", "COMPLETED", "DROPPED"] })
       .notNull()
       .default("ONGOING"),
@@ -49,6 +51,7 @@ export const chapters = sqliteTable(
     wordCount: integer("word_count").notNull().default(0),
     password: text("password"),
     passwordHint: text("password_hint"),
+    contentHtml: text("content_html"),
     paragraphs: text("paragraphs", { mode: "json" })
       .$type<{ index: number; text: string }[]>()
       .notNull()
@@ -140,4 +143,26 @@ export const guestbookPosts = sqliteTable(
   },
   (table) => [index("gb_parent_idx").on(table.parentId)]
 );
+
+// 6. Editor Templates & Snippets Table
+export const editorTemplates = sqliteTable(
+  "editor_templates",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => generateId("tmpl")),
+    title: text("title").notNull(),
+    description: text("description"),
+    category: text("category").notNull().default("custom"),
+    htmlCode: text("html_code").notNull(),
+    cssCode: text("css_code"),
+    isBuiltin: integer("is_builtin", { mode: "boolean" })
+      .notNull()
+      .default(false),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  }
+);
+
 

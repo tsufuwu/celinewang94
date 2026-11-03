@@ -7,15 +7,24 @@ import { eq, asc } from "drizzle-orm";
 import { FALLBACK_STORIES, type StoryItem } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { StoryHtmlRenderer } from "@/components/story/story-html-renderer";
+import { Edit3 } from "lucide-react";
 
 interface ChapterItem {
   id: string;
   chapterNumber: number;
   title: string;
   wordCount: number;
+  password?: string | null;
 }
 
-type StoryDetailItem = Pick<StoryItem, "id" | "slug" | "title" | "author" | "coverUrl" | "description" | "status" | "tags" | "category">;
+type StoryDetailItem = Pick<
+  StoryItem,
+  "id" | "slug" | "title" | "author" | "coverUrl" | "description" | "status" | "tags" | "category"
+> & {
+  contentHtml?: string | null;
+  customCss?: string | null;
+};
 
 interface StoryDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -50,6 +59,8 @@ export default async function StoryDetailPage({ params }: StoryDetailPageProps) 
           ...row,
           category,
           tags,
+          contentHtml: row.contentHtml,
+          customCss: row.customCss,
         } as unknown as StoryDetailItem;
         chaptersList = await db
           .select({
@@ -57,6 +68,7 @@ export default async function StoryDetailPage({ params }: StoryDetailPageProps) 
             chapterNumber: chapters.chapterNumber,
             title: chapters.title,
             wordCount: chapters.wordCount,
+            password: chapters.password,
           })
           .from(chapters)
           .where(eq(chapters.storyId, story.id))
@@ -119,115 +131,140 @@ export default async function StoryDetailPage({ params }: StoryDetailPageProps) 
   const categoryLabel = (story as StoryDetailItem & { category?: string }).category ?? (isCompleted ? "Full" : "Đang cook");
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
-      {/* Back button */}
-      <Link
-        href="/"
-        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-6 transition-colors"
-      >
-        <ArrowLeft className="size-3.5" />
-        <span>Quay lại trang chủ</span>
-      </Link>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      {/* Top Navigation & Studio Edit Shortcut */}
+      <div className="flex items-center justify-between gap-4 mb-6">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors font-mono"
+        >
+          <ArrowLeft className="size-3.5" />
+          <span>Quay lại trang chủ</span>
+        </Link>
 
-      {/* Story Info Hero */}
-      <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 bg-card p-6 sm:p-8 rounded-3xl border border-border/70 shadow-xs mb-10">
-        <div className="relative w-40 h-56 sm:w-48 sm:h-64 shrink-0 mx-auto sm:mx-0 rounded-2xl overflow-hidden bg-muted border border-border/80 shadow-md">
-          {story.coverUrl ? (
-            <Image
-              src={story.coverUrl}
-              alt={story.title}
-              fill
-              sizes="192px"
-              className="object-cover"
-              priority
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-              <BookOpen className="size-8" />
-            </div>
-          )}
+        <Link
+          href={`/admin/editor?storyId=${story.id}`}
+          className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-600 dark:text-orange-400 hover:bg-orange-500/20 transition-all font-mono shadow-xs"
+        >
+          <Edit3 className="size-3.5" />
+          <span>Mở Studio Editor</span>
+        </Link>
+      </div>
+
+      {story.contentHtml ? (
+        /* 1. Custom Artistic Studio Render (Render toàn bộ bản dựng HTML nghệ thuật 100%) */
+        <div className="space-y-6">
+          <StoryHtmlRenderer
+            content={story.contentHtml}
+            customCss={story.customCss}
+            chapters={chaptersList}
+            storySlug={story.slug}
+          />
         </div>
-
-        <div className="flex-1 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Badge
-                variant="outline"
-                className="text-[10px] font-medium bg-secondary text-primary border-orange-300 dark:border-orange-800"
-              >
-                {categoryLabel}
-              </Badge>
-              <span className="text-xs font-mono text-muted-foreground">
-                {chaptersList.length} chương
-              </span>
+      ) : (
+        /* 2. Fallback Standard View for stories without custom HTML */
+        <>
+          {/* Story Info Hero */}
+          <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 bg-card p-6 sm:p-8 rounded-3xl border border-border/70 shadow-xs mb-10">
+            <div className="relative w-40 h-56 sm:w-48 sm:h-64 shrink-0 mx-auto sm:mx-0 rounded-2xl overflow-hidden bg-muted border border-border/80 shadow-md">
+              {story.coverUrl ? (
+                <Image
+                  src={story.coverUrl}
+                  alt={story.title}
+                  fill
+                  sizes="192px"
+                  className="object-cover"
+                  priority
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                  <BookOpen className="size-8" />
+                </div>
+              )}
             </div>
 
-            <h1 className="font-serif text-2xl sm:text-3xl font-medium text-foreground mb-1.5 tracking-tight">
-              {story.title}
-            </h1>
-            <p className="text-sm text-muted-foreground mb-4">
-              Tác giả: <span className="font-medium text-primary">{story.author}</span>
-            </p>
+            <div className="flex-1 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] font-medium bg-secondary text-primary border-orange-300 dark:border-orange-800"
+                  >
+                    {categoryLabel}
+                  </Badge>
+                  <span className="text-xs font-mono text-muted-foreground">
+                    {chaptersList.length} chương
+                  </span>
+                </div>
 
-            <div className="flex flex-wrap gap-1.5 mb-4">
-              {story.tags.map((tag: string) => (
-                <span
-                  key={tag}
-                  className="text-xs px-2.5 py-1 rounded-full bg-secondary/80 text-muted-foreground"
+                <h1 className="font-serif text-2xl sm:text-3xl font-medium text-foreground mb-1.5 tracking-tight">
+                  {story.title}
+                </h1>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Tác giả: <span className="font-medium text-primary">{story.author}</span>
+                </p>
+
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  {story.tags.map((tag: string) => (
+                    <span
+                      key={tag}
+                      className="text-xs px-2.5 py-1 rounded-full bg-secondary/80 text-muted-foreground"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+
+                <p className="text-sm text-muted-foreground/90 leading-relaxed font-sans italic border-l-2 border-border/80 pl-3.5 my-3">
+                  {story.description || "Không có tóm tắt."}
+                </p>
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                {chaptersList.length > 0 && (
+                  <Link href={`/chuong/${chaptersList[0].id}`}>
+                    <Button className="rounded-xl text-xs h-9 px-4">
+                      Đọc từ chương đầu
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Chapters list */}
+          <div className="bg-card p-6 sm:p-8 rounded-3xl border border-border/70 shadow-xs">
+            <div className="flex items-center gap-2 pb-4 mb-4 border-b border-border/60">
+              <ListOrdered className="size-4 text-primary" />
+              <h2 className="font-serif text-xl font-medium text-foreground">
+                Danh Sách Các Chương ({chaptersList.length})
+              </h2>
+            </div>
+
+            <div className="divide-y divide-border/50">
+              {chaptersList.map((ch) => (
+                <Link
+                  key={ch.id}
+                  href={`/chuong/${ch.id}`}
+                  className="py-3 px-3 -mx-3 rounded-xl flex items-center justify-between hover:bg-muted/50 transition-colors group"
                 >
-                  #{tag}
-                </span>
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-xs px-2 py-0.5 rounded-md bg-secondary text-muted-foreground">
+                      Chương {ch.chapterNumber}
+                    </span>
+                    <span className="font-serif text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                      {ch.title}
+                    </span>
+                  </div>
+                  <span className="text-xs font-mono text-muted-foreground">
+                    {ch.wordCount ? `${ch.wordCount.toLocaleString("vi-VN")} chữ` : "Đọc →"}
+                  </span>
+                </Link>
               ))}
             </div>
-
-            <p className="text-sm text-muted-foreground/90 leading-relaxed font-sans italic border-l-2 border-border/80 pl-3.5 my-3">
-              {story.description || "Không có tóm tắt."}
-            </p>
           </div>
-
-          <div className="pt-4 flex gap-3">
-            {chaptersList.length > 0 && (
-              <Link href={`/chuong/${chaptersList[0].id}`}>
-                <Button className="rounded-xl text-xs h-9 px-4">
-                  Đọc từ chương đầu
-                </Button>
-              </Link>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Chapters list */}
-      <div className="bg-card p-6 sm:p-8 rounded-3xl border border-border/70 shadow-xs">
-        <div className="flex items-center gap-2 pb-4 mb-4 border-b border-border/60">
-          <ListOrdered className="size-4 text-primary" />
-          <h2 className="font-serif text-xl font-medium text-foreground">
-            Danh Sách Các Chương ({chaptersList.length})
-          </h2>
-        </div>
-
-        <div className="divide-y divide-border/50">
-          {chaptersList.map((ch) => (
-            <Link
-              key={ch.id}
-              href={`/chuong/${ch.id}`}
-              className="py-3 px-3 -mx-3 rounded-xl flex items-center justify-between hover:bg-muted/50 transition-colors group"
-            >
-              <div className="flex items-center gap-3">
-                <span className="font-mono text-xs px-2 py-0.5 rounded-md bg-secondary text-muted-foreground">
-                  Chương {ch.chapterNumber}
-                </span>
-                <span className="font-serif text-sm font-medium text-foreground group-hover:text-primary transition-colors">
-                  {ch.title}
-                </span>
-              </div>
-              <span className="text-xs font-mono text-muted-foreground">
-                {ch.wordCount ? `${ch.wordCount.toLocaleString("vi-VN")} chữ` : "Đọc →"}
-              </span>
-            </Link>
-          ))}
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 }

@@ -9,8 +9,9 @@ import {
   chapters,
   paragraphComments,
   generateId,
+  editorTemplates,
 } from "@/db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, asc } from "drizzle-orm";
 import { FALLBACK_STORIES } from "@/lib/data";
 
 const COOKIE_NAME = "admin_auth_token";
@@ -396,3 +397,193 @@ export async function resolveTypoAndFixParagraph(
     };
   }
 }
+
+// ----------------------------------------------------
+// 4. HYBRID STUDIO EDITOR ACTIONS
+// ----------------------------------------------------
+
+export interface EditorTemplateItem {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string;
+  htmlCode: string;
+  cssCode: string | null;
+  isBuiltin: boolean;
+  createdAt: Date;
+}
+
+export async function saveStoryContentHtml(
+  storyId: string,
+  contentHtml: string,
+  customCss?: string
+): Promise<{ success: boolean; message: string }> {
+  const isAuth = await checkAdminAuth();
+  if (!isAuth) return { success: false, message: "Chưa xác thực quyền quản trị." };
+
+  try {
+    const db = await getDb();
+    if (!db) return { success: false, message: "Không thể kết nối D1 Database." };
+
+    await db
+      .update(stories)
+      .set({
+        contentHtml,
+        customCss: customCss || null,
+        updatedAt: new Date(),
+      })
+      .where(eq(stories.id, storyId));
+
+    const storyRow = await db.select({ slug: stories.slug }).from(stories).where(eq(stories.id, storyId)).limit(1);
+    const slug = storyRow[0]?.slug;
+
+    revalidatePath("/");
+    revalidatePath("/admin");
+    if (slug) revalidatePath(`/truyen/${slug}`);
+
+    return { success: true, message: "Đã lưu bản dựng nghệ thuật trang truyện thành công!" };
+  } catch (error: unknown) {
+    return { success: false, message: `Lỗi lưu nội dung: ${(error as Error)?.message || String(error)}` };
+  }
+}
+
+export async function saveChapterContentHtml(
+  chapterId: string,
+  contentHtml: string
+): Promise<{ success: boolean; message: string }> {
+  const isAuth = await checkAdminAuth();
+  if (!isAuth) return { success: false, message: "Chưa xác thực quyền quản trị." };
+
+  try {
+    const db = await getDb();
+    if (!db) return { success: false, message: "Không thể kết nối D1 Database." };
+
+    await db
+      .update(chapters)
+      .set({
+        contentHtml,
+        updatedAt: new Date(),
+      })
+      .where(eq(chapters.id, chapterId));
+
+    revalidatePath(`/chuong/${chapterId}`);
+    return { success: true, message: "Đã lưu nội dung chương thành công!" };
+  } catch (error: unknown) {
+    return { success: false, message: `Lỗi lưu chương: ${(error as Error)?.message || String(error)}` };
+  }
+}
+
+export interface EditorStoryOption {
+  id: string;
+  slug: string;
+  title: string;
+  author: string;
+  contentHtml?: string | null;
+  customCss?: string | null;
+  chapters: {
+    id: string;
+    chapterNumber: number;
+    title: string;
+    contentHtml?: string | null;
+    password?: string | null;
+  }[];
+}
+
+export async function getEditorStories(): Promise<EditorStoryOption[]> {
+  try {
+    const db = await getDb();
+    if (db) {
+      const allStories = await db.select().from(stories).orderBy(desc(stories.updatedAt));
+      const allChapters = await db
+        .select({
+          id: chapters.id,
+          storyId: chapters.storyId,
+          chapterNumber: chapters.chapterNumber,
+          title: chapters.title,
+          contentHtml: chapters.contentHtml,
+          password: chapters.password,
+        })
+        .from(chapters)
+        .orderBy(asc(chapters.chapterNumber));
+
+      if (allStories && allStories.length > 0) {
+        return allStories.map((s) => ({
+          id: s.id,
+          slug: s.slug,
+          title: s.title,
+          author: s.author,
+          contentHtml: s.contentHtml,
+          customCss: s.customCss,
+          chapters: allChapters.filter((c) => c.storyId === s.id),
+        }));
+      }
+    }
+  } catch (error) {
+    console.warn("Could not query stories for editor:", error);
+  }
+
+  return FALLBACK_STORIES.map((s) => ({
+    id: s.id,
+    slug: s.slug,
+    title: s.title,
+    author: s.author,
+    contentHtml: null,
+    customCss: null,
+    chapters: [],
+  }));
+}
+
+export async function getEditorTemplates(): Promise<EditorTemplateItem[]> {
+  try {
+    const db = await getDb();
+    if (db) {
+      const rows = await db.select().from(editorTemplates).orderBy(desc(editorTemplates.createdAt));
+      return rows.map((r) => ({
+        ...r,
+        isBuiltin: Boolean(r.isBuiltin),
+      })) as EditorTemplateItem[];
+    }
+  } catch (error) {
+    console.warn("Could not query editor_templates from D1:", error);
+  }
+  return [];
+}
+
+export async function saveEditorTemplate(
+  title: string,
+  description: string,
+  htmlCode: string,
+  cssCode?: string,
+  category: string = "custom"
+): Promise<{ success: boolean; message: string; template?: EditorTemplateItem }> {
+  const isAuth = await checkAdminAuth();
+  if (!isAuth) return { success: false, message: "Chưa xác thực quyền quản trị." };
+
+  try {
+    const db = await getDb();
+    if (!db) return { success: false, message: "Không thể kết nối D1 Database." };
+
+    const id = generateId("tmpl");
+    const newTmpl = {
+      id,
+      title: title.trim(),
+      description: description.trim() || null,
+      category,
+      htmlCode,
+      cssCode: cssCode?.trim() || null,
+      isBuiltin: false,
+      createdAt: new Date(),
+    };
+
+    await db.insert(editorTemplates).values(newTmpl);
+
+    return {
+      success: true,
+      message: "Đã lưu khối HTML/CSS thành mẫu giao diện thành công!",
+      template: newTmpl,
+    };
+  } catch (error: unknown) {
+    return { success: false, message: `Lỗi lưu mẫu: ${(error as Error)?.message || String(error)}` };
+  }
+}
+

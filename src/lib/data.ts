@@ -158,7 +158,19 @@ export interface BgmTrackItem {
   youtubeId: string;
 }
 
-// User-provided YouTube tracks only; sample classical tracks removed per request
+export const DEFAULT_BGM_PLAYLIST_ID = "PLWsWIKUX9PRq7aPRAwjjwDid_e0_K2P3Y";
+export const DEFAULT_BGM_PLAYLIST_URL = "https://www.youtube.com/playlist?list=PLWsWIKUX9PRq7aPRAwjjwDid_e0_K2P3Y";
+
+export function extractPlaylistId(urlOrId: string): string {
+  if (!urlOrId) return "";
+  const trimmed = urlOrId.trim();
+  if (/^[a-zA-Z0-9_-]{16,50}$/.test(trimmed)) return trimmed;
+  const match = trimmed.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+  if (match) return match[1];
+  return "";
+}
+
+// Curated official background playlist
 export const DEFAULT_BGM_PLAYLIST: BgmTrackItem[] = [];
 
 export const RECENT_SIDEBAR_COMMENTS: SidebarCommentItem[] = [

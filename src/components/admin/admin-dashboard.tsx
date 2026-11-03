@@ -22,7 +22,6 @@ import {
   type AdminStoryItem,
   type TypoReportItem,
   type CelineProfileData,
-  type BgmTrackItem,
 } from "@/app/admin/actions";
 import { OrangeLogo } from "@/components/layout/orange-logo";
 
@@ -30,14 +29,17 @@ interface AdminDashboardProps {
   stories: AdminStoryItem[];
   typoReports: TypoReportItem[];
   profile: CelineProfileData;
-  bgmPlaylist: BgmTrackItem[];
+  bgmSetting: {
+    playlistId: string;
+    playlistUrl: string;
+  };
 }
 
 export function AdminDashboard({
   stories,
   typoReports,
   profile,
-  bgmPlaylist,
+  bgmSetting,
 }: AdminDashboardProps) {
   const [activeTab, setActiveTab] = React.useState<
     "stories" | "profile" | "bgm" | "epub" | "typos"
@@ -148,7 +150,7 @@ export function AdminDashboard({
           }`}
         >
           <Disc3 className="size-3.5 text-[#E07B4C]" />
-          <span>Nhạc Nền ({bgmPlaylist.length})</span>
+          <span>Nhạc Nền (BGM)</span>
         </button>
 
         <button
@@ -185,7 +187,7 @@ export function AdminDashboard({
       <div>
         {activeTab === "stories" && <StoryManager initialStories={stories} />}
         {activeTab === "profile" && <ProfileManager initialProfile={profile} />}
-        {activeTab === "bgm" && <BgmManager initialPlaylist={bgmPlaylist} />}
+        {activeTab === "bgm" && <BgmManager initialPlaylistSetting={bgmSetting} />}
         {activeTab === "epub" && <EpubImporter stories={stories} />}
         {activeTab === "typos" && <TypoManager initialReports={typoReports} />}
       </div>

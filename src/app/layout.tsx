@@ -4,9 +4,9 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
-import { BgmFloatingButton } from "@/components/media/bgm-floating-button";
 import { BgmProvider } from "@/components/media/bgm-context";
 import { BgmModal } from "@/components/media/bgm-modal";
+import { getBgmPlaylistSetting } from "@/app/admin/actions";
 
 const sans = Plus_Jakarta_Sans({
   subsets: ["latin", "vietnamese"],
@@ -37,11 +37,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const bgmSetting = await getBgmPlaylistSetting();
+
   return (
     <html lang="vi" suppressHydrationWarning className={`${sans.variable} ${serif.variable}`}>
       <head>
@@ -57,11 +59,10 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen flex flex-col font-sans selection:bg-[#F4DFAD] selection:text-[#2B2623] bg-[#FAF5EE] dark:bg-[#1A1614] text-[#2B2623] dark:text-[#FAF5EE]">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <BgmProvider>
+          <BgmProvider initialPlaylistId={bgmSetting.playlistId}>
             <Header />
             <main className="flex-1">{children}</main>
             <Footer />
-            <BgmFloatingButton />
             <BgmModal />
           </BgmProvider>
         </ThemeProvider>

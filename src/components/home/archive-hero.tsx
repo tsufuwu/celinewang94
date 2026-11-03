@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowRight, Quote, Sparkles } from "lucide-react";
+import { Quote, Sparkles } from "lucide-react";
 import { PolaroidCollage } from "./polaroid-collage";
 import { type StoryItem } from "@/lib/data";
 
@@ -78,9 +78,8 @@ export function ArchiveHero({ stories = [] }: ArchiveHeroProps) {
             </div>
 
             {/* Main Headline */}
-            <h1 className="font-serif text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-[#2B2623] dark:text-[#FAF5EE] leading-[1.12]">
-              Kho lưu trữ <br />
-              <span className="text-[#E07B4C]">Media Naranja</span>
+            <h1 className="font-serif text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-[#E07B4C] leading-[1.12]">
+              Media Naranja
             </h1>
 
             {/* Motto */}
@@ -90,26 +89,8 @@ export function ArchiveHero({ stories = [] }: ArchiveHeroProps) {
 
             {/* Description */}
             <p className="text-sm sm:text-base text-[#5C5146] dark:text-[#C4B9AD] max-w-xl leading-relaxed font-sans">
-              Nơi lưu giữ những mẩu truyện dịu dàng, bản dịch đam mỹ chọn lọc và tản văn nghệ thuật tràn ngập sắc cam ấm áp của Celine Wang.
+              chào mừng đến với web lỏ của mình
             </p>
-
-            {/* Retro Action Buttons */}
-            <div className="flex flex-wrap items-center gap-3 pt-3">
-              <Link
-                href="/kho-truyen"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-[14px] bg-[#E07B4C] hover:bg-[#DC7648] text-white border-2 border-[#2B2623] shadow-[2px_4px_0px_#2B2623] active:translate-x-[2px] active:translate-y-[4px] active:shadow-none text-xs sm:text-sm font-bold transition-all"
-              >
-                <span>Khám phá kho truyện</span>
-                <ArrowRight className="size-4" />
-              </Link>
-
-              <Link
-                href={`/truyen/${omLayStory?.slug || "om-lay-trong-luc"}`}
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-[14px] bg-[#E5DDD2] dark:bg-[#3D352E] hover:bg-[#DBD1C4] text-[#5C5146] dark:text-[#FAF5EE] border-2 border-[#2B2623] shadow-[2px_4px_0px_#2B2623] active:translate-x-[2px] active:translate-y-[4px] active:shadow-none text-xs sm:text-sm font-bold transition-all"
-              >
-                <span>Vào đọc Ôm Lấy Trọng Lực</span>
-              </Link>
-            </div>
           </div>
 
           {/* Right Column: Polaroid Scrapbook Collage (Clickable Polaroid Cards with Story Cover) */}
@@ -128,7 +109,6 @@ export function ArchiveHero({ stories = [] }: ArchiveHeroProps) {
                 href: secondStory ? `/truyen/${secondStory.slug}` : "/kho-truyen",
               }}
               topSticker="orange vibes"
-              bottomSticker="100% đam mê!"
             />
           </div>
         </div>

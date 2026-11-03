@@ -97,7 +97,7 @@ export function PolaroidCollage({
     href: "/kho-truyen",
   },
   topSticker = "orange vibes",
-  bottomSticker = "100% đam mê!",
+  bottomSticker,
   className = "",
 }: PolaroidCollageProps) {
   return (
@@ -137,13 +137,15 @@ export function PolaroidCollage({
         </div>
       </div>
 
-      {/* 5. Bottom-Left Floating Sticker: Sage Green #BDCEAF, rotate-[-8deg] */}
-      <div className="absolute bottom-3 left-1 sm:left-2 z-30 rotate-[-8deg] pointer-events-none">
-        <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-[10px] bg-[#BDCEAF] text-[#2B2623] border-2 border-[#2B2623] shadow-[2px_4px_0px_#2B2623] text-xs font-bold tracking-tight">
-          <span>✨</span>
-          <span>{bottomSticker}</span>
+      {/* 5. Bottom-Left Floating Sticker: Sage Green #BDCEAF (Optional) */}
+      {bottomSticker && (
+        <div className="absolute bottom-3 left-1 sm:left-2 z-30 rotate-[-8deg] pointer-events-none">
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-[10px] bg-[#BDCEAF] text-[#2B2623] border-2 border-[#2B2623] shadow-[2px_4px_0px_#2B2623] text-xs font-bold tracking-tight">
+            <span>✨</span>
+            <span>{bottomSticker}</span>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

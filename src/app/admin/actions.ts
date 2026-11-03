@@ -19,6 +19,7 @@ import {
   DEFAULT_BGM_PLAYLIST,
   type CelineProfileData,
   type BgmTrackItem,
+  extractPlaylistId,
 } from "@/lib/data";
 
 export type { CelineProfileData, BgmTrackItem, ProfileExperience, ProfileProject } from "@/lib/data";
@@ -661,6 +662,86 @@ export async function saveProfileSettings(
 // ----------------------------------------------------
 // 8. BGM SETTINGS ACTIONS
 // ----------------------------------------------------
+
+export async function getBgmPlaylistSetting(): Promise<{
+  playlistId: string;
+  playlistUrl: string;
+}> {
+  try {
+    const db = await getDb();
+    if (db) {
+      const rows = await db
+        .select()
+        .from(siteSettings)
+        .where(eq(siteSettings.key, "bgm_playlist_id"))
+        .limit(1);
+      if (rows && rows.length > 0 && rows[0].value) {
+        const id = rows[0].value.trim();
+        if (id) {
+          return {
+            playlistId: id,
+            playlistUrl: `https://www.youtube.com/playlist?list=${id}`,
+          };
+        }
+      }
+    }
+  } catch (error) {
+    console.warn("Could not query D1 BGM playlist setting:", error);
+  }
+
+  return {
+    playlistId: "PLWsWIKUX9PRq7aPRAwjjwDid_e0_K2P3Y",
+    playlistUrl: "https://www.youtube.com/playlist?list=PLWsWIKUX9PRq7aPRAwjjwDid_e0_K2P3Y",
+  };
+}
+
+export async function saveBgmPlaylistSetting(
+  playlistUrlOrId: string
+): Promise<{ success: boolean; message: string; playlistId?: string }> {
+  const isAuth = await checkAdminAuth();
+  if (!isAuth) return { success: false, message: "Chưa xác thực quyền quản trị." };
+
+  const id = extractPlaylistId(playlistUrlOrId);
+  if (!id) {
+    return {
+      success: false,
+      message: "Liên kết Playlist hoặc Mã Playlist YouTube không hợp lệ (cần chứa '?list=...').",
+    };
+  }
+
+  try {
+    const db = await getDb();
+    if (!db) return { success: false, message: "Không thể kết nối D1 Database." };
+
+    const now = new Date();
+    await db
+      .insert(siteSettings)
+      .values({
+        key: "bgm_playlist_id",
+        value: id,
+        updatedAt: now,
+      })
+      .onConflictDoUpdate({
+        target: siteSettings.key,
+        set: {
+          value: id,
+          updatedAt: now,
+        },
+      });
+
+    revalidatePath("/");
+    return {
+      success: true,
+      message: `Đã khóa cứng và cập nhật Playlist BGM (${id}) thành công!`,
+      playlistId: id,
+    };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      message: `Lỗi lưu cài đặt Playlist BGM: ${(error as Error)?.message || String(error)}`,
+    };
+  }
+}
 
 export async function getAdminBgmPlaylist(): Promise<BgmTrackItem[]> {
   try {

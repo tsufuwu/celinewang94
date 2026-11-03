@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Search, X, BookOpen, Layers, Check, Filter, ArrowRight } from "lucide-react";
+import { Search, X, BookOpen, Layers, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import type { StoryItem, StoryCategory } from "@/lib/data";
@@ -23,29 +23,13 @@ const CATEGORIES: { label: string; value: "ALL" | StoryCategory }[] = [
 export function StoryList({ initialStories }: StoryListProps) {
   const [selectedCategory, setSelectedCategory] = React.useState<"ALL" | StoryCategory>("ALL");
   const [searchQuery, setSearchQuery] = React.useState("");
-  const [selectedTags, setSelectedTags] = React.useState<string[]>([]);
-
-  // Collect unique tags
-  const allTags = React.useMemo(() => {
-    const tagsSet = new Set<string>();
-    initialStories.forEach((s) => s.tags.forEach((t) => tagsSet.add(t)));
-    return Array.from(tagsSet).sort();
-  }, [initialStories]);
-
-  // Toggle tag selection
-  const handleToggleTag = (tag: string) => {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-    );
-  };
 
   const handleClearFilters = () => {
     setSelectedCategory("ALL");
     setSearchQuery("");
-    setSelectedTags([]);
   };
 
-  // Filtered stories: category matches AND search matches AND all selected tags match
+  // Filtered stories: category matches AND search matches
   const filteredStories = React.useMemo(() => {
     return initialStories.filter((story) => {
       // Category filter
@@ -59,20 +43,11 @@ export function StoryList({ initialStories }: StoryListProps) {
         story.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         story.author.toLowerCase().includes(searchQuery.toLowerCase());
 
-      if (!matchesSearch) return false;
-
-      // Multi-tag filter (AND condition: story must include all selected tags)
-      if (selectedTags.length > 0) {
-        const hasAllTags = selectedTags.every((tag) => story.tags.includes(tag));
-        if (!hasAllTags) return false;
-      }
-
-      return true;
+      return matchesSearch;
     });
-  }, [initialStories, selectedCategory, searchQuery, selectedTags]);
+  }, [initialStories, selectedCategory, searchQuery]);
 
-  const hasActiveFilters =
-    selectedCategory !== "ALL" || searchQuery.trim() !== "" || selectedTags.length > 0;
+  const hasActiveFilters = selectedCategory !== "ALL" || searchQuery.trim() !== "";
 
   return (
     <section className="my-16" id="kho-truyen">
@@ -136,31 +111,8 @@ export function StoryList({ initialStories }: StoryListProps) {
           )}
         </div>
 
-        {/* Multi-Tag Filtering Cloud */}
-        <div className="flex flex-wrap items-center gap-2 pt-1">
-          <span className="text-xs font-mono font-bold text-[#5C5146] dark:text-[#C4B9AD] flex items-center gap-1 mr-1">
-            <Filter className="size-3 text-[#E07B4C]" />
-            Tags:
-          </span>
-          {allTags.map((tag) => {
-            const isTagActive = selectedTags.includes(tag);
-            return (
-              <button
-                key={tag}
-                onClick={() => handleToggleTag(tag)}
-                className={`inline-flex items-center gap-1 px-3 py-1 rounded-[10px] text-xs font-mono font-bold transition-all cursor-pointer ${
-                  isTagActive
-                    ? "bg-[#E07B4C] text-white border-2 border-[#2B2623] shadow-[1.5px_2px_0px_#2B2623]"
-                    : "bg-[#FDFBF7] dark:bg-[#241F1C] text-[#5C5146] dark:text-[#C4B9AD] border border-[#2B2623]/30 hover:border-[#2B2623]"
-                }`}
-              >
-                {isTagActive && <Check className="size-3" />}
-                <span>#{tag}</span>
-              </button>
-            );
-          })}
-
-          {hasActiveFilters && (
+        {hasActiveFilters && (
+          <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="sm"
@@ -170,8 +122,8 @@ export function StoryList({ initialStories }: StoryListProps) {
               <X className="size-3 mr-1" />
               Xóa bộ lọc
             </Button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Story Grid */}

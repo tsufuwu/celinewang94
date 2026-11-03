@@ -62,3 +62,4 @@ export function ProtectedText({ text, paragraphIndex }: { text: string; paragrap
     </>
   );
 }
+

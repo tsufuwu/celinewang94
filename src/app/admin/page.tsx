@@ -4,7 +4,7 @@ import {
   getAdminStories,
   getTypoReports,
   getAdminProfileSettings,
-  getAdminBgmPlaylist,
+  getBgmPlaylistSetting,
 } from "./actions";
 import { AdminLogin } from "@/components/admin/admin-login";
 import { AdminDashboard } from "@/components/admin/admin-dashboard";
@@ -23,11 +23,11 @@ export default async function AdminPage() {
     return <AdminLogin />;
   }
 
-  const [stories, typoReports, profile, bgmPlaylist] = await Promise.all([
+  const [stories, typoReports, profile, bgmSetting] = await Promise.all([
     getAdminStories(),
     getTypoReports(),
     getAdminProfileSettings(),
-    getAdminBgmPlaylist(),
+    getBgmPlaylistSetting(),
   ]);
 
   return (
@@ -35,7 +35,7 @@ export default async function AdminPage() {
       stories={stories}
       typoReports={typoReports}
       profile={profile}
-      bgmPlaylist={bgmPlaylist}
+      bgmSetting={bgmSetting}
     />
   );
 }

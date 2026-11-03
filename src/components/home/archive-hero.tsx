@@ -40,6 +40,15 @@ const MEMORIES = [
   },
 ];
 
+function formatPolaroidCaption(title?: string): string {
+  if (!title) return "#MediaNaranja";
+  const words = title.trim().split(/\s+/);
+  if (words.length > 3 || title.length > 16) {
+    return `#${words.slice(0, 3).join("")}...`;
+  }
+  return `#${title.replace(/\s+/g, "")}`;
+}
+
 export function ArchiveHero({ stories = [] }: ArchiveHeroProps) {
   // Find "Ôm Lấy Trọng Lực" dynamically from stories passed from DB
   const omLayStory = stories.find(
@@ -105,7 +114,7 @@ export function ArchiveHero({ stories = [] }: ArchiveHeroProps) {
               photo2={{
                 src: photo2Src,
                 alt: secondStory?.title || "Media Naranja Archive",
-                caption: secondStory?.title ? `#${secondStory.title.replace(/\s+/g, "")}` : "#MediaNaranja",
+                caption: formatPolaroidCaption(secondStory?.title),
                 href: secondStory ? `/truyen/${secondStory.slug}` : "/kho-truyen",
               }}
               topSticker="citrus archive"

@@ -69,8 +69,11 @@ export function PolaroidCard({
       </div>
 
       {/* Handwritten / Monospace Hashtag Caption at Bottom */}
-      <div className="absolute bottom-2 sm:bottom-2.5 left-0 right-0 text-center px-2">
-        <span className="font-mono text-[11px] sm:text-xs font-bold tracking-tight text-[#3D3935] dark:text-[#EAE4DC] select-none">
+      <div className="absolute bottom-2 sm:bottom-2.5 left-2 right-2 text-center overflow-hidden">
+        <span
+          className="block truncate font-mono text-[11px] sm:text-xs font-bold tracking-tight text-[#3D3935] dark:text-[#EAE4DC] select-none"
+          title={caption}
+        >
           {caption}
         </span>
       </div>

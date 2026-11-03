@@ -13,9 +13,9 @@ export function BgmPlayer() {
       variant="ghost"
       size="sm"
       onClick={() => setModalOpen(true)}
-      className={`h-9 px-2.5 rounded-full border transition-all flex items-center gap-1.5 text-xs ${
+      className={`h-8 px-2.5 rounded-full border transition-all flex items-center gap-1.5 text-xs ${
         isPlaying
-          ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400 font-medium"
+          ? "border-[#E07B4C] bg-[#E07B4C]/10 text-[#E07B4C] font-semibold"
           : "border-border/70 text-muted-foreground hover:text-foreground"
       }`}
       title="Nhạc nền đọc truyện (BGM từ YouTube)"

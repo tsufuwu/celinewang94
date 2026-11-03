@@ -45,6 +45,9 @@ export default function RootLayout({
   return (
     <html lang="vi" suppressHydrationWarning className={`${sans.variable} ${serif.variable}`}>
       <head>
+        <link rel="icon" type="image/webp" href="/cropped-cropped-cropped-medianaranja.webp?v=4" />
+        <link rel="shortcut icon" href="/favicon.ico?v=4" />
+        <link rel="apple-touch-icon" href="/cropped-cropped-cropped-medianaranja.webp?v=4" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

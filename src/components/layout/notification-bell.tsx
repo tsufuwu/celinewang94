@@ -29,7 +29,7 @@ export function NotificationBell() {
         variant="ghost"
         size="icon"
         onClick={() => setIsOpen(!isOpen)}
-        className="h-9 w-9 rounded-full border border-border/70 text-muted-foreground hover:text-foreground relative"
+        className="h-8 w-8 rounded-full border border-border/70 text-muted-foreground hover:text-foreground relative"
         title="Thông báo chương mới"
       >
         <Bell className="size-4" />

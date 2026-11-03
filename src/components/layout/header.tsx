@@ -23,30 +23,28 @@ export function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border/70 bg-background/85 backdrop-blur-md transition-colors duration-200">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3 sm:gap-4">
+    <header className="sticky top-0 z-40 w-full border-b border-border/70 bg-background/90 backdrop-blur-md transition-colors duration-200">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
         {/* Brand */}
         <Link
           href="/"
           className="group flex items-center gap-2.5 transition-opacity hover:opacity-90 shrink-0"
         >
           <div className="transition-transform group-hover:scale-105 duration-200">
-            <OrangeLogo className="size-8 drop-shadow-xs" />
+            <OrangeLogo className="size-7 sm:size-8 drop-shadow-xs" />
           </div>
           <div className="flex flex-col">
-            <div className="flex items-center gap-1.5">
-              <span className="font-serif text-lg tracking-tight font-semibold text-foreground group-hover:text-primary transition-colors">
-                Media naranja
-              </span>
-            </div>
-            <span className="text-[10px] text-muted-foreground italic font-serif leading-none line-clamp-1 hidden sm:inline">
+            <span className="font-serif text-base sm:text-lg tracking-tight font-semibold text-foreground group-hover:text-primary transition-colors leading-tight">
+              Media naranja
+            </span>
+            <span className="text-[10px] text-muted-foreground italic font-serif leading-none line-clamp-1 hidden xl:inline">
               ars longa, vita brevis – nghệ thuật trường tồn, cuộc đời ngắn ngủi
             </span>
           </div>
         </Link>
 
-        {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-1.5">
+        {/* Desktop Nav - Compact, Single-line, No Wrapping */}
+        <nav className="hidden md:flex items-center gap-1.5 shrink-0">
           {navItems.map((item) => {
             const isActive =
               item.href === "/"
@@ -57,13 +55,13 @@ export function Header() {
               <Link
                 key={item.label}
                 href={item.href}
-                className={`relative px-5 py-2.5 rounded-[18px] text-xs sm:text-sm transition-all flex items-center gap-2 border-0 shadow-none font-bold ${
+                className={`relative px-3.5 py-1.5 rounded-[12px] text-xs sm:text-[13px] whitespace-nowrap shrink-0 transition-all flex items-center gap-1.5 border-0 shadow-none font-semibold ${
                   isActive
                     ? "bg-[#E5DDD2] dark:bg-[#2B2521] text-[#5C5146] dark:text-[#E5DDD2]"
-                    : "text-[#6B5E54] dark:text-[#A6998D] hover:text-[#2B2623] dark:hover:text-[#FAF5EE] hover:bg-[#EFE8DE] dark:hover:bg-[#241E1A]"
+                    : "text-[#6B5E54] dark:text-[#A6998D] hover:text-[#2B2623] dark:hover:text-[#FAF5EE] hover:bg-[#EFE8DE]/80 dark:hover:bg-[#241E1A]"
                 }`}
               >
-                <Icon className="size-4" />
+                <Icon className="size-3.5 shrink-0" />
                 <span>{item.label}</span>
               </Link>
             );
@@ -71,7 +69,7 @@ export function Header() {
         </nav>
 
         {/* Right Actions: BGM, Notification Bell, Theme, Mobile Menu */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <BgmPlayer />
           <NotificationBell />
           <ThemeToggle />
@@ -79,7 +77,7 @@ export function Header() {
           {/* Mobile Sheet Trigger */}
           <div className="md:hidden">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
-              <SheetTrigger render={<Button variant="ghost" size="icon" className="h-9 w-9 rounded-full border border-border/70 text-muted-foreground" />}>
+              <SheetTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8 rounded-full border border-border/70 text-muted-foreground" />}>
                 <Menu className="size-4" />
                 <span className="sr-only">Mở menu</span>
               </SheetTrigger>
@@ -100,13 +98,13 @@ export function Header() {
                         key={item.label}
                         href={item.href}
                         onClick={() => setIsOpen(false)}
-                        className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                        className={`px-4 py-2.5 rounded-[12px] text-sm flex items-center gap-3 font-semibold transition-all ${
                           isActive
-                            ? "bg-secondary text-primary font-semibold"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                            ? "bg-[#E5DDD2] dark:bg-[#2B2521] text-[#5C5146] dark:text-[#E5DDD2]"
+                            : "text-[#6B5E54] dark:text-[#A6998D] hover:bg-[#EFE8DE]/70"
                         }`}
                       >
-                        <Icon className="size-4" />
+                        <Icon className="size-4 shrink-0" />
                         <span>{item.label}</span>
                       </Link>
                     );

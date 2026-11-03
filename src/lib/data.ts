@@ -158,38 +158,8 @@ export interface BgmTrackItem {
   youtubeId: string;
 }
 
-export const DEFAULT_BGM_PLAYLIST: BgmTrackItem[] = [
-  {
-    id: "bgm-1",
-    title: "Gymnopédie No. 1",
-    artist: "Erik Satie",
-    youtubeId: "S-Xm7s9eGuU",
-  },
-  {
-    id: "bgm-2",
-    title: "Clair de Lune",
-    artist: "Claude Debussy",
-    youtubeId: "WNcsUNKlAKw",
-  },
-  {
-    id: "bgm-3",
-    title: "Lofi Hip Hop Radio (Beats to Relax)",
-    artist: "Lofi Girl",
-    youtubeId: "jfKfPfyJRdk",
-  },
-  {
-    id: "bgm-4",
-    title: "Studio Ghibli Relaxing Piano",
-    artist: "Peaceful Piano",
-    youtubeId: "0Ww8L7Z5x0M",
-  },
-  {
-    id: "bgm-5",
-    title: "Canon in D",
-    artist: "Johann Pachelbel",
-    youtubeId: "NlprozGcs80",
-  },
-];
+// User-provided YouTube tracks only; sample classical tracks removed per request
+export const DEFAULT_BGM_PLAYLIST: BgmTrackItem[] = [];
 
 export const RECENT_SIDEBAR_COMMENTS: SidebarCommentItem[] = [
   {

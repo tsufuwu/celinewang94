@@ -1,7 +1,7 @@
 name = "wang94"
 main = ".open-next/worker.js"
-compatibility_date = "2024-12-30"
-compatibility_flags = ["nodejs_compat"]
+compatibility_date = "2026-11-04"
+compatibility_flags = ["nodejs_compat", "expose_global_message_channel"]
 assets = { directory = ".open-next/assets", binding = "ASSETS" }
 
 # 1. Cloudflare D1 Database binding

@@ -79,23 +79,21 @@ export type CommentActionResult = {
 export async function createParagraphComment(
   chapterId: string,
   paragraphIndex: number,
-  authorName: string,
   content: string,
   isTypoReport: boolean
 ): Promise<CommentActionResult> {
   const user = await getAuthSession();
-  let finalAuthorName = authorName ? authorName.trim() : "";
 
-  if (user) {
-    // If logged in via Google OAuth, locked to authenticated identity
-    finalAuthorName = user.nickname || user.name || finalAuthorName || "Thành viên Google";
-    if (user.role === "ADMIN" && !finalAuthorName.startsWith("[Admin]")) {
-      finalAuthorName = `[Admin] ${finalAuthorName}`;
-    }
+  if (!user) {
+    return {
+      success: false,
+      message: "Vui lòng đăng nhập bằng Google để gửi bình luận hoặc báo lỗi.",
+    };
   }
 
-  if (!finalAuthorName || finalAuthorName.length === 0) {
-    return { success: false, message: "Vui lòng nhập tên hoặc biệt danh của bạn." };
+  let finalAuthorName = user.nickname || user.name || "Thành viên Google";
+  if (user.role === "ADMIN" && !finalAuthorName.startsWith("[Admin]")) {
+    finalAuthorName = `[Admin] ${finalAuthorName}`;
   }
 
   if (!content || content.trim().length === 0) {

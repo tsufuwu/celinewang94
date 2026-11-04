@@ -364,6 +364,21 @@ export function StoryHtmlRenderer({
   const renderContent = React.useMemo(() => {
     if (!content) return null;
 
+    // Fast path: If content has no shortcodes, render raw HTML directly (avoids expensive regex on 100KB strings)
+    const hasShortcodes =
+      content.includes("[muc_luc") ||
+      content.includes("[bgm") ||
+      content.includes("[spoiler");
+
+    if (!hasShortcodes) {
+      return (
+        <div
+          className="story-raw-html-section space-y-4"
+          dangerouslySetInnerHTML={{ __html: content }}
+        />
+      );
+    }
+
     // Regex to match our smart shortcodes:
     // 1. [muc_luc style="grid" from="1" to="48" title="..."]
     // 2. [muc_luc style="list" type="extra" title="..."]

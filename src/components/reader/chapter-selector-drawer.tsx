@@ -132,28 +132,25 @@ export function ChapterSelectorDrawer({
                     if (onSelectChapter) onSelectChapter(ch.id);
                     onClose();
                   }}
-                  className={`py-2.5 px-3 rounded-[12px] flex items-center justify-between transition-all my-1 group ${
-                    isActive
+                  className={`py-2.5 px-3 rounded-[12px] flex items-center justify-between transition-all my-1 group ${isActive
                       ? "bg-[#E07B4C]/15 border-2 border-[#E07B4C] text-[#2B2623] dark:text-[#FAF5EE] shadow-[1.5px_2px_0px_#E07B4C]"
                       : "hover:bg-[#E5DDD2]/50 dark:hover:bg-[#2A2420] text-[#2B2623] dark:text-[#FAF5EE] border border-transparent"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0 pr-2">
                     <span
-                      className={`font-mono text-xs px-2 py-0.5 rounded-[6px] shrink-0 font-bold border ${
-                        isActive
+                      className={`font-mono text-xs px-2 py-0.5 rounded-[6px] shrink-0 font-bold border ${isActive
                           ? "bg-[#E07B4C] text-white border-[#2B2623]"
                           : "bg-[#E5DDD2] dark:bg-[#332C27] text-[#5C5146] dark:text-[#C4B9AD] border-[#2B2623]/30"
-                      }`}
+                        }`}
                     >
                       #{ch.chapterNumber}
                     </span>
                     <span
-                      className={`font-serif text-sm truncate font-medium ${
-                        isActive
+                      className={`font-serif text-sm truncate font-medium ${isActive
                           ? "font-bold text-[#E07B4C]"
                           : "group-hover:text-[#E07B4C] transition-colors"
-                      }`}
+                        }`}
                     >
                       {ch.title}
                     </span>

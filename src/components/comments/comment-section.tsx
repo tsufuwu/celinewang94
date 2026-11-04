@@ -2,13 +2,24 @@
 
 import * as React from "react";
 import { useAuth } from "@/components/auth/auth-context";
-import { MessageCircle, Send, Sparkles, UserCheck, Clock } from "lucide-react";
+import {
+  MessageCircle,
+  Send,
+  Sparkles,
+  UserCheck,
+  Clock,
+  Pencil,
+  Trash2,
+  Check,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface CommentItem {
   id: string;
   authorName: string;
   content: string;
+  userId?: string | null;
   createdAt: string;
 }
 
@@ -29,6 +40,12 @@ export function CommentSection({
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
+
+  // Edit states
+  const [editingCommentId, setEditingCommentId] = React.useState<string | null>(null);
+  const [editingContent, setEditingContent] = React.useState("");
+  const [isSavingEdit, setIsSavingEdit] = React.useState(false);
+  const [deletingId, setDeletingId] = React.useState<string | null>(null);
 
   const fetchComments = React.useCallback(async () => {
     try {
@@ -95,6 +112,74 @@ export function CommentSection({
       setErrorMsg(msg);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleStartEdit = (c: CommentItem) => {
+    setEditingCommentId(c.id);
+    setEditingContent(c.content);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCommentId(null);
+    setEditingContent("");
+  };
+
+  const handleSaveEdit = async (commentId: string) => {
+    if (!editingContent.trim() || isSavingEdit) return;
+
+    try {
+      setIsSavingEdit(true);
+      const endpoint =
+        targetType === "chapter" ? "/api/comments/chapter" : "/api/comments/story";
+
+      const res = await fetch(endpoint, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ commentId, content: editingContent.trim() }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Không thể cập nhật bình luận.");
+      }
+
+      setComments((prev) =>
+        prev.map((c) => (c.id === commentId ? { ...c, content: editingContent.trim() } : c))
+      );
+      setEditingCommentId(null);
+      setEditingContent("");
+    } catch (err: unknown) {
+      alert((err as Error)?.message || "Lỗi khi cập nhật.");
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
+  const handleDelete = async (commentId: string) => {
+    if (!confirm("Bạn có chắc chắn muốn xóa bình luận này không?")) return;
+
+    try {
+      setDeletingId(commentId);
+      const endpoint =
+        targetType === "chapter"
+          ? `/api/comments/chapter?commentId=${encodeURIComponent(commentId)}`
+          : `/api/comments/story?commentId=${encodeURIComponent(commentId)}`;
+
+      const res = await fetch(endpoint, {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Không thể xóa bình luận.");
+      }
+
+      setComments((prev) => prev.filter((c) => c.id !== commentId));
+    } catch (err: unknown) {
+      alert((err as Error)?.message || "Lỗi khi xóa bình luận.");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -225,10 +310,14 @@ export function CommentSection({
         <div className="space-y-3.5">
           {comments.map((c) => {
             const isAdmin = c.authorName.startsWith("[Admin]");
+            const isOwner = user && c.userId && user.id === c.userId;
+            const canManage = isOwner || (user && user.role === "ADMIN");
+            const isEditing = editingCommentId === c.id;
+
             return (
               <div
                 key={c.id}
-                className="rounded-[14px] bg-[#FDFBF7] dark:bg-[#25201C] border-2 border-[#2B2623] p-4 shadow-[1.5px_2px_0px_#2B2623]"
+                className="rounded-[14px] bg-[#FDFBF7] dark:bg-[#25201C] border-2 border-[#2B2623] p-4 shadow-[1.5px_2px_0px_#2B2623] transition-all"
               >
                 <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#2B2623]/10">
                   <div className="flex items-center gap-2">
@@ -250,15 +339,81 @@ export function CommentSection({
                     >
                       {c.authorName}
                     </span>
+                    {isOwner && (
+                      <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#F4DFAD] text-[#2B2623] border border-[#2B2623]/30 font-semibold">
+                        Bạn
+                      </span>
+                    )}
                   </div>
-                  <span className="text-[11px] font-mono text-[#5C5146] dark:text-[#C4B9AD] flex items-center gap-1">
-                    <Clock className="size-3" />
-                    {formatCommentDate(c.createdAt)}
-                  </span>
+
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-[11px] font-mono text-[#5C5146] dark:text-[#C4B9AD] flex items-center gap-1">
+                      <Clock className="size-3" />
+                      {formatCommentDate(c.createdAt)}
+                    </span>
+
+                    {/* Edit / Delete actions for comment owner or admin */}
+                    {canManage && !isEditing && (
+                      <div className="flex items-center gap-1 border-l border-[#2B2623]/20 pl-2">
+                        {isOwner && (
+                          <button
+                            type="button"
+                            onClick={() => handleStartEdit(c)}
+                            className="p-1 text-[#5C5146] hover:text-[#E07B4C] transition-colors rounded hover:bg-[#E5DDD2]"
+                            title="Sửa bình luận"
+                          >
+                            <Pencil className="size-3.5" />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          disabled={deletingId === c.id}
+                          onClick={() => handleDelete(c.id)}
+                          className="p-1 text-[#5C5146] hover:text-rose-600 transition-colors rounded hover:bg-[#E5DDD2] disabled:opacity-50"
+                          title="Xóa bình luận"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <p className="text-sm font-sans text-[#2B2623] dark:text-[#E8E2D9] whitespace-pre-wrap leading-relaxed select-text">
-                  {c.content}
-                </p>
+
+                {isEditing ? (
+                  <div className="mt-2 space-y-2">
+                    <textarea
+                      value={editingContent}
+                      onChange={(e) => setEditingContent(e.target.value)}
+                      rows={3}
+                      className="w-full p-2.5 rounded-[10px] bg-[#FAF5EE] dark:bg-[#1F1B18] border-2 border-[#2B2623] text-sm font-sans text-[#2B2623] dark:text-[#FAF5EE] focus:outline-none focus:ring-1 focus:ring-[#E07B4C]"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCancelEdit}
+                        className="rounded-[8px] text-xs h-7 px-2.5 border-2 border-[#2B2623]"
+                      >
+                        <X className="size-3 mr-1" /> Hủy
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={isSavingEdit || !editingContent.trim()}
+                        onClick={() => handleSaveEdit(c.id)}
+                        className="rounded-[8px] text-xs h-7 px-3 bg-[#E07B4C] hover:bg-[#DC7648] text-white border-2 border-[#2B2623] font-bold"
+                      >
+                        <Check className="size-3 mr-1" />
+                        {isSavingEdit ? "Đang lưu..." : "Lưu thay đổi"}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm font-sans text-[#2B2623] dark:text-[#E8E2D9] whitespace-pre-wrap leading-relaxed select-text">
+                    {c.content}
+                  </p>
+                )}
               </div>
             );
           })}

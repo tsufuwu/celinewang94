@@ -16,47 +16,7 @@ export interface GuestbookItem {
   replies?: GuestbookItem[];
 }
 
-const FALLBACK_GUESTBOOK_POSTS: GuestbookItem[] = [
-  {
-    id: "post_1",
-    authorName: "Celine Wang",
-    title: "Chào mừng các quả cam ghé thăm Media naranja 🍊",
-    content: "Cảm ơn mọi người đã luôn đồng hành cùng Celine và các bộ truyện. Nhà Cam là nơi lưu giữ những câu chuyện dịu dàng, hy vọng đây sẽ là chốn nghỉ ngơi ấm áp của bạn sau những giờ học tập và làm việc căng thẳng ˶ˆ꒳ˆ˵",
-    isAdmin: true,
-    parentId: null,
-    createdAt: new Date("2026-10-20T10:00:00Z"),
-    replies: [
-      {
-        id: "post_1_reply_1",
-        authorName: "Little meow meow.",
-        title: null,
-        content: "Em thích văn phong của chị Celine lắm luôn á, truyện nào chị chọn cũng có chiều sâu và chữa lành tâm hồn 🥺",
-        isAdmin: false,
-        parentId: "post_1",
-        createdAt: new Date("2026-10-21T14:30:00Z"),
-      },
-      {
-        id: "post_1_reply_2",
-        authorName: "Celine Wang",
-        title: null,
-        content: "Cảm ơn em nhiều nhen! Có các bạn độc giả dễ thương như vậy làm động lực edit vui lắm luôn 🧡",
-        isAdmin: true,
-        parentId: "post_1",
-        createdAt: new Date("2026-10-21T15:00:00Z"),
-      },
-    ],
-  },
-  {
-    id: "post_2",
-    authorName: "mxijoan",
-    title: "Mê mẩn với Ôm Lấy Trọng Lực",
-    content: "Vừa cày xong một lèo Ôm Lấy Trọng Lực, đoạn trên sân băng cảm xúc vỡ òa luôn ạ. Cảm ơn chị Celine đã mang một tác phẩm tuyệt vời như thế này về với tụi em!",
-    isAdmin: false,
-    parentId: null,
-    createdAt: new Date("2026-11-01T09:15:00Z"),
-    replies: [],
-  },
-];
+const FALLBACK_GUESTBOOK_POSTS: GuestbookItem[] = [];
 
 const inMemoryCache: GuestbookItem[] = [...FALLBACK_GUESTBOOK_POSTS];
 

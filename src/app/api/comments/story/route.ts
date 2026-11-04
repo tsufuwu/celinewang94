@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
           id: r.id,
           authorName: r.authorName,
           content: r.content,
+          userId: r.userId || null,
           rating: r.rating,
           createdAt: r.createdAt ? new Date(r.createdAt).toISOString() : new Date().toISOString(),
         })),
@@ -68,6 +69,7 @@ export async function POST(request: NextRequest) {
     const newReview = {
       id: generateId("rev"),
       storyId,
+      userId: session.id,
       authorName,
       rating: 5,
       content: content.trim(),
@@ -86,6 +88,7 @@ export async function POST(request: NextRequest) {
         id: newReview.id,
         authorName: newReview.authorName,
         content: newReview.content,
+        userId: newReview.userId,
         createdAt: newReview.createdAt.toISOString(),
       },
     });
@@ -95,5 +98,100 @@ export async function POST(request: NextRequest) {
       { error: "Không thể lưu bình luận vào lúc này." },
       { status: 500 }
     );
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  const session = await getAuthSession();
+  if (!session) {
+    return NextResponse.json({ error: "Chưa đăng nhập." }, { status: 401 });
+  }
+
+  try {
+    const body = await request.json();
+    const { commentId, content } = body;
+
+    if (!commentId || !content || !content.trim()) {
+      return NextResponse.json({ error: "Nội dung không hợp lệ." }, { status: 400 });
+    }
+
+    const db = await getDb();
+    if (!db) {
+      return NextResponse.json({ error: "Database error" }, { status: 500 });
+    }
+
+    const rows = await db
+      .select()
+      .from(reviews)
+      .where(eq(reviews.id, commentId))
+      .limit(1);
+
+    if (rows.length === 0) {
+      return NextResponse.json({ error: "Không tìm thấy bình luận." }, { status: 404 });
+    }
+
+    const targetComment = rows[0];
+    const isOwner = targetComment.userId && targetComment.userId === session.id;
+    const isAdmin = session.role === "ADMIN";
+
+    if (!isOwner && !isAdmin) {
+      return NextResponse.json({ error: "Bạn không có quyền sửa bình luận này." }, { status: 403 });
+    }
+
+    await db
+      .update(reviews)
+      .set({ content: content.trim() })
+      .where(eq(reviews.id, commentId));
+
+    return NextResponse.json({ success: true, message: "Đã cập nhật bình luận." });
+  } catch (error) {
+    console.error("Error updating story comment:", error);
+    return NextResponse.json({ error: "Lỗi hệ thống khi cập nhật." }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  const session = await getAuthSession();
+  if (!session) {
+    return NextResponse.json({ error: "Chưa đăng nhập." }, { status: 401 });
+  }
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const commentId = searchParams.get("commentId");
+
+    if (!commentId) {
+      return NextResponse.json({ error: "Thiếu commentId" }, { status: 400 });
+    }
+
+    const db = await getDb();
+    if (!db) {
+      return NextResponse.json({ error: "Database error" }, { status: 500 });
+    }
+
+    const rows = await db
+      .select()
+      .from(reviews)
+      .where(eq(reviews.id, commentId))
+      .limit(1);
+
+    if (rows.length === 0) {
+      return NextResponse.json({ error: "Không tìm thấy bình luận." }, { status: 404 });
+    }
+
+    const targetComment = rows[0];
+    const isOwner = targetComment.userId && targetComment.userId === session.id;
+    const isAdmin = session.role === "ADMIN";
+
+    if (!isOwner && !isAdmin) {
+      return NextResponse.json({ error: "Bạn không có quyền xóa bình luận này." }, { status: 403 });
+    }
+
+    await db.delete(reviews).where(eq(reviews.id, commentId));
+
+    return NextResponse.json({ success: true, message: "Đã xóa bình luận." });
+  } catch (error) {
+    console.error("Error deleting story comment:", error);
+    return NextResponse.json({ error: "Lỗi hệ thống khi xóa bình luận." }, { status: 500 });
   }
 }

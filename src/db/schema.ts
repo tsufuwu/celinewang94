@@ -80,6 +80,7 @@ export const paragraphComments = sqliteTable(
     chapterId: text("chapter_id")
       .notNull()
       .references(() => chapters.id, { onDelete: "cascade" }),
+    userId: text("user_id"),
     paragraphIndex: integer("paragraph_index").notNull(),
     authorName: text("author_name").notNull(),
     content: text("content").notNull(),
@@ -109,6 +110,7 @@ export const reviews = sqliteTable(
     storyId: text("story_id")
       .notNull()
       .references(() => stories.id, { onDelete: "cascade" }),
+    userId: text("user_id"),
     authorName: text("author_name").notNull(),
     rating: integer("rating").notNull(),
     content: text("content").notNull(),

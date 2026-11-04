@@ -16,6 +16,7 @@ import {
   KeyRound,
   HelpCircle,
   ListOrdered,
+  BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -426,12 +427,19 @@ export function ChapterReader({
             </Button>
           </form>
 
-          <div className="pt-2">
+          <div className="pt-2 flex items-center justify-center gap-3">
             <Link
               href="/"
               className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
             >
-              <ArrowLeft className="size-3" /> Quay lại trang chủ
+              <ArrowLeft className="size-3" /> Trang chủ
+            </Link>
+            <span className="text-muted-foreground/40">•</span>
+            <Link
+              href={`/truyen/${chapter.story.slug}`}
+              className="text-xs font-bold text-[#E07B4C] hover:underline inline-flex items-center gap-1"
+            >
+              <BookOpen className="size-3" /> Giới thiệu truyện
             </Link>
           </div>
         </div>
@@ -478,20 +486,36 @@ export function ChapterReader({
         {!settings.focusMode && (
           <nav
             aria-label="Điều hướng chương"
-            className="flex items-center justify-between pb-6 mb-8 border-b border-border/60"
+            className="flex items-center justify-between pb-6 mb-8 border-b border-border/60 flex-wrap gap-3"
           >
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ArrowLeft className="size-3.5" />
-              <span>Về trang chủ Media naranja</span>
-            </Link>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Link
+                href="/"
+                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors font-medium"
+              >
+                <ArrowLeft className="size-3.5" />
+                <span>Trang chủ</span>
+              </Link>
+
+              <span className="text-muted-foreground/40 font-mono">•</span>
+
+              <Link
+                href={`/truyen/${chapter.story.slug}`}
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#E07B4C] hover:underline transition-colors"
+                title={`Về trang giới thiệu truyện ${chapter.story.title}`}
+              >
+                <BookOpen className="size-3.5" />
+                <span>Giới thiệu truyện</span>
+              </Link>
+            </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-xs font-mono text-muted-foreground truncate max-w-[200px] sm:max-w-xs">
+              <Link
+                href={`/truyen/${chapter.story.slug}`}
+                className="text-xs font-mono text-muted-foreground hover:text-[#E07B4C] truncate max-w-[200px] sm:max-w-xs transition-colors"
+              >
                 {chapter.story.title}
-              </span>
+              </Link>
             </div>
           </nav>
         )}
@@ -670,9 +694,21 @@ export function ChapterReader({
               </Button>
             )}
 
+            <Link href={`/truyen/${chapter.story.slug}`}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-xl text-xs font-bold border-2 border-[#2B2623] bg-[#FAF5EE] dark:bg-[#2A2420] text-[#2B2623] dark:text-[#FAF5EE] shadow-[1.5px_2px_0px_#2B2623] hover:border-[#E07B4C] hover:text-[#E07B4C] transition-all"
+                title={`Về trang giới thiệu truyện ${chapter.story.title}`}
+              >
+                <BookOpen className="size-3.5 mr-1 text-[#E07B4C]" />
+                <span>Giới thiệu truyện</span>
+              </Button>
+            </Link>
+
             <Link href="/">
               <Button variant="ghost" size="sm" className="rounded-xl text-xs text-muted-foreground hover:text-foreground">
-                Về thư viện
+                Trang chủ
               </Button>
             </Link>
           </div>

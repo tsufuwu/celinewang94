@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -23,7 +24,12 @@ interface BookshelfDrawerProps {
 }
 
 export function BookshelfDrawer({ isOpen, onClose }: BookshelfDrawerProps) {
+  const [mounted, setMounted] = React.useState(false);
   const [items, setItems] = React.useState<BookshelfItem[]>([]);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const loadItems = React.useCallback(() => {
     setItems(getLocalBookshelf());
@@ -47,17 +53,17 @@ export function BookshelfDrawer({ isOpen, onClose }: BookshelfDrawerProps) {
     };
   }, [isOpen, loadItems]);
 
-  if (!isOpen) return null;
+  if (!mounted || !isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
+  const content = (
+    <div className="fixed inset-0 z-[9999] flex justify-end bg-black/50 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
       {/* Backdrop click to close */}
       <div className="absolute inset-0" onClick={onClose} />
 
       {/* Drawer Panel */}
-      <div className="relative w-full max-w-md bg-[#FAF5EE] dark:bg-[#1E1916] text-[#2B2623] dark:text-[#FAF5EE] border-l-2 border-[#2B2623] shadow-[-6px_0px_0px_#2B2623] h-full flex flex-col z-10 animate-in slide-in-from-right duration-200">
+      <div className="relative w-full max-w-md bg-[#FAF5EE] dark:bg-[#1E1916] text-[#2B2623] dark:text-[#FAF5EE] border-l-2 border-[#2B2623] shadow-[-6px_0px_0px_#2B2623] h-screen max-h-screen flex flex-col z-10 animate-in slide-in-from-right duration-200">
         {/* Header */}
-        <div className="p-5 border-b-2 border-[#2B2623]/20 flex items-center justify-between bg-[#FDFBF7] dark:bg-[#25201C]">
+        <div className="p-5 border-b-2 border-[#2B2623]/20 flex items-center justify-between bg-[#FDFBF7] dark:bg-[#25201C] shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="size-9 rounded-[10px] bg-[#E07B4C] text-white border-2 border-[#2B2623] shadow-[1.5px_2px_0px_#2B2623] flex items-center justify-center">
               <Bookmark className="size-4.5 fill-current" />
@@ -221,10 +227,12 @@ export function BookshelfDrawer({ isOpen, onClose }: BookshelfDrawerProps) {
         </div>
 
         {/* Footer info */}
-        <div className="p-3.5 border-t-2 border-[#2B2623]/20 bg-[#FDFBF7] dark:bg-[#25201C] text-center text-[11px] font-mono text-[#5C5146] dark:text-[#C4B9AD]">
+        <div className="p-3.5 border-t-2 border-[#2B2623]/20 bg-[#FDFBF7] dark:bg-[#25201C] text-center text-[11px] font-mono text-[#5C5146] dark:text-[#C4B9AD] shrink-0">
           <span>Tiến độ đọc được tự động đồng bộ trên thiết bị của bạn</span>
         </div>
       </div>
     </div>
   );
+
+  return createPortal(content, document.body);
 }

@@ -90,3 +90,4 @@ export function isStoryInBookshelf(storyId: string, storySlug?: string): boolean
   const list = getLocalBookshelf();
   return list.some((i) => i.storyId === storyId || (storySlug && i.storySlug === storySlug));
 }
+

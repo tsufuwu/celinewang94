@@ -17,6 +17,12 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CommentSection } from "@/components/comments/comment-section";
+import {
+  getLocalBookshelf,
+  saveBookshelfItem,
+  removeBookshelfItem,
+  isStoryInBookshelf,
+} from "@/lib/bookshelf";
 
 export interface UnifiedChapterItem {
   id: string;
@@ -67,47 +73,60 @@ export function StoryUnifiedView({ story, chapters, isAdmin = false }: UnifiedSt
   // Load reading history and bookmark state from localStorage
   React.useEffect(() => {
     try {
-      // 1. Check bookmark
-      const bookmarksRaw = localStorage.getItem("user_bookmarked_stories");
-      if (bookmarksRaw) {
-        const bookmarks: string[] = JSON.parse(bookmarksRaw);
-        setIsBookmarked(bookmarks.includes(story.id));
-      }
+      setIsBookmarked(isStoryInBookshelf(story.id, story.slug));
 
-      // 2. Check reading history for this story
-      for (const ch of chapters) {
-        const h = localStorage.getItem(`reading_history_${ch.id}`);
-        if (h) {
-          const parsed = JSON.parse(h);
-          if (parsed.chapterId) {
-            setSavedProgress({
-              chapterId: parsed.chapterId,
-              chapterNumber: ch.chapterNumber,
-            });
-            break;
+      // 1. Check bookshelf item for this story
+      const shelf = getLocalBookshelf();
+      const currentInShelf = shelf.find(
+        (i) => i.storyId === story.id || i.storySlug === story.slug
+      );
+
+      if (currentInShelf?.lastChapterId && currentInShelf.lastChapterNumber) {
+        setSavedProgress({
+          chapterId: currentInShelf.lastChapterId,
+          chapterNumber: currentInShelf.lastChapterNumber,
+        });
+      } else {
+        // 2. Check reading history per chapter
+        for (const ch of chapters) {
+          const h = localStorage.getItem(`reading_history_${ch.id}`);
+          if (h) {
+            const parsed = JSON.parse(h);
+            if (parsed.chapterId) {
+              setSavedProgress({
+                chapterId: parsed.chapterId,
+                chapterNumber: ch.chapterNumber,
+              });
+              break;
+            }
           }
         }
       }
     } catch {
       // Ignore localStorage issues
     }
-  }, [story.id, chapters]);
+  }, [story.id, story.slug, chapters]);
 
   // Toggle Bookmark
   const handleToggleBookmark = () => {
     try {
-      const bookmarksRaw = localStorage.getItem("user_bookmarked_stories") || "[]";
-      let bookmarks: string[] = JSON.parse(bookmarksRaw);
       if (isBookmarked) {
-        bookmarks = bookmarks.filter((id) => id !== story.id);
+        removeBookshelfItem(story.id);
         setIsBookmarked(false);
       } else {
-        bookmarks.push(story.id);
+        saveBookshelfItem({
+          storyId: story.id,
+          storySlug: story.slug,
+          storyTitle: story.title,
+          storyAuthor: story.author,
+          coverUrl: story.coverUrl,
+          lastChapterId: savedProgress?.chapterId || (chapters.length > 0 ? chapters[0].id : undefined),
+          lastChapterNumber: savedProgress?.chapterNumber || (chapters.length > 0 ? chapters[0].chapterNumber : 1),
+        });
         setIsBookmarked(true);
         setBookmarkFeedback(true);
         setTimeout(() => setBookmarkFeedback(false), 2000);
       }
-      localStorage.setItem("user_bookmarked_stories", JSON.stringify(bookmarks));
     } catch {
       // Ignore
     }
@@ -225,24 +244,34 @@ export function StoryUnifiedView({ story, chapters, isAdmin = false }: UnifiedSt
 
             {/* Action Buttons: Đọc từ đầu, Đọc tiếp, Thêm vào tủ sách */}
             <div className="flex gap-2.5 flex-wrap justify-center md:justify-start">
-              {/* Primary Action: Read from start */}
-              {firstChapter && (
-                <Link href={`/chuong/${firstChapter.id}`}>
-                  <Button className="h-10 px-5 rounded-[14px] text-xs font-bold font-mono bg-[#E07B4C] hover:bg-[#DC7648] text-white border-2 border-[#2B2623] shadow-[2px_2.5px_0px_#2B2623] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none flex items-center gap-2">
-                    <BookOpen className="size-3.5" />
-                    <span>Đọc từ đầu</span>
-                  </Button>
-                </Link>
-              )}
+              {/* If user has reading progress, "Đọc tiếp" is prominent */}
+              {savedProgress ? (
+                <>
+                  <Link href={`/chuong/${savedProgress.chapterId}`}>
+                    <Button className="h-10 px-5 rounded-[14px] text-xs font-bold font-mono bg-[#E07B4C] hover:bg-[#DC7648] text-white border-2 border-[#2B2623] shadow-[2px_2.5px_0px_#2B2623] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none flex items-center gap-2">
+                      <Clock className="size-3.5" />
+                      <span>Đọc tiếp Chương {savedProgress.chapterNumber}</span>
+                    </Button>
+                  </Link>
 
-              {/* Resume Reading if progress exists */}
-              {savedProgress && savedProgress.chapterId !== firstChapter?.id && (
-                <Link href={`/chuong/${savedProgress.chapterId}`}>
-                  <Button className="h-10 px-4 rounded-[14px] text-xs font-bold font-mono bg-[#BDCEAF] hover:bg-[#AEC0A0] text-[#2B2623] border-2 border-[#2B2623] shadow-[2px_2.5px_0px_#2B2623] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none flex items-center gap-1.5">
-                    <Clock className="size-3.5" />
-                    <span>Đọc tiếp Chương {savedProgress.chapterNumber}</span>
-                  </Button>
-                </Link>
+                  {firstChapter && (
+                    <Link href={`/chuong/${firstChapter.id}`}>
+                      <Button variant="outline" className="h-10 px-4 rounded-[14px] text-xs font-bold font-mono bg-[#FAF5EE] dark:bg-[#2A2420] text-[#2B2623] dark:text-[#FAF5EE] border-2 border-[#2B2623] shadow-[2px_2.5px_0px_#2B2623] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none flex items-center gap-2 hover:bg-[#E5DDD2]">
+                        <BookOpen className="size-3.5 text-[#E07B4C]" />
+                        <span>Đọc từ đầu</span>
+                      </Button>
+                    </Link>
+                  )}
+                </>
+              ) : (
+                firstChapter && (
+                  <Link href={`/chuong/${firstChapter.id}`}>
+                    <Button className="h-10 px-5 rounded-[14px] text-xs font-bold font-mono bg-[#E07B4C] hover:bg-[#DC7648] text-white border-2 border-[#2B2623] shadow-[2px_2.5px_0px_#2B2623] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none flex items-center gap-2">
+                      <BookOpen className="size-3.5" />
+                      <span>Đọc từ đầu</span>
+                    </Button>
+                  </Link>
+                )
               )}
 
               {/* Bookmark Button */}

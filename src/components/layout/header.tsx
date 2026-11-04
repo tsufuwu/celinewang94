@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Library, Menu, Sliders } from "lucide-react";
+import { BookOpen, Library, Menu, Sliders, Bookmark } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
@@ -12,11 +12,25 @@ import { BgmPlayer } from "@/components/media/bgm-player";
 import { NotificationBell } from "./notification-bell";
 import { UserNav } from "@/components/auth/user-nav";
 import { useAuth } from "@/components/auth/auth-context";
+import { BookshelfDrawer } from "@/components/bookshelf/bookshelf-drawer";
+import { getLocalBookshelf } from "@/lib/bookshelf";
 
 export function Header() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = React.useState(false);
+  const [isBookshelfOpen, setIsBookshelfOpen] = React.useState(false);
+  const [bookshelfCount, setBookshelfCount] = React.useState(0);
   const { user } = useAuth();
+
+  const updateCount = React.useCallback(() => {
+    setBookshelfCount(getLocalBookshelf().length);
+  }, []);
+
+  React.useEffect(() => {
+    updateCount();
+    window.addEventListener("bookshelf_updated", updateCount);
+    return () => window.removeEventListener("bookshelf_updated", updateCount);
+  }, [updateCount]);
 
   const navItems = [
     { label: "Trang chủ", href: "/", icon: BookOpen },
@@ -66,6 +80,21 @@ export function Header() {
               </Link>
             );
           })}
+
+          {/* Tủ Sách Trigger Button */}
+          <button
+            onClick={() => setIsBookshelfOpen(true)}
+            className="relative px-3.5 py-1.5 rounded-[12px] text-xs sm:text-[13px] whitespace-nowrap shrink-0 transition-all flex items-center gap-1.5 text-[#6B5E54] dark:text-[#A6998D] hover:text-[#2B2623] dark:hover:text-[#FAF5EE] hover:bg-[#EFE8DE]/80 dark:hover:bg-[#241E1A] font-semibold cursor-pointer"
+            title="Mở tủ sách cá nhân và dấu trang"
+          >
+            <Bookmark className="size-3.5 shrink-0 text-[#E07B4C]" />
+            <span>Tủ sách</span>
+            {bookshelfCount > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-[#E07B4C] text-white">
+                {bookshelfCount}
+              </span>
+            )}
+          </button>
         </nav>
 
         {/* Right Actions: BGM, Notification Bell, Theme, UserNav, Mobile Menu */}
@@ -123,6 +152,25 @@ export function Header() {
                     );
                   })}
 
+                  {/* Mobile Tủ Sách Trigger */}
+                  <button
+                    onClick={() => {
+                      setIsOpen(false);
+                      setIsBookshelfOpen(true);
+                    }}
+                    className="px-4 py-2.5 rounded-[12px] text-sm flex items-center justify-between font-semibold transition-all text-[#6B5E54] dark:text-[#A6998D] hover:bg-[#EFE8DE]/70 w-full text-left"
+                  >
+                    <span className="flex items-center gap-3">
+                      <Bookmark className="size-4 shrink-0 text-[#E07B4C]" />
+                      <span>Tủ sách của tôi</span>
+                    </span>
+                    {bookshelfCount > 0 && (
+                      <span className="px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-[#E07B4C] text-white">
+                        {bookshelfCount}
+                      </span>
+                    )}
+                  </button>
+
                   {user?.role === "ADMIN" && (
                     <Link
                       href="/admin"
@@ -142,6 +190,12 @@ export function Header() {
           </div>
         </div>
       </div>
+
+      {/* Global Bookshelf Drawer */}
+      <BookshelfDrawer
+        isOpen={isBookshelfOpen}
+        onClose={() => setIsBookshelfOpen(false)}
+      />
     </header>
   );
 }

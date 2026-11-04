@@ -29,6 +29,7 @@ import { renderParagraphWithFootnotes } from "./inline-footnote";
 import { AntiCopyShield } from "./anti-copy-shield";
 import { useAuth } from "@/components/auth/auth-context";
 import { CommentSection } from "@/components/comments/comment-section";
+import { saveBookshelfItem } from "@/lib/bookshelf";
 
 export interface ParagraphData {
   index: number;
@@ -49,6 +50,7 @@ export interface ChapterData {
     slug: string;
     title: string;
     author: string;
+    coverUrl?: string | null;
   };
 }
 
@@ -312,9 +314,29 @@ export function ChapterReader({
   }, [syncProgressToD1]);
 
   const handleManualBookmark = () => {
+    saveBookshelfItem({
+      storyId: chapter.story.id,
+      storySlug: chapter.story.slug,
+      storyTitle: chapter.story.title,
+      coverUrl: chapter.story.coverUrl,
+      lastChapterId: chapter.id,
+      lastChapterNumber: chapter.chapterNumber,
+      lastChapterTitle: chapter.title,
+    });
+    try {
+      localStorage.setItem(
+        `reading_history_${chapter.id}`,
+        JSON.stringify({
+          chapterId: chapter.id,
+          chapterNumber: chapter.chapterNumber,
+          updatedAt: new Date().toISOString(),
+        })
+      );
+    } catch {}
+
     syncProgressToD1(currentParagraphIndexRef.current);
     setBookmarkSavedMsg(true);
-    setTimeout(() => setBookmarkSavedMsg(false), 2000);
+    setTimeout(() => setBookmarkSavedMsg(false), 2500);
   };
 
   const scrollToParagraph = (index: number) => {
@@ -388,7 +410,7 @@ export function ChapterReader({
           <div className="p-4 rounded-2xl bg-secondary/60 border border-orange-200/50 dark:border-orange-950/40 text-left space-y-1.5 text-xs">
             <div className="flex items-center gap-1.5 font-semibold text-orange-800 dark:text-orange-300">
               <HelpCircle className="size-3.5" />
-              <span>Gợi ý mật khẩu từ Celine:</span>
+              <span>Gợi ý mật khẩu:</span>
             </div>
             <p className="text-foreground/90 italic">
               {chapter.passwordHint || "Chương này chưa có gợi ý cụ thể. Nếu bạn chưa biết mật khẩu, hãy liên hệ nhà Cam nhé!"}
@@ -626,93 +648,124 @@ export function ChapterReader({
           })}
         </article>
 
-        {/* Chapter-wide Comments Section */}
-        <CommentSection targetType="chapter" targetId={chapter.id} />
-
-        {/* Bottom Navigation Links */}
-        <footer
-          className="mt-16 sm:mt-24 pt-8 pb-36 sm:pb-48 border-t border-border/60 flex flex-col sm:flex-row items-center justify-between gap-4"
+        {/* 1. Primary Chapter Navigation Bar (PLACED ABOVE COMMENTS, ENLARGED) */}
+        <section
+          aria-label="Điều hướng chương truyện"
+          className="my-10 sm:my-14 p-5 sm:p-7 rounded-[22px] bg-[#FDFBF7] dark:bg-[#25201C] border-2 border-[#2B2623] shadow-[3.5px_5px_0px_#2B2623] flex flex-col gap-4 sm:gap-5"
         >
-          <div className="flex items-center gap-2">
+          {/* Main 3 Chapter Jump Buttons (Enlarged for comfortable tapping) */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {/* Previous Chapter */}
             {prevChapterId ? (
               <Link
                 href={`/chuong/${prevChapterId}`}
                 onClick={() => syncProgressToD1(currentParagraphIndexRef.current)}
+                className="w-full"
               >
-                <Button variant="outline" size="sm" className="rounded-xl text-xs">
-                  <ChevronLeft className="size-3.5 mr-1" /> Chương trước
+                <Button
+                  variant="outline"
+                  className="w-full h-12 px-4 rounded-[14px] text-sm sm:text-base font-bold font-mono bg-[#E5DDD2] hover:bg-[#D9CFC2] dark:bg-[#2E2824] dark:hover:bg-[#38312C] text-[#2B2623] dark:text-[#FAF5EE] border-2 border-[#2B2623] shadow-[2px_3px_0px_#2B2623] active:translate-x-[1px] active:translate-y-[1.5px] active:shadow-none flex items-center justify-center gap-2 cursor-pointer transition-all"
+                >
+                  <ChevronLeft className="size-4.5" />
+                  <span>Chương trước</span>
                 </Button>
               </Link>
             ) : (
-              <Button variant="outline" size="sm" disabled className="rounded-xl text-xs opacity-40">
-                <ChevronLeft className="size-3.5 mr-1" /> Đầu truyện
+              <Button
+                variant="outline"
+                disabled
+                className="w-full h-12 px-4 rounded-[14px] text-sm sm:text-base font-bold font-mono border-2 border-[#2B2623]/40 opacity-40 flex items-center justify-center gap-2"
+              >
+                <ChevronLeft className="size-4.5" />
+                <span>Đầu truyện</span>
               </Button>
             )}
 
-            {/* Chapter Quick Selector Center Button */}
+            {/* Chapter Quick Selector / Overview */}
             <Button
               variant="outline"
-              size="sm"
               onClick={() => setIsChapterDrawerOpen(true)}
-              className="rounded-xl text-xs font-mono font-bold bg-[#FAF5EE] dark:bg-[#2A2420] border-2 border-[#2B2623] hover:border-[#E07B4C] hover:text-[#E07B4C] transition-all shadow-[1.5px_2px_0px_#2B2623] flex items-center gap-1.5 px-3"
+              className="w-full h-12 px-4 rounded-[14px] text-sm sm:text-base font-mono font-bold bg-[#FAF5EE] dark:bg-[#1E1916] border-2 border-[#2B2623] text-[#2B2623] dark:text-[#FAF5EE] hover:border-[#E07B4C] hover:text-[#E07B4C] shadow-[2px_3px_0px_#2B2623] active:translate-x-[1px] active:translate-y-[1.5px] active:shadow-none flex items-center justify-center gap-2 cursor-pointer transition-all"
               title="Bấm để mở danh sách toàn bộ chương"
             >
-              <ListOrdered className="size-3.5 text-[#E07B4C]" />
+              <ListOrdered className="size-4.5 text-[#E07B4C]" />
               <span>
                 Chương {chapter.chapterNumber}
                 {allChapters.length > 0 ? ` / ${allChapters.length}` : ""}
               </span>
             </Button>
 
+            {/* Next Chapter */}
             {nextChapterId ? (
               <Link
                 href={`/chuong/${nextChapterId}`}
                 onClick={() => syncProgressToD1(currentParagraphIndexRef.current)}
+                className="w-full"
               >
-                <Button size="sm" className="rounded-xl text-xs bg-primary hover:bg-primary/90 text-primary-foreground">
-                  Chương sau <ChevronRight className="size-3.5 ml-1" />
+                <Button
+                  className="w-full h-12 px-4 rounded-[14px] text-sm sm:text-base font-bold font-mono bg-[#E07B4C] hover:bg-[#DC7648] text-white border-2 border-[#2B2623] shadow-[2px_3px_0px_#2B2623] active:translate-x-[1px] active:translate-y-[1.5px] active:shadow-none flex items-center justify-center gap-2 cursor-pointer transition-all"
+                >
+                  <span>Chương sau</span>
+                  <ChevronRight className="size-4.5" />
                 </Button>
               </Link>
             ) : (
-              <Button size="sm" disabled className="rounded-xl text-xs opacity-40">
-                Hết chương <ChevronRight className="size-3.5 ml-1" />
+              <Button
+                disabled
+                className="w-full h-12 px-4 rounded-[14px] text-sm sm:text-base font-bold font-mono border-2 border-[#2B2623]/40 opacity-40 flex items-center justify-center gap-2"
+              >
+                <span>Hết chương</span>
+                <ChevronRight className="size-4.5" />
               </Button>
             )}
           </div>
 
-          <div className="flex items-center gap-2">
-            {user && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleManualBookmark}
-                className="rounded-xl text-xs flex items-center gap-1.5 border-[#E07B4C]/40 text-[#E07B4C] hover:bg-[#E07B4C]/10 transition-colors"
-                title="Lưu tiến độ đọc lên tài khoản Google của bạn"
-              >
-                <Bookmark className="size-3.5 fill-current" />
-                <span>{bookmarkSavedMsg ? "Đã lưu vào tài khoản!" : "Đánh dấu đang đọc"}</span>
-              </Button>
-            )}
+          {/* Secondary Actions: Đánh dấu đang đọc, Giới thiệu truyện, Trang chủ (Enlarged) */}
+          <div className="pt-3 border-t-2 border-[#2B2623]/10 flex flex-wrap items-center justify-between gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleManualBookmark}
+              className={`h-11 px-4 sm:px-5 rounded-[14px] text-xs sm:text-sm font-bold font-mono border-2 border-[#2B2623] shadow-[2px_2.5px_0px_#2B2623] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none flex items-center gap-2 cursor-pointer transition-all ${
+                bookmarkSavedMsg
+                  ? "bg-[#BDCEAF] text-[#2B2623]"
+                  : "bg-[#F4DFAD] text-[#2B2623] hover:bg-[#EED499]"
+              }`}
+              title="Lưu vị trí chương này vào Tủ sách cá nhân của bạn"
+            >
+              <Bookmark className="size-4 fill-current text-[#E07B4C]" />
+              <span>{bookmarkSavedMsg ? "Đã lưu vào Tủ sách!" : "Đánh dấu đang đọc"}</span>
+            </Button>
 
-            <Link href={`/truyen/${chapter.story.slug}`}>
-              <Button
-                variant="outline"
-                size="sm"
-                className="rounded-xl text-xs font-bold border-2 border-[#2B2623] bg-[#FAF5EE] dark:bg-[#2A2420] text-[#2B2623] dark:text-[#FAF5EE] shadow-[1.5px_2px_0px_#2B2623] hover:border-[#E07B4C] hover:text-[#E07B4C] transition-all"
-                title={`Về trang giới thiệu truyện ${chapter.story.title}`}
-              >
-                <BookOpen className="size-3.5 mr-1 text-[#E07B4C]" />
-                <span>Giới thiệu truyện</span>
-              </Button>
-            </Link>
+            <div className="flex items-center gap-2.5">
+              <Link href={`/truyen/${chapter.story.slug}`}>
+                <Button
+                  variant="outline"
+                  className="h-11 px-4 sm:px-5 rounded-[14px] text-xs sm:text-sm font-bold font-mono border-2 border-[#2B2623] bg-[#FAF5EE] dark:bg-[#2A2420] text-[#2B2623] dark:text-[#FAF5EE] shadow-[2px_2.5px_0px_#2B2623] hover:border-[#E07B4C] hover:text-[#E07B4C] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all flex items-center gap-2"
+                  title={`Về trang giới thiệu truyện ${chapter.story.title}`}
+                >
+                  <BookOpen className="size-4 text-[#E07B4C]" />
+                  <span>Giới thiệu truyện</span>
+                </Button>
+              </Link>
 
-            <Link href="/">
-              <Button variant="ghost" size="sm" className="rounded-xl text-xs text-muted-foreground hover:text-foreground">
-                Trang chủ
-              </Button>
-            </Link>
+              <Link href="/">
+                <Button
+                  variant="ghost"
+                  className="h-11 px-3.5 rounded-[14px] text-xs sm:text-sm font-mono font-medium text-[#5C5146] hover:text-[#2B2623] dark:text-[#C4B9AD] hover:bg-[#E5DDD2]"
+                >
+                  Trang chủ
+                </Button>
+              </Link>
+            </div>
           </div>
-        </footer>
+        </section>
+
+        {/* 2. Chapter-wide Comments Section (PLACED BELOW NAVIGATION BAR) */}
+        <CommentSection targetType="chapter" targetId={chapter.id} />
+
+        {/* Bottom padding for reading comfort */}
+        <footer className="mt-8 pb-32 sm:pb-40" />
       </main>
 
       {/* Floating Toolbar Docked in Corner */}

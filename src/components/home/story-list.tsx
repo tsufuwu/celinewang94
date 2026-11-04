@@ -6,13 +6,15 @@ import Image from "next/image";
 import { BookOpen, ArrowRight } from "lucide-react";
 import type { StoryItem, StoryCategory } from "@/lib/data";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { getLocalBookshelf } from "@/lib/bookshelf";
 
 interface StoryListProps {
   initialStories: StoryItem[];
 }
 
-const CATEGORIES: { label: string; value: "ALL" | StoryCategory }[] = [
+const CATEGORIES: { label: string; value: "ALL" | "BOOKSHELF" | StoryCategory }[] = [
   { label: "Tất cả", value: "ALL" },
+  { label: "🔖 Tủ sách của tôi", value: "BOOKSHELF" },
   { label: "Full", value: "Full" },
   { label: "Đang cook", value: "Đang cook" },
   { label: "Dịch", value: "Dịch" },
@@ -20,7 +22,18 @@ const CATEGORIES: { label: string; value: "ALL" | StoryCategory }[] = [
 ];
 
 export function StoryList({ initialStories }: StoryListProps) {
-  const [selectedCategory, setSelectedCategory] = React.useState<"ALL" | StoryCategory>("ALL");
+  const [selectedCategory, setSelectedCategory] = React.useState<"ALL" | "BOOKSHELF" | StoryCategory>("ALL");
+  const [bookshelfIds, setBookshelfIds] = React.useState<string[]>([]);
+
+  React.useEffect(() => {
+    const update = () => {
+      const items = getLocalBookshelf();
+      setBookshelfIds(items.map((i) => i.storyId));
+    };
+    update();
+    window.addEventListener("bookshelf_updated", update);
+    return () => window.removeEventListener("bookshelf_updated", update);
+  }, []);
 
   const handleClearFilters = () => {
     setSelectedCategory("ALL");
@@ -29,8 +42,11 @@ export function StoryList({ initialStories }: StoryListProps) {
   // Filtered stories: category matches
   const filteredStories = React.useMemo(() => {
     if (selectedCategory === "ALL") return initialStories;
+    if (selectedCategory === "BOOKSHELF") {
+      return initialStories.filter((s) => bookshelfIds.includes(s.id) || bookshelfIds.includes(s.slug));
+    }
     return initialStories.filter((story) => story.category === selectedCategory);
-  }, [initialStories, selectedCategory]);
+  }, [initialStories, selectedCategory, bookshelfIds]);
 
   return (
     <section className="my-16" id="kho-truyen">

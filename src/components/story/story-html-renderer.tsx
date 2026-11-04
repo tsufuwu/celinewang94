@@ -18,6 +18,7 @@ interface StoryHtmlRendererProps {
   customCss?: string | null;
   chapters?: StoryChapterItem[];
   storySlug?: string;
+  disableShield?: boolean;
 }
 
 // ----------------------------------------------------
@@ -279,6 +280,7 @@ export function StoryHtmlRenderer({
   customCss,
   chapters = [],
   storySlug,
+  disableShield = false,
 }: StoryHtmlRendererProps) {
   const router = useRouter();
 
@@ -464,52 +466,56 @@ export function StoryHtmlRenderer({
     });
   }, [content, chapters]);
 
-  return (
-    <AntiCopyShield>
-      <div
-        className="story-custom-article-wrapper w-full max-w-4xl mx-auto py-4"
-        onClick={handleContainerClick}
-      >
-        {/* Scoped CSS if author specified custom styles */}
-        {customCss && <style dangerouslySetInnerHTML={{ __html: customCss }} />}
+  const contentElement = (
+    <div
+      className="story-custom-article-wrapper w-full max-w-4xl mx-auto py-4 select-text"
+      onClick={handleContainerClick}
+    >
+      {/* Scoped CSS if author specified custom styles */}
+      {customCss && <style dangerouslySetInnerHTML={{ __html: customCss }} />}
 
-        {/* Global safety styles for custom HTML to prevent overflow or breaking layout */}
-        <style>{`
-          .story-custom-article-wrapper img {
-            max-width: 100% !important;
-            height: auto !important;
-            display: block;
-            margin-left: auto;
-            margin-right: auto;
-          }
-          .story-custom-article-wrapper iframe {
-            max-width: 100% !important;
-          }
-          .story-custom-article-wrapper a {
-            color: inherit;
-            text-decoration: underline;
-            text-decoration-color: rgba(249, 115, 22, 0.4);
-            text-underline-offset: 3px;
-            transition: all 0.2s ease;
-          }
-          .story-custom-article-wrapper a:hover {
-            color: #ea580c;
-            text-decoration-color: #ea580c;
-          }
-          .story-custom-article-wrapper details summary {
-            cursor: pointer;
-            user-select: none;
-          }
-          .story-custom-article-wrapper pre,
-          .story-custom-article-wrapper code {
-            max-width: 100%;
-            overflow-x: auto;
-          }
-        `}</style>
+      {/* Global safety styles for custom HTML to prevent overflow or breaking layout */}
+      <style>{`
+        .story-custom-article-wrapper img {
+          max-width: 100% !important;
+          height: auto !important;
+          display: block;
+          margin-left: auto;
+          margin-right: auto;
+        }
+        .story-custom-article-wrapper iframe {
+          max-width: 100% !important;
+        }
+        .story-custom-article-wrapper a {
+          color: inherit;
+          text-decoration: underline;
+          text-decoration-color: rgba(249, 115, 22, 0.4);
+          text-underline-offset: 3px;
+          transition: all 0.2s ease;
+        }
+        .story-custom-article-wrapper a:hover {
+          color: #ea580c;
+          text-decoration-color: #ea580c;
+        }
+        .story-custom-article-wrapper details summary {
+          cursor: pointer;
+          user-select: none;
+        }
+        .story-custom-article-wrapper pre,
+        .story-custom-article-wrapper code {
+          max-width: 100%;
+          overflow-x: auto;
+        }
+      `}</style>
 
-        {/* Rendered HTML & Shortcode Blocks */}
-        <div className="space-y-4">{renderContent}</div>
-      </div>
-    </AntiCopyShield>
+      {/* Rendered HTML & Shortcode Blocks */}
+      <div className="space-y-4">{renderContent}</div>
+    </div>
   );
+
+  if (disableShield) {
+    return contentElement;
+  }
+
+  return <AntiCopyShield>{contentElement}</AntiCopyShield>;
 }

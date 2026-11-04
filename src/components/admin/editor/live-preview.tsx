@@ -142,6 +142,7 @@ export function LivePreview({
               customCss={customCss}
               chapters={chapters}
               storySlug={storySlug}
+              disableShield={true}
             />
           ) : (
             <div className="flex flex-col items-center justify-center min-h-[300px] text-center p-8 text-muted-foreground">

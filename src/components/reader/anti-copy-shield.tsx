@@ -1,11 +1,14 @@
 "use client";
 
 import * as React from "react";
+import { usePathname } from "next/navigation";
 import { Lock } from "lucide-react";
 
 export function AntiCopyShield({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [toastMessage, setToastMessage] = React.useState<string | null>(null);
   const toastTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const containerRef = React.useRef<HTMLDivElement>(null);
 
   const showToast = React.useCallback((msg: string) => {
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
@@ -15,15 +18,35 @@ export function AntiCopyShield({ children }: { children: React.ReactNode }) {
     }, 2500);
   }, []);
 
+  // NEVER activate copy protection inside the admin studio or editor
+  const isAdminArea = pathname?.startsWith("/admin");
+
   React.useEffect(() => {
-    // 1. Right Click / Context Menu protection
+    if (isAdminArea) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Helper: never block inputs, textareas or contenteditable elements
+    const isEditable = (el: EventTarget | null): boolean => {
+      if (!el || !(el instanceof HTMLElement)) return false;
+      return (
+        el.tagName === "INPUT" ||
+        el.tagName === "TEXTAREA" ||
+        el.isContentEditable ||
+        Boolean(el.closest("[contenteditable='true']"))
+      );
+    };
+
+    // 1. Right Click / Context Menu protection (SCOPED TO CONTAINER ONLY)
     const handleContextMenu = (e: MouseEvent) => {
+      if (isEditable(e.target)) return;
       e.preventDefault();
       showToast("🔒 Nội dung chương được bảo hộ bản quyền. Vui lòng không sao chép!");
     };
 
-    // 2. Copy & Cut Interceptor -> Poison clipboard with copyright watermark
+    // 2. Copy & Cut Interceptor (SCOPED TO CONTAINER ONLY)
     const handleCopyCut = (e: ClipboardEvent) => {
+      if (isEditable(e.target)) return;
       e.preventDefault();
       try {
         if (e.clipboardData) {
@@ -38,22 +61,20 @@ export function AntiCopyShield({ children }: { children: React.ReactNode }) {
       showToast("⚠️ Nội dung được bảo vệ bản quyền. Sao chép không được phép!");
     };
 
-    // 3. Selection & Drag start prevention
+    // 3. Selection & Drag start prevention (SCOPED TO CONTAINER ONLY)
     const handleSelectStart = (e: Event) => {
-      const target = e.target as HTMLElement;
-      // Allow inputs or forms (e.g. password modal, comments)
-      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
+      if (isEditable(e.target)) return;
       e.preventDefault();
     };
 
     const handleDragStart = (e: DragEvent) => {
+      if (isEditable(e.target)) return;
       e.preventDefault();
     };
 
-    // 4. Keyboard Shortcuts Interception (Ctrl+C, Ctrl+A, Ctrl+U, Ctrl+S, Ctrl+P)
+    // 4. Keyboard Shortcuts Interception (SCOPED TO CONTAINER ONLY)
     const handleKeyDown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
+      if (isEditable(e.target)) return;
 
       const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
       const modifier = isMac ? e.metaKey : e.ctrlKey;
@@ -94,25 +115,30 @@ export function AntiCopyShield({ children }: { children: React.ReactNode }) {
       }
     };
 
-    window.addEventListener("contextmenu", handleContextMenu);
-    window.addEventListener("copy", handleCopyCut);
-    window.addEventListener("cut", handleCopyCut);
-    window.addEventListener("selectstart", handleSelectStart);
-    window.addEventListener("dragstart", handleDragStart);
-    window.addEventListener("keydown", handleKeyDown);
+    container.addEventListener("contextmenu", handleContextMenu);
+    container.addEventListener("copy", handleCopyCut);
+    container.addEventListener("cut", handleCopyCut);
+    container.addEventListener("selectstart", handleSelectStart);
+    container.addEventListener("dragstart", handleDragStart);
+    container.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      window.removeEventListener("contextmenu", handleContextMenu);
-      window.removeEventListener("copy", handleCopyCut);
-      window.removeEventListener("cut", handleCopyCut);
-      window.removeEventListener("selectstart", handleSelectStart);
-      window.removeEventListener("dragstart", handleDragStart);
-      window.removeEventListener("keydown", handleKeyDown);
+      container.removeEventListener("contextmenu", handleContextMenu);
+      container.removeEventListener("copy", handleCopyCut);
+      container.removeEventListener("cut", handleCopyCut);
+      container.removeEventListener("selectstart", handleSelectStart);
+      container.removeEventListener("dragstart", handleDragStart);
+      container.removeEventListener("keydown", handleKeyDown);
     };
-  }, [showToast]);
+  }, [isAdminArea, showToast]);
+
+  // If in admin studio, render raw children with 0 protection or interference
+  if (isAdminArea) {
+    return <>{children}</>;
+  }
 
   return (
-    <div className="relative protected-chapter-reader select-none">
+    <div ref={containerRef} className="relative protected-chapter-reader select-none">
       {/* Retro Floating Toast Notification */}
       {toastMessage && (
         <aside

@@ -288,3 +288,45 @@
   transform: translate3d(0, 0, 0) scale(1) rotate(0deg) !important;
 }
 
+/* -------------------------------------------------------------------------- */
+/* 7. Alegreya Font for Story Intro & ProseMirror Studio Styling              */
+/* -------------------------------------------------------------------------- */
+.font-alegreya,
+.story-custom-article-wrapper,
+.story-intro-container {
+  font-family: var(--font-alegreya), "Alegreya", Georgia, Cambria, "Times New Roman", serif !important;
+}
+
+.story-custom-article-wrapper p,
+.story-custom-article-wrapper div,
+.story-custom-article-wrapper span,
+.story-custom-article-wrapper h1,
+.story-custom-article-wrapper h2,
+.story-custom-article-wrapper h3,
+.story-custom-article-wrapper blockquote {
+  font-family: var(--font-alegreya), "Alegreya", Georgia, Cambria, "Times New Roman", serif;
+}
+
+/* Studio Tiptap ProseMirror Text Selection and Cursor Fixes */
+.ProseMirror {
+  min-height: 450px;
+  outline: none !important;
+  cursor: text !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+.ProseMirror * {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+.ProseMirror p {
+  margin-bottom: 0.85em;
+  line-height: 1.8;
+}
+
+.ProseMirror:focus {
+  outline: none !important;
+}
+

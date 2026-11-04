@@ -32,6 +32,7 @@ interface ReadingToolbarProps {
   currentChapterNumber?: number;
   totalChapters?: number;
   onOpenChapterSelector?: () => void;
+  isHidden?: boolean;
 }
 
 export function ReadingToolbar({
@@ -42,13 +43,18 @@ export function ReadingToolbar({
   currentChapterNumber,
   totalChapters,
   onOpenChapterSelector,
+  isHidden = false,
 }: ReadingToolbarProps) {
   const [isExpanded, setIsExpanded] = React.useState(false);
 
   return (
     <aside
       aria-label="Thanh công cụ đọc truyện"
-      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center select-none"
+      className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center select-none transition-all duration-300 ${
+        isHidden
+          ? "translate-y-24 opacity-0 pointer-events-none"
+          : "translate-y-0 opacity-100"
+      }`}
     >
       {/* Expanded Controls Panel */}
       {isExpanded && (

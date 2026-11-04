@@ -1,15 +1,24 @@
-import { getStories, getRecentChapters } from "@/lib/data";
+import { getStories, getRecentChapters, FALLBACK_STORIES, FALLBACK_RECENT_CHAPTERS } from "@/lib/data";
 import { ArchiveHero } from "@/components/home/archive-hero";
 import { BentoSection } from "@/components/home/bento-section";
 import { StoryList } from "@/components/home/story-list";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export default async function HomePage() {
-  const [stories, recentChapters] = await Promise.all([
-    getStories(),
-    getRecentChapters(6),
-  ]);
+  let stories = FALLBACK_STORIES;
+  let recentChapters = FALLBACK_RECENT_CHAPTERS.slice(0, 6);
+
+  try {
+    const [dbStories, dbChapters] = await Promise.all([
+      getStories(),
+      getRecentChapters(6),
+    ]);
+    if (dbStories && dbStories.length > 0) stories = dbStories;
+    if (dbChapters && dbChapters.length > 0) recentChapters = dbChapters;
+  } catch (err) {
+    console.warn("HomePage fetch fallback active:", err);
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4">

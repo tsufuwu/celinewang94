@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Lora } from "next/font/google";
+import { Plus_Jakarta_Sans, Lora, Alegreya } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Header } from "@/components/layout/header";
@@ -20,6 +20,12 @@ const sans = Plus_Jakarta_Sans({
 const serif = Lora({
   subsets: ["latin", "vietnamese"],
   variable: "--font-serif",
+  display: "swap",
+});
+
+const alegreya = Alegreya({
+  subsets: ["latin", "vietnamese"],
+  variable: "--font-alegreya",
   display: "swap",
 });
 
@@ -51,7 +57,7 @@ export default async function RootLayout({
   ]);
 
   return (
-    <html lang="vi" suppressHydrationWarning className={`${sans.variable} ${serif.variable}`}>
+    <html lang="vi" suppressHydrationWarning className={`${sans.variable} ${serif.variable} ${alegreya.variable}`}>
       <head>
         <link rel="icon" type="image/webp" href="/cropped-cropped-cropped-medianaranja.webp?v=4" />
         <link rel="shortcut icon" href="/favicon.ico?v=4" />
@@ -59,7 +65,7 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400..900;1,400..900&family=Alegreya+Sans:ital,wght@0,400..700;1,400..700&family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap"
           rel="stylesheet"
         />
       </head>

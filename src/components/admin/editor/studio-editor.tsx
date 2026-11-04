@@ -388,7 +388,7 @@ export function StudioEditor({ stories: initialStories, initialTemplates = [] }:
     .filter(Boolean).length;
 
   return (
-    <div className="flex flex-col h-screen w-full bg-[#FAF5EE] dark:bg-[#1A1614] text-[#2B2623] dark:text-[#FAF5EE] overflow-hidden select-none font-sans">
+    <div className="flex flex-col h-screen w-full bg-[#FAF5EE] dark:bg-[#1A1614] text-[#2B2623] dark:text-[#FAF5EE] overflow-hidden font-sans">
       {/* 1. Studio Top Control Bar */}
       <header className="h-14 border-b-2 border-[#2B2623]/20 bg-[#FAF5EE]/95 dark:bg-[#1F1B18]/95 backdrop-blur-md px-3 sm:px-6 flex items-center justify-between gap-3 shrink-0 z-30 shadow-[0_2px_4px_rgba(43,38,35,0.04)]">
         {/* Left: Back + Mode Switchers */}

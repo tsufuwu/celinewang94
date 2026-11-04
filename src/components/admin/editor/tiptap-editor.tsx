@@ -32,6 +32,8 @@ import {
   Heading1,
   Heading2,
   Heading3,
+  X,
+  Sparkles,
 } from "lucide-react";
 
 interface TiptapEditorProps {
@@ -41,8 +43,14 @@ interface TiptapEditorProps {
 }
 
 export function TiptapEditor({ value, onChange, className = "" }: TiptapEditorProps) {
-  const [footnoteDialogOpen, setFootnoteDialogOpen] = React.useState(false);
-  const [footnoteNote, setFootnoteNote] = React.useState("");
+  // Footnote Modal States
+  const [footnoteModalOpen, setFootnoteModalOpen] = React.useState(false);
+  const [footnoteTargetWord, setFootnoteTargetWord] = React.useState("");
+  const [footnoteExplanation, setFootnoteExplanation] = React.useState("");
+  const selectionRangeRef = React.useRef<{ from: number; to: number } | null>(null);
+
+  // Distinguish between internal typing and external prop updates
+  const isInternalUpdateRef = React.useRef(false);
 
   const editor = useEditor({
     extensions: [
@@ -62,22 +70,89 @@ export function TiptapEditor({ value, onChange, className = "" }: TiptapEditorPr
     content: value || "<p>Bắt đầu viết tác phẩm của bạn...</p>",
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
+      isInternalUpdateRef.current = true;
       onChange(editor.getHTML());
     },
     editorProps: {
       attributes: {
         class:
-          "prose prose-stone dark:prose-invert max-w-none focus:outline-none min-h-[400px] p-6 font-serif leading-relaxed text-base text-foreground",
+          "prose prose-stone dark:prose-invert max-w-none focus:outline-none min-h-[500px] p-6 font-serif leading-relaxed text-base text-foreground cursor-text select-text",
       },
     },
   });
 
-  // Sync external changes (e.g. from Code mode or template insertion)
+  // Sync external changes (e.g. from switching chapters or Code mode)
   React.useEffect(() => {
-    if (editor && value !== editor.getHTML()) {
+    if (!editor) return;
+
+    if (isInternalUpdateRef.current) {
+      isInternalUpdateRef.current = false;
+      return;
+    }
+
+    const currentHtml = editor.getHTML();
+    if (value !== currentHtml) {
       editor.commands.setContent(value || "<p></p>", { emitUpdate: false });
     }
   }, [value, editor]);
+
+  // Open Footnote modal: captures current selected text and cursor range immediately
+  const handleOpenFootnoteDialog = () => {
+    if (!editor) return;
+    const { from, to } = editor.state.selection;
+    const selectedText = editor.state.doc.textBetween(from, to).trim();
+
+    selectionRangeRef.current = { from, to };
+    setFootnoteTargetWord(selectedText);
+    setFootnoteExplanation("");
+    setFootnoteModalOpen(true);
+  };
+
+  // Submit Footnote insertion: wraps as [cụm từ][[lời giải thích]]
+  const handleSubmitFootnote = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!editor) return;
+    const note = footnoteExplanation.trim();
+    if (!note) return;
+
+    const target = footnoteTargetWord.trim() || "chú thích";
+    const range = selectionRangeRef.current;
+
+    // Standard shortcode format used by ChapterReader: [cụm từ][[lời giải thích]]
+    const footnoteString = `[${target}][[${note}]]`;
+
+    if (range && range.from !== range.to) {
+      editor
+        .chain()
+        .focus()
+        .setTextSelection({ from: range.from, to: range.to })
+        .insertContent(footnoteString)
+        .run();
+    } else {
+      editor
+        .chain()
+        .focus()
+        .insertContent(footnoteString)
+        .run();
+    }
+
+    setFootnoteModalOpen(false);
+    setFootnoteTargetWord("");
+    setFootnoteExplanation("");
+    selectionRangeRef.current = null;
+  };
+
+  // Hotkey listener for footnote (Alt+N or Ctrl+Shift+F)
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.altKey && e.key.toLowerCase() === "n") || (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "f")) {
+        e.preventDefault();
+        handleOpenFootnoteDialog();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [editor]);
 
   if (!editor) {
     return <div className="p-8 text-center text-muted-foreground text-sm">Đang tải trình soạn thảo Visual...</div>;
@@ -88,22 +163,10 @@ export function TiptapEditor({ value, onChange, className = "" }: TiptapEditorPr
     editor.chain().focus().insertContent(htmlContent).run();
   };
 
-  // Insert Inline Footnote: word[[note]]
-  const handleInsertFootnote = () => {
-    const { from, to } = editor.state.selection;
-    const selectedText = editor.state.doc.textBetween(from, to) || "Từ cần chú thích";
-    if (!footnoteNote.trim()) return;
-
-    const footnoteTag = `${selectedText}[[${footnoteNote.trim()}]]`;
-    editor.chain().focus().insertContent(footnoteTag).run();
-    setFootnoteNote("");
-    setFootnoteDialogOpen(false);
-  };
-
   return (
-    <div className={`flex flex-col h-full rounded-2xl border border-border/80 overflow-hidden bg-background shadow-xs ${className}`}>
+    <div className={`flex flex-col h-full rounded-2xl border border-border/80 overflow-hidden bg-background shadow-xs select-text ${className}`}>
       {/* Sticky Top Formatting Toolbar */}
-      <div className="sticky top-0 z-20 flex flex-wrap items-center gap-1 p-2 bg-muted/40 border-b border-border/70 backdrop-blur-xs text-xs">
+      <div className="sticky top-0 z-20 flex flex-wrap items-center gap-1 p-2 bg-muted/40 border-b border-border/70 backdrop-blur-xs text-xs select-none">
         {/* Headings */}
         <div className="flex items-center gap-0.5 border-r border-border/60 pr-1.5 mr-1">
           <Button
@@ -291,17 +354,18 @@ export function TiptapEditor({ value, onChange, className = "" }: TiptapEditorPr
         </div>
 
         {/* Studio Elements: Inline Footnote, Spoiler, Shortcodes */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
+          {/* Prominent Footnote Button */}
           <Button
             type="button"
-            variant="ghost"
+            variant="default"
             size="sm"
-            onClick={() => setFootnoteDialogOpen(true)}
-            className="h-7 px-2 text-[11px] rounded-lg text-orange-600 bg-orange-500/10 hover:bg-orange-500/20 font-medium"
-            title="Chèn chú thích nổi (Inline Footnote)"
+            onClick={handleOpenFootnoteDialog}
+            className="h-7 px-2.5 text-xs rounded-lg bg-[#E07B4C] hover:bg-[#DC7648] text-white font-bold shadow-xs flex items-center gap-1.5 transition-all"
+            title="Bôi đen một từ/cụm từ rồi bấm nút này để thêm chú thích nổi (Phím tắt: Alt+N)"
           >
-            <HelpCircle className="size-3.5 mr-1 text-orange-500" />
-            <span>Chú thích</span>
+            <HelpCircle className="size-3.5" />
+            <span>Thêm Chú Thích</span>
           </Button>
 
           <Button
@@ -370,57 +434,106 @@ export function TiptapEditor({ value, onChange, className = "" }: TiptapEditorPr
         </div>
       </div>
 
-      {/* Editor Content Area */}
-      <div className="flex-1 overflow-y-auto">
-        <EditorContent editor={editor} />
+      {/* Editor Content Area: Click to place cursor & Select text */}
+      <div
+        className="flex-1 overflow-y-auto cursor-text bg-background select-text p-2 sm:p-4"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            editor.commands.focus("end");
+          }
+        }}
+      >
+        <EditorContent editor={editor} className="min-h-full cursor-text select-text focus:outline-none" />
       </div>
 
-      {/* Footnote Insertion Dialog */}
-      {footnoteDialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in-50">
-          <div className="w-full max-w-md bg-background rounded-2xl border border-border p-5 shadow-2xl space-y-4">
-            <div className="flex items-center gap-2 text-foreground font-serif text-lg font-bold">
-              <HelpCircle className="size-5 text-orange-500" />
-              <h3>Tạo Chú Thích Nổi (Inline Footnote)</h3>
+      {/* Footnote Insertion Modal */}
+      {footnoteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in-50">
+          <form
+            onSubmit={handleSubmitFootnote}
+            className="w-full max-w-md bg-background rounded-2xl border-2 border-[#2B2623] p-5 shadow-[4px_6px_0px_#2B2623] space-y-4"
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-border/80">
+              <div className="flex items-center gap-2 text-foreground font-serif text-lg font-bold">
+                <HelpCircle className="size-5 text-[#E07B4C]" />
+                <h3>Thêm Chú Thích Nổi</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFootnoteModalOpen(false)}
+                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
+              >
+                <X className="size-4" />
+              </button>
             </div>
 
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Nhập nội dung giải thích cho từ/cụm từ đang chọn. Trên máy tính khi rê chuột vào sẽ nổi tooltip, trên điện thoại khi chạm vào sẽ mở khung giải nghĩa.
-            </p>
+            <div className="space-y-3">
+              {/* Word/phrase to annotate */}
+              <div>
+                <label className="block text-xs font-bold text-[#5C5146] dark:text-[#C4B9AD] mb-1">
+                  Từ hoặc cụm từ được chú thích:
+                </label>
+                <input
+                  type="text"
+                  value={footnoteTargetWord}
+                  onChange={(e) => setFootnoteTargetWord(e.target.value)}
+                  placeholder="Ví dụ: Lưỡi trượt, Cú nhảy Axel..."
+                  className="w-full h-9 px-3 rounded-xl border border-border bg-muted/20 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-[#E07B4C]"
+                  autoFocus={!footnoteTargetWord}
+                />
+              </div>
 
-            <textarea
-              rows={3}
-              value={footnoteNote}
-              onChange={(e) => setFootnoteNote(e.target.value)}
-              placeholder="Ví dụ: Cú nhảy duy nhất cất cánh về phía trước trong trượt băng nghệ thuật..."
-              className="w-full p-3 rounded-xl border border-border bg-muted/20 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-orange-500 resize-none"
-              autoFocus
-            />
+              {/* Explanation Note */}
+              <div>
+                <label className="block text-xs font-bold text-[#5C5146] dark:text-[#C4B9AD] mb-1">
+                  Nội dung giải thích / chú thích:
+                </label>
+                <textarea
+                  rows={3}
+                  value={footnoteExplanation}
+                  onChange={(e) => setFootnoteExplanation(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSubmitFootnote();
+                    }
+                  }}
+                  placeholder="Nhập giải nghĩa chi tiết... (Gợi ý: Nhấn Enter để lưu)"
+                  className="w-full p-3 rounded-xl border border-border bg-muted/20 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-[#E07B4C] resize-none leading-relaxed"
+                  autoFocus={!!footnoteTargetWord}
+                />
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-[#5C5146] dark:text-[#E0D8D0] flex items-start gap-2">
+                <Sparkles className="size-3.5 text-amber-600 shrink-0 mt-0.5" />
+                <span>
+                  Độc giả trên máy tính khi rê chuột vào cụm từ sẽ nổi bong bóng giải thích. Trên điện thoại chạm vào sẽ mở khung giải nghĩa tiện lợi.
+                </span>
+              </div>
+            </div>
 
             <div className="flex justify-end gap-2 pt-2">
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={() => setFootnoteDialogOpen(false)}
-                className="rounded-xl text-xs h-8"
+                onClick={() => setFootnoteModalOpen(false)}
+                className="rounded-xl text-xs h-9 px-4"
               >
-                Hủy
+                Hủy (Esc)
               </Button>
               <Button
-                type="button"
+                type="submit"
                 size="sm"
-                onClick={handleInsertFootnote}
-                disabled={!footnoteNote.trim()}
-                className="rounded-xl text-xs h-8 bg-orange-600 hover:bg-orange-700 text-white"
+                disabled={!footnoteExplanation.trim()}
+                className="rounded-xl text-xs h-9 px-4 bg-[#E07B4C] hover:bg-[#DC7648] text-white font-bold border border-[#2B2623]/20 shadow-xs"
               >
-                Chèn chú thích
+                Chèn chú thích (Enter)
               </Button>
             </div>
-          </div>
+          </form>
         </div>
       )}
     </div>
   );
 }
-

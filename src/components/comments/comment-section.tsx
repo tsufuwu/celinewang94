@@ -12,6 +12,8 @@ import {
   Trash2,
   Check,
   X,
+  CornerDownRight,
+  Reply,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -20,6 +22,7 @@ interface CommentItem {
   authorName: string;
   content: string;
   userId?: string | null;
+  parentId?: string | null;
   createdAt: string;
 }
 
@@ -46,6 +49,11 @@ export function CommentSection({
   const [editingContent, setEditingContent] = React.useState("");
   const [isSavingEdit, setIsSavingEdit] = React.useState(false);
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
+
+  // Reply states
+  const [replyingCommentId, setReplyingCommentId] = React.useState<string | null>(null);
+  const [replyContent, setReplyContent] = React.useState("");
+  const [isSubmittingReply, setIsSubmittingReply] = React.useState(false);
 
   const fetchComments = React.useCallback(async () => {
     try {
@@ -183,6 +191,63 @@ export function CommentSection({
     }
   };
 
+  const handleSubmitReply = async (parentCommentId: string) => {
+    if (!replyContent.trim() || isSubmittingReply) return;
+
+    if (!user) {
+      loginWithGoogle();
+      return;
+    }
+
+    try {
+      setIsSubmittingReply(true);
+      const endpoint =
+        targetType === "chapter" ? "/api/comments/chapter" : "/api/comments/story";
+      const payload =
+        targetType === "chapter"
+          ? { chapterId: targetId, content: replyContent.trim(), parentId: parentCommentId }
+          : { storyId: targetId, content: replyContent.trim(), parentId: parentCommentId };
+
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Không thể gửi phản hồi.");
+      }
+
+      setReplyContent("");
+      setReplyingCommentId(null);
+      // Append the new reply
+      setComments((prev) => [...prev, data.comment]);
+    } catch (err: unknown) {
+      alert((err as Error)?.message || "Đã có lỗi xảy ra khi gửi phản hồi.");
+    } finally {
+      setIsSubmittingReply(false);
+    }
+  };
+
+  // Group into root comments and replies
+  const { rootComments, replyMap } = React.useMemo(() => {
+    const roots: CommentItem[] = [];
+    const map = new Map<string, CommentItem[]>();
+
+    comments.forEach((c) => {
+      if (c.parentId) {
+        const list = map.get(c.parentId) || [];
+        list.push(c);
+        map.set(c.parentId, list);
+      } else {
+        roots.push(c);
+      }
+    });
+
+    return { rootComments: roots, replyMap: map };
+  }, [comments]);
+
   const formatCommentDate = (dateStr: string) => {
     try {
       const d = new Date(dateStr);
@@ -300,119 +365,24 @@ export function CommentSection({
         <div className="py-8 text-center text-xs font-mono text-[#5C5146] dark:text-[#C4B9AD]">
           Đang tải bình luận...
         </div>
-      ) : comments.length === 0 ? (
+      ) : rootComments.length === 0 ? (
         <div className="py-8 text-center rounded-[12px] bg-[#FDFBF7]/60 dark:bg-[#25201C]/60 border border-dashed border-[#2B2623]/25">
           <p className="text-xs sm:text-sm font-serif italic text-[#5C5146] dark:text-[#C4B9AD]">
             Chưa có bình luận nào. Hãy là người đầu tiên để lại cảm nghĩ của bạn!
           </p>
         </div>
       ) : (
-        <div className="space-y-3.5">
-          {comments.map((c) => {
-            const isAdmin = c.authorName.startsWith("[Admin]");
-            const isOwner = user && c.userId && user.id === c.userId;
-            const canManage = isOwner || (user && user.role === "ADMIN");
-            const isEditing = editingCommentId === c.id;
-
+        <div className="space-y-4">
+          {rootComments.map((root) => {
+            const replies = replyMap.get(root.id) || [];
             return (
-              <div
-                key={c.id}
-                className="rounded-[14px] bg-[#FDFBF7] dark:bg-[#25201C] border-2 border-[#2B2623] p-4 shadow-[1.5px_2px_0px_#2B2623] transition-all"
-              >
-                <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#2B2623]/10">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={`size-6 rounded-full border border-[#2B2623] flex items-center justify-center text-[10px] font-bold ${
-                        isAdmin
-                          ? "bg-[#E07B4C] text-white"
-                          : "bg-[#BDCEAF] text-[#2B2623]"
-                      }`}
-                    >
-                      {c.authorName.charAt(isAdmin ? 8 : 0).toUpperCase() || "B"}
-                    </div>
-                    <span
-                      className={`text-xs font-mono font-bold ${
-                        isAdmin
-                          ? "text-[#E07B4C]"
-                          : "text-[#2B2623] dark:text-[#FAF5EE]"
-                      }`}
-                    >
-                      {c.authorName}
-                    </span>
-                    {isOwner && (
-                      <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#F4DFAD] text-[#2B2623] border border-[#2B2623]/30 font-semibold">
-                        Bạn
-                      </span>
-                    )}
+              <div key={root.id} className="space-y-2.5">
+                {renderCommentItem(root, false)}
+                {/* Nested replies */}
+                {replies.length > 0 && (
+                  <div className="ml-4 sm:ml-8 pl-3.5 border-l-2 border-[#E07B4C]/30 space-y-2.5">
+                    {replies.map((reply) => renderCommentItem(reply, true, root))}
                   </div>
-
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-[11px] font-mono text-[#5C5146] dark:text-[#C4B9AD] flex items-center gap-1">
-                      <Clock className="size-3" />
-                      {formatCommentDate(c.createdAt)}
-                    </span>
-
-                    {/* Edit / Delete actions for comment owner or admin */}
-                    {canManage && !isEditing && (
-                      <div className="flex items-center gap-1 border-l border-[#2B2623]/20 pl-2">
-                        {isOwner && (
-                          <button
-                            type="button"
-                            onClick={() => handleStartEdit(c)}
-                            className="p-1 text-[#5C5146] hover:text-[#E07B4C] transition-colors rounded hover:bg-[#E5DDD2]"
-                            title="Sửa bình luận"
-                          >
-                            <Pencil className="size-3.5" />
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          disabled={deletingId === c.id}
-                          onClick={() => handleDelete(c.id)}
-                          className="p-1 text-[#5C5146] hover:text-rose-600 transition-colors rounded hover:bg-[#E5DDD2] disabled:opacity-50"
-                          title="Xóa bình luận"
-                        >
-                          <Trash2 className="size-3.5" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {isEditing ? (
-                  <div className="mt-2 space-y-2">
-                    <textarea
-                      value={editingContent}
-                      onChange={(e) => setEditingContent(e.target.value)}
-                      rows={3}
-                      className="w-full p-2.5 rounded-[10px] bg-[#FAF5EE] dark:bg-[#1F1B18] border-2 border-[#2B2623] text-sm font-sans text-[#2B2623] dark:text-[#FAF5EE] focus:outline-none focus:ring-1 focus:ring-[#E07B4C]"
-                    />
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleCancelEdit}
-                        className="rounded-[8px] text-xs h-7 px-2.5 border-2 border-[#2B2623]"
-                      >
-                        <X className="size-3 mr-1" /> Hủy
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        disabled={isSavingEdit || !editingContent.trim()}
-                        onClick={() => handleSaveEdit(c.id)}
-                        className="rounded-[8px] text-xs h-7 px-3 bg-[#E07B4C] hover:bg-[#DC7648] text-white border-2 border-[#2B2623] font-bold"
-                      >
-                        <Check className="size-3 mr-1" />
-                        {isSavingEdit ? "Đang lưu..." : "Lưu thay đổi"}
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-sm font-sans text-[#2B2623] dark:text-[#E8E2D9] whitespace-pre-wrap leading-relaxed select-text">
-                    {c.content}
-                  </p>
                 )}
               </div>
             );
@@ -421,4 +391,197 @@ export function CommentSection({
       )}
     </section>
   );
+
+  function renderCommentItem(
+    c: CommentItem,
+    isReply: boolean = false,
+    parentComment?: CommentItem
+  ) {
+    const isAdmin = c.authorName.startsWith("[Admin]");
+    const isOwner = user && c.userId && user.id === c.userId;
+    const canManage = isOwner || (user && user.role === "ADMIN");
+    const isEditing = editingCommentId === c.id;
+    const isReplying = replyingCommentId === c.id;
+
+    return (
+      <div
+        key={c.id}
+        id={`comment-${c.id}`}
+        className={`rounded-[14px] border-2 border-[#2B2623] p-3.5 sm:p-4 shadow-[1.5px_2px_0px_#2B2623] transition-all ${
+          isReply
+            ? "bg-[#FAF5EE] dark:bg-[#1E1916]"
+            : "bg-[#FDFBF7] dark:bg-[#25201C]"
+        }`}
+      >
+        <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#2B2623]/10">
+          <div className="flex items-center gap-2">
+            <div
+              className={`size-6 rounded-full border border-[#2B2623] flex items-center justify-center text-[10px] font-bold ${
+                isAdmin
+                  ? "bg-[#E07B4C] text-white"
+                  : "bg-[#BDCEAF] text-[#2B2623]"
+              }`}
+            >
+              {c.authorName.charAt(isAdmin ? 8 : 0).toUpperCase() || "B"}
+            </div>
+            <span
+              className={`text-xs font-mono font-bold ${
+                isAdmin
+                  ? "text-[#E07B4C]"
+                  : "text-[#2B2623] dark:text-[#FAF5EE]"
+              }`}
+            >
+              {c.authorName}
+            </span>
+            {isOwner && (
+              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#F4DFAD] text-[#2B2623] border border-[#2B2623]/30 font-semibold">
+                Bạn
+              </span>
+            )}
+            {isReply && parentComment && (
+              <span className="text-[10px] font-mono text-[#5C5146] dark:text-[#C4B9AD] hidden sm:inline-flex items-center gap-1">
+                <CornerDownRight className="size-3 text-[#E07B4C]" />
+                trả lời <b>@{parentComment.authorName}</b>
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            <span className="text-[11px] font-mono text-[#5C5146] dark:text-[#C4B9AD] flex items-center gap-1">
+              <Clock className="size-3" />
+              {formatCommentDate(c.createdAt)}
+            </span>
+
+            {/* Edit / Delete actions */}
+            {canManage && !isEditing && (
+              <div className="flex items-center gap-1 border-l border-[#2B2623]/20 pl-2">
+                {isOwner && (
+                  <button
+                    type="button"
+                    onClick={() => handleStartEdit(c)}
+                    className="p-1 text-[#5C5146] hover:text-[#E07B4C] transition-colors rounded hover:bg-[#E5DDD2]"
+                    title="Sửa bình luận"
+                  >
+                    <Pencil className="size-3.5" />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  disabled={deletingId === c.id}
+                  onClick={() => handleDelete(c.id)}
+                  className="p-1 text-[#5C5146] hover:text-rose-600 transition-colors rounded hover:bg-[#E5DDD2] disabled:opacity-50"
+                  title="Xóa bình luận"
+                >
+                  <Trash2 className="size-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {isEditing ? (
+          <div className="mt-2 space-y-2">
+            <textarea
+              value={editingContent}
+              onChange={(e) => setEditingContent(e.target.value)}
+              rows={3}
+              className="w-full p-2.5 rounded-[10px] bg-[#FAF5EE] dark:bg-[#1F1B18] border-2 border-[#2B2623] text-sm font-sans text-[#2B2623] dark:text-[#FAF5EE] focus:outline-none focus:ring-1 focus:ring-[#E07B4C]"
+            />
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleCancelEdit}
+                className="rounded-[8px] text-xs h-7 px-2.5 border-2 border-[#2B2623]"
+              >
+                <X className="size-3 mr-1" /> Hủy
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                disabled={isSavingEdit || !editingContent.trim()}
+                onClick={() => handleSaveEdit(c.id)}
+                className="rounded-[8px] text-xs h-7 px-3 bg-[#E07B4C] hover:bg-[#DC7648] text-white border-2 border-[#2B2623] font-bold"
+              >
+                <Check className="size-3 mr-1" />
+                {isSavingEdit ? "Đang lưu..." : "Lưu thay đổi"}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <p className="text-sm font-sans text-[#2B2623] dark:text-[#E8E2D9] whitespace-pre-wrap leading-relaxed select-text">
+              {c.content}
+            </p>
+
+            <div className="flex items-center gap-3 mt-2.5 pt-2 border-t border-[#2B2623]/10">
+              <button
+                type="button"
+                onClick={() => {
+                  if (!user) {
+                    loginWithGoogle();
+                  } else {
+                    setReplyingCommentId(isReplying ? null : c.id);
+                    setReplyContent("");
+                  }
+                }}
+                className="text-[11px] font-mono font-bold text-[#5C5146] dark:text-[#C4B9AD] hover:text-[#E07B4C] flex items-center gap-1 transition-colors cursor-pointer"
+              >
+                <Reply className="size-3" />
+                <span>Trả lời</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Inline Reply Form */}
+        {isReplying && (
+          <div className="mt-3 pt-3 border-t-2 border-dashed border-[#2B2623]/20 animate-in fade-in duration-150">
+            <div className="flex items-center justify-between text-xs font-mono mb-1.5 text-[#5C5146] dark:text-[#C4B9AD]">
+              <span className="font-bold flex items-center gap-1 text-[#2B2623] dark:text-[#FAF5EE]">
+                <CornerDownRight className="size-3 text-[#E07B4C]" />
+                Trả lời @<b className="text-[#E07B4C]">{c.authorName}</b>:
+              </span>
+              <button
+                type="button"
+                onClick={() => setReplyingCommentId(null)}
+                className="text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <X className="size-3.5" />
+              </button>
+            </div>
+            <textarea
+              value={replyContent}
+              onChange={(e) => setReplyContent(e.target.value)}
+              placeholder={`Viết câu trả lời cho ${c.authorName}...`}
+              rows={2}
+              className="w-full p-2.5 rounded-[10px] bg-[#FAF5EE] dark:bg-[#1F1B18] border-2 border-[#2B2623] text-xs sm:text-sm font-sans text-[#2B2623] dark:text-[#FAF5EE] focus:outline-none focus:ring-1 focus:ring-[#E07B4C]"
+            />
+            <div className="flex justify-end gap-2 mt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setReplyingCommentId(null)}
+                className="rounded-[8px] text-xs h-7 px-2.5 border-2 border-[#2B2623]"
+              >
+                Hủy
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                disabled={isSubmittingReply || !replyContent.trim()}
+                onClick={() => handleSubmitReply(c.parentId || c.id)}
+                className="rounded-[8px] text-xs h-7 px-3 bg-[#E07B4C] hover:bg-[#DC7648] text-white border-2 border-[#2B2623] font-bold"
+              >
+                <Send className="size-3 mr-1" />
+                {isSubmittingReply ? "Đang gửi..." : "Gửi trả lời"}
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 }

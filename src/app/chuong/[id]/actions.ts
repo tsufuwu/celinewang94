@@ -1,9 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getDb, paragraphComments, generateId } from "@/db";
+import { getDb, paragraphComments, chapters, stories, generateId } from "@/db";
 import { eq } from "drizzle-orm";
 import { getAuthSession } from "@/lib/auth";
+import { dispatchCommentNotifications } from "@/lib/notifications";
 
 export interface ParagraphCommentItem {
   id: string;
@@ -11,6 +12,8 @@ export interface ParagraphCommentItem {
   paragraphIndex: number;
   authorName: string;
   content: string;
+  userId?: string | null;
+  parentId?: string | null;
   isTypoReport: boolean;
   isResolved: boolean;
   createdAt: Date;
@@ -80,7 +83,8 @@ export async function createParagraphComment(
   chapterId: string,
   paragraphIndex: number,
   content: string,
-  isTypoReport: boolean
+  isTypoReport: boolean,
+  parentId?: string | null
 ): Promise<CommentActionResult> {
   const user = await getAuthSession();
 
@@ -106,10 +110,15 @@ export async function createParagraphComment(
     paragraphIndex,
     authorName: finalAuthorName,
     content: content.trim(),
+    userId: user.id,
+    parentId: parentId || null,
     isTypoReport,
     isResolved: false,
     createdAt: new Date(),
   };
+
+  let parentComment: { userId: string | null; authorName: string } | null = null;
+  let targetTitle = "Chương truyện";
 
   try {
     const db = await getDb();
@@ -120,10 +129,47 @@ export async function createParagraphComment(
         paragraphIndex,
         authorName: commentData.authorName,
         content: commentData.content,
+        userId: user.id,
+        parentId: commentData.parentId,
         isTypoReport: commentData.isTypoReport,
         isResolved: false,
         createdAt: commentData.createdAt,
       });
+
+      // Query parent comment if replying
+      if (parentId) {
+        const parentRows = await db
+          .select({
+            userId: paragraphComments.userId,
+            authorName: paragraphComments.authorName,
+          })
+          .from(paragraphComments)
+          .where(eq(paragraphComments.id, parentId))
+          .limit(1);
+
+        if (parentRows.length > 0) {
+          parentComment = parentRows[0];
+        }
+      }
+
+      // Query chapter & story details
+      const chapterInfo = await db
+        .select({
+          chapterNumber: chapters.chapterNumber,
+          chapterTitle: chapters.title,
+          storyTitle: stories.title,
+        })
+        .from(chapters)
+        .leftJoin(stories, eq(chapters.storyId, stories.id))
+        .where(eq(chapters.id, chapterId))
+        .limit(1);
+
+      if (chapterInfo.length > 0) {
+        const ch = chapterInfo[0];
+        targetTitle = ch.storyTitle
+          ? `${ch.storyTitle} - Chương ${ch.chapterNumber}`
+          : `Chương ${ch.chapterNumber}: ${ch.chapterTitle}`;
+      }
     } else {
       throw new Error("No D1 connection");
     }
@@ -131,6 +177,21 @@ export async function createParagraphComment(
     console.warn("D1 offline, saved paragraph comment to memory cache:", error);
     inMemoryParagraphComments.push(commentData);
   }
+
+  // Dispatch in-app and email notifications
+  dispatchCommentNotifications({
+    actorName: commentData.authorName,
+    actorId: user.id,
+    content: commentData.content,
+    targetType: "paragraph",
+    targetId: chapterId,
+    targetTitle,
+    link: `/chuong/${chapterId}`,
+    parentId: parentId || null,
+    parentUserId: parentComment?.userId || null,
+    parentAuthorName: parentComment?.authorName || null,
+    paragraphIndex,
+  });
 
   revalidatePath(`/chuong/${chapterId}`);
   return {

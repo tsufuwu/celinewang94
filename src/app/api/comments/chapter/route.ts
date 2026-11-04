@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb, paragraphComments, generateId } from "@/db";
+import { getDb, paragraphComments, chapters, stories, generateId } from "@/db";
 import { eq, and, desc } from "drizzle-orm";
 import { getAuthSession } from "@/lib/auth";
+import { dispatchCommentNotifications } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +35,7 @@ export async function GET(request: NextRequest) {
           authorName: r.authorName,
           content: r.content,
           userId: r.userId || null,
+          parentId: r.parentId || null,
           createdAt: r.createdAt ? new Date(r.createdAt).toISOString() : new Date().toISOString(),
         })),
       });
@@ -56,7 +58,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { chapterId, content } = body;
+    const { chapterId, content, parentId } = body;
 
     if (!chapterId || !content || !content.trim()) {
       return NextResponse.json(
@@ -77,15 +79,68 @@ export async function POST(request: NextRequest) {
       paragraphIndex: 0,
       authorName,
       content: content.trim(),
+      parentId: parentId || null,
       isTypoReport: false,
       isResolved: false,
       createdAt: new Date(),
     };
 
     const db = await getDb();
+    let parentComment: { userId: string | null; authorName: string } | null = null;
+    let targetTitle = "Chương truyện";
+
     if (db) {
       await db.insert(paragraphComments).values(newComment);
+
+      // Query parent comment if replying
+      if (parentId) {
+        const parentRows = await db
+          .select({
+            userId: paragraphComments.userId,
+            authorName: paragraphComments.authorName,
+          })
+          .from(paragraphComments)
+          .where(eq(paragraphComments.id, parentId))
+          .limit(1);
+
+        if (parentRows.length > 0) {
+          parentComment = parentRows[0];
+        }
+      }
+
+      // Query chapter & story details for rich notification title
+      const chapterInfo = await db
+        .select({
+          chapterNumber: chapters.chapterNumber,
+          chapterTitle: chapters.title,
+          storyTitle: stories.title,
+        })
+        .from(chapters)
+        .leftJoin(stories, eq(chapters.storyId, stories.id))
+        .where(eq(chapters.id, chapterId))
+        .limit(1);
+
+      if (chapterInfo.length > 0) {
+        const ch = chapterInfo[0];
+        targetTitle = ch.storyTitle
+          ? `${ch.storyTitle} - Chương ${ch.chapterNumber}`
+          : `Chương ${ch.chapterNumber}: ${ch.chapterTitle}`;
+      }
     }
+
+    // Dispatch in-app and email notifications
+    dispatchCommentNotifications({
+      actorName: newComment.authorName,
+      actorId: session.id,
+      content: newComment.content,
+      targetType: "chapter",
+      targetId: chapterId,
+      targetTitle,
+      link: `/chuong/${chapterId}#comment-${newComment.id}`,
+      parentId: parentId || null,
+      parentUserId: parentComment?.userId || null,
+      parentAuthorName: parentComment?.authorName || null,
+    });
 
     return NextResponse.json({
       success: true,
@@ -94,6 +149,7 @@ export async function POST(request: NextRequest) {
         authorName: newComment.authorName,
         content: newComment.content,
         userId: newComment.userId,
+        parentId: newComment.parentId,
         createdAt: newComment.createdAt.toISOString(),
       },
     });

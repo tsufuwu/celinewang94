@@ -84,6 +84,7 @@ export const paragraphComments = sqliteTable(
     paragraphIndex: integer("paragraph_index").notNull(),
     authorName: text("author_name").notNull(),
     content: text("content").notNull(),
+    parentId: text("parent_id"),
     isTypoReport: integer("is_typo_report", { mode: "boolean" })
       .notNull()
       .default(false),
@@ -218,6 +219,41 @@ export const readingProgress = sqliteTable(
   (table) => [
     index("rp_user_story_idx").on(table.userId, table.storyId),
     index("rp_user_chapter_idx").on(table.userId, table.chapterId),
+  ]
+);
+
+// 10. Notifications Table (Admin & User Reply Notifications)
+export const notifications = sqliteTable(
+  "notifications",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => generateId("notif")),
+    userId: text("user_id"), // null if broadcast to admin
+    forAdmin: integer("for_admin", { mode: "boolean" })
+      .notNull()
+      .default(false),
+    type: text("type", {
+      enum: ["NEW_COMMENT", "NEW_PARAGRAPH_COMMENT", "COMMENT_REPLY"],
+    }).notNull(),
+    title: text("title").notNull(),
+    content: text("content").notNull(),
+    actorName: text("actor_name").notNull(),
+    actorId: text("actor_id"),
+    link: text("link").notNull(),
+    targetType: text("target_type", { enum: ["story", "chapter", "paragraph"] })
+      .notNull(),
+    targetId: text("target_id").notNull(),
+    isRead: integer("is_read", { mode: "boolean" })
+      .notNull()
+      .default(false),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (table) => [
+    index("notif_user_idx").on(table.userId),
+    index("notif_admin_idx").on(table.forAdmin, table.isRead),
   ]
 );
 

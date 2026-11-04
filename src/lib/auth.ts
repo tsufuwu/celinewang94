@@ -44,6 +44,19 @@ export function checkIsAdminEmail(email?: string | null): boolean {
 }
 
 /**
+ * Returns all admin emails configured in the system.
+ */
+export function getAdminEmails(): string[] {
+  const adminEmailsEnv = process.env.ADMIN_EMAILS || "";
+  const list = adminEmailsEnv
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  const combined = new Set([...TRUSTED_ADMIN_EMAILS, ...list]);
+  return Array.from(combined);
+}
+
+/**
  * Signs a JWT token containing user session details.
  * Strategy: "jwt" - 0 D1 reads on requests.
  */

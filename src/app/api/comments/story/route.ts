@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb, reviews, generateId } from "@/db";
+import { getDb, reviews, stories, generateId } from "@/db";
 import { eq, desc } from "drizzle-orm";
 import { getAuthSession } from "@/lib/auth";
+import { dispatchCommentNotifications } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,7 @@ export async function GET(request: NextRequest) {
           authorName: r.authorName,
           content: r.content,
           userId: r.userId || null,
+          parentId: r.parentId || null,
           rating: r.rating,
           createdAt: r.createdAt ? new Date(r.createdAt).toISOString() : new Date().toISOString(),
         })),
@@ -52,7 +54,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { storyId, content } = body;
+    const { storyId, content, parentId } = body;
 
     if (!storyId || !content || !content.trim()) {
       return NextResponse.json(
@@ -73,14 +75,66 @@ export async function POST(request: NextRequest) {
       authorName,
       rating: 5,
       content: content.trim(),
+      parentId: parentId || null,
       likes: 0,
       createdAt: new Date(),
     };
 
     const db = await getDb();
+    let parentComment: { userId: string | null; authorName: string } | null = null;
+    let targetTitle = "Tác phẩm";
+    let storySlug = "";
+
     if (db) {
       await db.insert(reviews).values(newReview);
+
+      // Query parent comment if replying
+      if (parentId) {
+        const parentRows = await db
+          .select({
+            userId: reviews.userId,
+            authorName: reviews.authorName,
+          })
+          .from(reviews)
+          .where(eq(reviews.id, parentId))
+          .limit(1);
+
+        if (parentRows.length > 0) {
+          parentComment = parentRows[0];
+        }
+      }
+
+      // Query story title and slug
+      const storyRows = await db
+        .select({
+          title: stories.title,
+          slug: stories.slug,
+        })
+        .from(stories)
+        .where(eq(stories.id, storyId))
+        .limit(1);
+
+      if (storyRows.length > 0) {
+        targetTitle = storyRows[0].title;
+        storySlug = storyRows[0].slug;
+      }
     }
+
+    const storyLink = storySlug ? `/truyen/${storySlug}#comment-${newReview.id}` : `/`;
+
+    // Dispatch in-app and email notifications
+    dispatchCommentNotifications({
+      actorName: newReview.authorName,
+      actorId: session.id,
+      content: newReview.content,
+      targetType: "story",
+      targetId: storyId,
+      targetTitle,
+      link: storyLink,
+      parentId: parentId || null,
+      parentUserId: parentComment?.userId || null,
+      parentAuthorName: parentComment?.authorName || null,
+    });
 
     return NextResponse.json({
       success: true,
@@ -89,6 +143,7 @@ export async function POST(request: NextRequest) {
         authorName: newReview.authorName,
         content: newReview.content,
         userId: newReview.userId,
+        parentId: newReview.parentId,
         createdAt: newReview.createdAt.toISOString(),
       },
     });

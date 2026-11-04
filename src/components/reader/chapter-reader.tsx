@@ -40,6 +40,7 @@ export interface ChapterData {
   wordCount: number;
   password?: string | null;
   passwordHint?: string | null;
+  lockMessage?: string | null;
   paragraphs: ParagraphData[];
   story: {
     id: string;
@@ -368,6 +369,19 @@ export function ChapterReader({
             </p>
           </div>
 
+          {/* Lock Message from Celine if available */}
+          {chapter.lockMessage && (
+            <div className="p-4 rounded-2xl bg-[#FFF5EB] dark:bg-[#251D18] border-2 border-[#E07B4C]/40 text-left space-y-1.5 text-xs shadow-xs">
+              <div className="flex items-center gap-1.5 font-bold text-[#E07B4C]">
+                <MessageSquare className="size-3.5" />
+                <span>Lời nhắn từ Celine:</span>
+              </div>
+              <p className="text-[#2B2623] dark:text-[#FAF5EE] whitespace-pre-line leading-relaxed font-sans">
+                {chapter.lockMessage}
+              </p>
+            </div>
+          )}
+
           {/* Hint Area */}
           <div className="p-4 rounded-2xl bg-secondary/60 border border-orange-200/50 dark:border-orange-950/40 text-left space-y-1.5 text-xs">
             <div className="flex items-center gap-1.5 font-semibold text-orange-800 dark:text-orange-300">
@@ -375,7 +389,7 @@ export function ChapterReader({
               <span>Gợi ý mật khẩu từ Celine:</span>
             </div>
             <p className="text-foreground/90 italic">
-              {chapter.passwordHint || "Tên trang web viết thường không cách (media...)"}
+              {chapter.passwordHint || "Chương này chưa có gợi ý cụ thể. Nếu bạn chưa biết mật khẩu, hãy liên hệ nhà Cam nhé!"}
             </p>
           </div>
 

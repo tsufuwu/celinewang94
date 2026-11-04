@@ -51,6 +51,7 @@ export const chapters = sqliteTable(
     wordCount: integer("word_count").notNull().default(0),
     password: text("password"),
     passwordHint: text("password_hint"),
+    lockMessage: text("lock_message"),
     contentHtml: text("content_html"),
     paragraphs: text("paragraphs", { mode: "json" })
       .$type<{ index: number; text: string }[]>()

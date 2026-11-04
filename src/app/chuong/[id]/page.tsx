@@ -107,6 +107,7 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
           paragraphs: (currentCh.paragraphs as ParagraphData[]) || [],
           password: currentCh.password,
           passwordHint: currentCh.passwordHint,
+          lockMessage: currentCh.lockMessage,
           story: currentStory,
         };
       }

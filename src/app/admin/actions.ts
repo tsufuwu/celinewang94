@@ -509,6 +509,7 @@ export interface ChapterSavePayload {
   contentHtml: string;
   password?: string | null;
   passwordHint?: string | null;
+  lockMessage?: string | null;
 }
 
 export async function createOrUpdateChapterAction(
@@ -547,6 +548,7 @@ export async function createOrUpdateChapterAction(
             wordCount,
             password: payload.password?.trim() ? payload.password.trim() : null,
             passwordHint: payload.passwordHint?.trim() ? payload.passwordHint.trim() : null,
+            lockMessage: payload.lockMessage?.trim() ? payload.lockMessage.trim() : null,
             updatedAt: now,
           })
           .where(eq(chapters.id, targetChapterId));
@@ -573,6 +575,7 @@ export async function createOrUpdateChapterAction(
       wordCount,
       password: payload.password?.trim() ? payload.password.trim() : null,
       passwordHint: payload.passwordHint?.trim() ? payload.passwordHint.trim() : null,
+      lockMessage: payload.lockMessage?.trim() ? payload.lockMessage.trim() : null,
       createdAt: now,
       updatedAt: now,
     });
@@ -653,6 +656,7 @@ export interface EditorChapterOption {
   paragraphs?: { index: number; text: string }[];
   password?: string | null;
   passwordHint?: string | null;
+  lockMessage?: string | null;
   wordCount?: number;
 }
 
@@ -681,6 +685,7 @@ export async function getEditorStories(): Promise<EditorStoryOption[]> {
           paragraphs: chapters.paragraphs,
           password: chapters.password,
           passwordHint: chapters.passwordHint,
+          lockMessage: chapters.lockMessage,
           wordCount: chapters.wordCount,
         })
         .from(chapters)
@@ -714,6 +719,7 @@ export async function getEditorStories(): Promise<EditorStoryOption[]> {
                 paragraphs: paragraphsList,
                 password: c.password,
                 passwordHint: c.passwordHint,
+                lockMessage: c.lockMessage,
                 wordCount: c.wordCount,
               };
             }),

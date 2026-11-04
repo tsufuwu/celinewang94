@@ -33,7 +33,12 @@ import {
   Plus,
   Trash2,
   Lock,
+  Unlock,
   KeyRound,
+  EyeOff,
+  HelpCircle,
+  MessageSquare,
+  X,
   Quote,
   AlignLeft,
   Scissors,
@@ -81,9 +86,12 @@ export function StudioEditor({ stories: initialStories, initialTemplates = [] }:
   // Form Fields for Chapter Editing
   const [chapterNumber, setChapterNumber] = React.useState<number>(1);
   const [chapterTitle, setChapterTitle] = React.useState<string>("");
+  const [isChapterLocked, setIsChapterLocked] = React.useState<boolean>(false);
   const [chapterPassword, setChapterPassword] = React.useState<string>("");
   const [chapterPasswordHint, setChapterPasswordHint] = React.useState<string>("");
+  const [chapterLockMessage, setChapterLockMessage] = React.useState<string>("");
   const [showPasswordBox, setShowPasswordBox] = React.useState<boolean>(false);
+  const [showPasswordText, setShowPasswordText] = React.useState<boolean>(false);
 
   // Content States
   const [htmlContent, setHtmlContent] = React.useState<string>("");
@@ -119,16 +127,23 @@ export function StudioEditor({ stories: initialStories, initialTemplates = [] }:
           : 0;
         setChapterNumber(maxNum + 1);
         setChapterTitle(`Chương ${maxNum + 1}`);
+        setIsChapterLocked(false);
         setChapterPassword("");
         setChapterPasswordHint("");
+        setChapterLockMessage("");
         setShowPasswordBox(false);
+        setShowPasswordText(false);
         setHtmlContent("");
       } else if (currentChapter) {
         setChapterNumber(currentChapter.chapterNumber);
         setChapterTitle(currentChapter.title);
+        const hasLock = Boolean(currentChapter.password);
+        setIsChapterLocked(hasLock);
         setChapterPassword(currentChapter.password || "");
         setChapterPasswordHint(currentChapter.passwordHint || "");
-        setShowPasswordBox(Boolean(currentChapter.password));
+        setChapterLockMessage(currentChapter.lockMessage || "");
+        setShowPasswordBox(hasLock);
+        setShowPasswordText(false);
 
         // Load content: if contentHtml was null, reconstruct from paragraphs
         const contentToLoad =
@@ -151,9 +166,12 @@ export function StudioEditor({ stories: initialStories, initialTemplates = [] }:
       : 0;
     setChapterNumber(maxNum + 1);
     setChapterTitle(`Chương ${maxNum + 1}`);
+    setIsChapterLocked(false);
     setChapterPassword("");
     setChapterPasswordHint("");
+    setChapterLockMessage("");
     setShowPasswordBox(false);
+    setShowPasswordText(false);
     setHtmlContent("");
   };
 
@@ -198,14 +216,19 @@ export function StudioEditor({ stories: initialStories, initialTemplates = [] }:
           }
         } else {
           // Chapter Mode: Save or Create chapter
+          const effectivePassword = isChapterLocked && chapterPassword.trim() ? chapterPassword.trim() : null;
+          const effectivePasswordHint = isChapterLocked && chapterPasswordHint.trim() ? chapterPasswordHint.trim() : null;
+          const effectiveLockMessage = isChapterLocked && chapterLockMessage.trim() ? chapterLockMessage.trim() : null;
+
           const res = await createOrUpdateChapterAction({
             id: isNewChapter ? undefined : currentChapter?.id,
             storyId: currentStory.id,
             chapterNumber,
             title: chapterTitle,
             contentHtml: htmlContent,
-            password: chapterPassword,
-            passwordHint: chapterPasswordHint,
+            password: effectivePassword,
+            passwordHint: effectivePasswordHint,
+            lockMessage: effectiveLockMessage,
           });
 
           if (res.success && res.chapterId) {
@@ -219,8 +242,9 @@ export function StudioEditor({ stories: initialStories, initialTemplates = [] }:
               chapterNumber,
               title: chapterTitle || `Chương ${chapterNumber}`,
               contentHtml: htmlContent,
-              password: chapterPassword || null,
-              passwordHint: chapterPasswordHint || null,
+              password: effectivePassword,
+              passwordHint: effectivePasswordHint,
+              lockMessage: effectiveLockMessage,
             };
 
             setStories((prev) =>
@@ -663,21 +687,35 @@ export function StudioEditor({ stories: initialStories, initialTemplates = [] }:
 
           {/* Quick Toolbar: Password Toggle, Text Cleaners, Word Counter */}
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Password Toggle Button */}
+            {/* Password / Lock Toggle Button */}
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={() => setShowPasswordBox((prev) => !prev)}
-              className={`h-8 px-2.5 text-xs rounded-xl font-mono font-bold border-2 border-[#2B2623] shadow-[1px_1.5px_0px_#2B2623] flex items-center gap-1 ${
-                chapterPassword
-                  ? "bg-[#EBBAB5] text-[#2B2623]"
-                  : "bg-[#FAF5EE] dark:bg-[#2A2420] text-[#5C5146]"
+              className={`h-8 px-2.5 text-xs rounded-xl font-mono font-bold border-2 border-[#2B2623] shadow-[1px_1.5px_0px_#2B2623] flex items-center gap-1.5 transition-all cursor-pointer ${
+                isChapterLocked
+                  ? "bg-[#EBBAB5] text-[#2B2623] hover:bg-[#E2A6A0]"
+                  : "bg-[#FAF5EE] dark:bg-[#2A2420] text-[#5C5146] hover:text-[#2B2623] hover:bg-[#E5DDD2]"
               }`}
-              title="Thiết lập mật khẩu bảo vệ chương"
+              title="Cài đặt khóa chương, mật khẩu, gợi ý và lời nhắn"
             >
-              <Lock className="size-3" />
-              <span>{chapterPassword ? "Đã khóa Pass" : "Đặt Pass"}</span>
+              {isChapterLocked ? (
+                <>
+                  <Lock className="size-3 text-[#2B2623]" />
+                  <span>Đã Khóa Pass</span>
+                  {chapterPassword && (
+                    <span className="text-[10px] px-1 py-0.2 rounded bg-black/10 font-bold">
+                      {chapterPassword.length} ký tự
+                    </span>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Unlock className="size-3 text-muted-foreground" />
+                  <span>Công khai (Không khóa)</span>
+                </>
+              )}
             </Button>
 
             {/* Formatting Quick Tools */}
@@ -718,29 +756,163 @@ export function StudioEditor({ stories: initialStories, initialTemplates = [] }:
         </div>
       )}
 
-      {/* Password & Hint Dropdown Box */}
+      {/* 2.5 Password & Lock Configuration Panel */}
       {targetType === "chapter" && showPasswordBox && (
-        <div className="p-3 sm:px-6 bg-[#EBBAB5]/30 border-b-2 border-[#2B2623]/20 flex flex-wrap items-center gap-3 text-xs font-mono">
-          <div className="flex items-center gap-2">
-            <KeyRound className="size-4 text-[#2B2623]" />
-            <span className="font-bold">Mật khẩu chương:</span>
-            <Input
-              type="text"
-              value={chapterPassword}
-              onChange={(e) => setChapterPassword(e.target.value)}
-              placeholder="Nhập pass (ví dụ: haianhem)"
-              className="w-40 h-7 text-xs rounded bg-[#FAF5EE] border-2 border-[#2B2623]"
-            />
-          </div>
-          <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-            <span className="font-bold text-[#5C5146]">Gợi ý giải pass:</span>
-            <Input
-              type="text"
-              value={chapterPasswordHint}
-              onChange={(e) => setChapterPasswordHint(e.target.value)}
-              placeholder="Gợi ý câu hỏi để độc giả tìm mật khẩu..."
-              className="flex-1 h-7 text-xs rounded bg-[#FAF5EE] border-2 border-[#2B2623]"
-            />
+        <div className="p-4 sm:p-5 bg-[#FAF5EE] dark:bg-[#1F1B18] border-b-2 border-[#2B2623] shadow-inner text-xs animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="max-w-5xl mx-auto space-y-4">
+            {/* Top row: Lock Status Switcher + Close button */}
+            <div className="flex items-center justify-between pb-3 border-b-2 border-[#2B2623]/20">
+              <div className="flex items-center gap-3">
+                <div className="size-8 rounded-full bg-[#E07B4C]/20 border border-[#2B2623] flex items-center justify-center text-[#E07B4C]">
+                  {isChapterLocked ? <Lock className="size-4" /> : <Unlock className="size-4" />}
+                </div>
+                <div>
+                  <h4 className="font-serif font-bold text-sm text-[#2B2623] dark:text-[#FAF5EE] flex items-center gap-2">
+                    <span>Cài đặt Khóa Chương & Mật Khẩu</span>
+                    {isChapterLocked ? (
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#EBBAB5] text-[#2B2623] border border-[#2B2623] font-bold">
+                        Đang Khóa
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#BDCEAF] text-[#2B2623] border border-[#2B2623] font-bold">
+                        Công Khai (Không Khóa)
+                      </span>
+                    )}
+                  </h4>
+                  <p className="text-[11px] text-[#5C5146] dark:text-[#C4B9AD] font-sans">
+                    {isChapterLocked
+                      ? "Chương này yêu cầu độc giả nhập đúng mật khẩu để mở khóa đọc nội dung."
+                      : "Chương này đang được mở tự do cho mọi độc giả đọc trực tiếp."}
+                  </p>
+                </div>
+              </div>
+
+              {/* Toggle switch between Locked and Open */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const nextState = !isChapterLocked;
+                    setIsChapterLocked(nextState);
+                    if (!nextState) {
+                      setChapterPassword("");
+                      setChapterPasswordHint("");
+                      setChapterLockMessage("");
+                    }
+                  }}
+                  className={`px-3 py-1.5 rounded-[10px] font-mono font-bold text-xs border-2 border-[#2B2623] transition-all flex items-center gap-1.5 cursor-pointer shadow-[1.5px_2px_0px_#2B2623] active:translate-x-[1px] active:translate-y-[1px] ${
+                    isChapterLocked
+                      ? "bg-[#EBBAB5] text-[#2B2623] hover:bg-[#E2A6A0]"
+                      : "bg-[#E5DDD2] text-[#5C5146] hover:bg-[#D5CDC2]"
+                  }`}
+                >
+                  {isChapterLocked ? <Lock className="size-3.5" /> : <Unlock className="size-3.5" />}
+                  <span>{isChapterLocked ? "Tắt Khóa (Mở Công Khai)" : "Bật Khóa Chương"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordBox(false)}
+                  className="size-7 rounded-[8px] border-2 border-[#2B2623] bg-[#FAF5EE] hover:bg-[#E5DDD2] text-[#2B2623] flex items-center justify-center transition-all cursor-pointer shadow-[1px_1px_0px_#2B2623]"
+                  title="Đóng bảng cài đặt"
+                >
+                  <X className="size-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Inputs Form when Locked */}
+            {isChapterLocked ? (
+              <div className="space-y-3.5 pt-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Field 1: Password */}
+                  <div className="space-y-1">
+                    <label className="flex items-center justify-between text-xs font-mono font-bold text-[#2B2623] dark:text-[#FAF5EE]">
+                      <span className="flex items-center gap-1.5">
+                        <KeyRound className="size-3.5 text-[#E07B4C]" />
+                        <span>Mật khẩu chương (Bắt buộc)</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowPasswordText(!showPasswordText)}
+                        className="text-[10px] text-[#5C5146] hover:text-[#2B2623] flex items-center gap-1 cursor-pointer font-sans"
+                      >
+                        {showPasswordText ? <EyeOff className="size-3" /> : <Eye className="size-3" />}
+                        <span>{showPasswordText ? "Ẩn pass" : "Hiện pass"}</span>
+                      </button>
+                    </label>
+                    <div className="relative">
+                      <Input
+                        type={showPasswordText ? "text" : "password"}
+                        value={chapterPassword}
+                        onChange={(e) => setChapterPassword(e.target.value)}
+                        placeholder="Nhập mật khẩu (ví dụ: 1996 hoặc dongdong)..."
+                        className="h-9 text-xs font-mono font-bold rounded-[10px] bg-white dark:bg-[#2A2420] border-2 border-[#2B2623] shadow-[1px_1.5px_0px_#2B2623] pr-12"
+                      />
+                      {chapterPassword && (
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-muted-foreground select-none">
+                          {chapterPassword.length} ký tự
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground font-sans">
+                      * Hệ thống không phân biệt chữ hoa/thường khi độc giả nhập mật khẩu.
+                    </p>
+                  </div>
+
+                  {/* Field 2: Password Hint */}
+                  <div className="space-y-1">
+                    <label className="flex items-center gap-1.5 text-xs font-mono font-bold text-[#2B2623] dark:text-[#FAF5EE]">
+                      <HelpCircle className="size-3.5 text-[#E07B4C]" />
+                      <span>Gợi ý giải pass (Hiển thị cho độc giả)</span>
+                    </label>
+                    <Input
+                      type="text"
+                      value={chapterPasswordHint}
+                      onChange={(e) => setChapterPasswordHint(e.target.value)}
+                      placeholder="Gợi ý câu đố để độc giả tìm mật khẩu (ví dụ: Năm sinh của Lương Mục Dã)..."
+                      className="h-9 text-xs rounded-[10px] bg-white dark:bg-[#2A2420] border-2 border-[#2B2623] shadow-[1px_1.5px_0px_#2B2623]"
+                    />
+                    <p className="text-[10px] text-muted-foreground font-sans">
+                      * Gợi ý này sẽ xuất hiện trên màn hình yêu cầu mật khẩu của chương.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Field 3: Custom Lock Message / Note */}
+                <div className="space-y-1">
+                  <label className="flex items-center gap-1.5 text-xs font-mono font-bold text-[#2B2623] dark:text-[#FAF5EE]">
+                    <MessageSquare className="size-3.5 text-[#E07B4C]" />
+                    <span>Lời nhắn của chủ nhà gửi độc giả (Không bắt buộc)</span>
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={chapterLockMessage}
+                    onChange={(e) => setChapterLockMessage(e.target.value)}
+                    placeholder="Ví dụ: Bản dịch phi thương mại, xin đừng chia sẻ pass công khai lên mạng xã hội bạn nhé..."
+                    className="w-full p-2.5 text-xs font-sans rounded-[10px] bg-white dark:bg-[#2A2420] border-2 border-[#2B2623] shadow-[1px_1.5px_0px_#2B2623] focus:outline-none focus:ring-1 focus:ring-[#E07B4C] resize-none"
+                  />
+                  <p className="text-[10px] text-muted-foreground font-sans">
+                    * Lời nhắn này sẽ được đóng khung trang trọng hiển thị trên màn hình mở khóa của chương.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="p-3 rounded-xl bg-[#E5DDD2]/50 dark:bg-[#2A2420]/50 border border-[#2B2623]/20 flex items-center justify-between">
+                <span className="text-xs text-[#5C5146] dark:text-[#C4B9AD] font-sans">
+                  Chương này hiện đang mở tự do cho mọi độc giả. Bấm nút <strong>&ldquo;Bật Khóa Chương&rdquo;</strong> ở trên để thiết lập mật khẩu bảo vệ.
+                </span>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setIsChapterLocked(true)}
+                  className="h-7 text-xs font-mono font-bold rounded-lg border-2 border-[#2B2623] bg-[#FAF5EE] text-[#2B2623] hover:bg-[#EBBAB5] shadow-xs cursor-pointer shrink-0"
+                >
+                  <Lock className="size-3 mr-1" /> Khóa ngay
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       )}

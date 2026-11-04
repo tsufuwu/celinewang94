@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import {
   Sun,
@@ -32,7 +33,6 @@ interface ReadingToolbarProps {
   currentChapterNumber?: number;
   totalChapters?: number;
   onOpenChapterSelector?: () => void;
-  isHidden?: boolean;
 }
 
 export function ReadingToolbar({
@@ -44,8 +44,13 @@ export function ReadingToolbar({
   totalChapters,
   onOpenChapterSelector,
 }: ReadingToolbarProps) {
+  const [mounted, setMounted] = React.useState(false);
   const [isExpanded, setIsExpanded] = React.useState(false);
   const containerRef = React.useRef<HTMLElement | null>(null);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Close panel when clicking outside
   React.useEffect(() => {
@@ -61,11 +66,13 @@ export function ReadingToolbar({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isExpanded]);
 
-  return (
+  if (!mounted) return null;
+
+  const content = (
     <aside
       ref={containerRef}
       aria-label="Thanh công cụ đọc truyện"
-      className="fixed bottom-5 right-4 sm:bottom-6 sm:right-6 z-40 flex flex-col items-end select-none transition-all duration-300"
+      className="fixed bottom-6 right-4 sm:right-6 z-50 flex flex-col items-end select-none pointer-events-auto transition-all duration-300"
     >
       {/* Expanded Controls Panel */}
       {isExpanded && (
@@ -204,79 +211,106 @@ export function ReadingToolbar({
               </button>
             </div>
           </div>
-
-          {/* 5. Focus Zen Mode & Chapter Quick Navigator */}
-          <div className="pt-2 border-t border-[#2B2623]/10 flex items-center justify-between gap-2 flex-wrap">
-            <button
-              onClick={() => onUpdateSettings({ focusMode: !settings.focusMode })}
-              className={`h-8 px-3 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 border-2 border-[#2B2623] shadow-[1.5px_2px_0px_#2B2623] transition-all ${
-                settings.focusMode
-                  ? "bg-[#EBBAB5] text-[#2B2623]"
-                  : "bg-[#FAF5EE] dark:bg-[#2A2420] text-[#2B2623] dark:text-[#FAF5EE]"
-              }`}
-            >
-              {settings.focusMode ? <Minimize2 className="size-3 text-rose-700" /> : <Maximize2 className="size-3" />}
-              <span>{settings.focusMode ? "Thoát Zen Mode" : "Đọc tập trung"}</span>
-            </button>
-
-            <div className="flex items-center gap-1.5">
-              {prevChapterId && (
-                <Link href={`/chuong/${prevChapterId}`} onClick={() => setIsExpanded(false)}>
-                  <button
-                    type="button"
-                    className="h-8 px-2 rounded-xl text-xs border-2 border-[#2B2623] bg-[#FAF5EE] dark:bg-[#2A2420] flex items-center justify-center hover:bg-[#E5DDD2] transition-colors"
-                    title="Chương trước"
-                  >
-                    <ChevronLeft className="size-3.5" />
-                  </button>
-                </Link>
-              )}
-
-              {onOpenChapterSelector && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsExpanded(false);
-                    onOpenChapterSelector();
-                  }}
-                  className="h-8 px-3 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 border-2 border-[#2B2623] bg-[#FAF5EE] dark:bg-[#2A2420] text-[#2B2623] dark:text-[#FAF5EE] shadow-[1.5px_2px_0px_#2B2623] hover:text-[#E07B4C] transition-all"
-                >
-                  <ListOrdered className="size-3.5 text-[#E07B4C]" />
-                  <span>Mục lục</span>
-                </button>
-              )}
-
-              {nextChapterId && (
-                <Link href={`/chuong/${nextChapterId}`} onClick={() => setIsExpanded(false)}>
-                  <button
-                    type="button"
-                    className="h-8 px-2 rounded-xl text-xs border-2 border-[#2B2623] bg-[#FAF5EE] dark:bg-[#2A2420] flex items-center justify-center hover:bg-[#E5DDD2] transition-colors"
-                    title="Chương sau"
-                  >
-                    <ChevronRight className="size-3.5" />
-                  </button>
-                </Link>
-              )}
-            </div>
-          </div>
         </div>
       )}
 
-      {/* Compact Floating Trigger Pill Docked in Corner */}
-      <button
-        type="button"
-        onClick={() => setIsExpanded((prev) => !prev)}
-        className="h-10 px-3.5 rounded-full bg-[#FAF5EE] dark:bg-[#25201C] border-2 border-[#2B2623] shadow-[2.5px_3.5px_0px_#2B2623] hover:translate-x-[0.5px] hover:translate-y-[0.5px] hover:shadow-[1.5px_2px_0px_#2B2623] active:translate-x-[1.5px] active:translate-y-[2px] active:shadow-none flex items-center gap-2 cursor-pointer transition-all text-[#2B2623] dark:text-[#FAF5EE] select-none"
-        title="Bấm để mở bảng tùy biến cỡ chữ, màu nền, font và mục lục"
-      >
-        <Sliders className={`size-4 text-[#E07B4C] transition-transform ${isExpanded ? "rotate-90" : ""}`} />
-        <span className="font-mono font-bold text-xs">Tùy biến</span>
-        {currentChapterNumber && (
-          <span className="text-[11px] font-mono px-1.5 py-0.2 rounded-full bg-[#E5DDD2] dark:bg-[#3D352E] text-[#5C5146] dark:text-[#C4B9AD] font-semibold">
-            #{currentChapterNumber}
-          </span>
+      {/* Main Floating Bar Pill Always Visible on Screen */}
+      <div className="flex items-center gap-1 p-1 rounded-full bg-[#FAF5EE] dark:bg-[#25201C] border-2 border-[#2B2623] shadow-[3px_4px_0px_#2B2623] transition-transform hover:scale-102">
+        {/* Previous Chapter */}
+        {prevChapterId ? (
+          <Link href={`/chuong/${prevChapterId}`}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8 rounded-full text-[#2B2623] dark:text-[#FAF5EE] hover:bg-[#E5DDD2] cursor-pointer"
+              title="Chương trước"
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+          </Link>
+        ) : (
+          <Button
+            variant="ghost"
+            size="icon"
+            disabled
+            className="size-8 rounded-full opacity-30 text-[#5C5146]"
+          >
+            <ChevronLeft className="size-4" />
+          </Button>
         )}
-      </button>
+
+        {/* Chapter Quick Selector Trigger */}
+        {onOpenChapterSelector && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onOpenChapterSelector}
+            className="h-8 px-2.5 rounded-full text-xs font-mono font-bold flex items-center gap-1 text-[#2B2623] dark:text-[#FAF5EE] hover:text-[#E07B4C] hover:bg-[#E5DDD2] cursor-pointer"
+            title="Mở mục lục chọn chương"
+          >
+            <ListOrdered className="size-3.5 text-[#E07B4C]" />
+            <span>
+              {currentChapterNumber ? `${currentChapterNumber}/${totalChapters || "?"}` : "Mục lục"}
+            </span>
+          </Button>
+        )}
+
+        {/* Toggle Reading Settings Panel */}
+        <Button
+          variant={isExpanded ? "secondary" : "ghost"}
+          size="sm"
+          onClick={() => setIsExpanded((prev) => !prev)}
+          className={`h-8 px-2.5 rounded-full text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer ${
+            isExpanded
+              ? "bg-[#E07B4C] text-white hover:bg-[#DC7648]"
+              : "text-[#2B2623] dark:text-[#FAF5EE] hover:bg-[#E5DDD2]"
+          }`}
+          title="Tùy chỉnh cỡ chữ, font và giao diện đọc"
+        >
+          <Sliders className="size-3.5 text-[#E07B4C]" />
+          <span>Tùy biến</span>
+        </Button>
+
+        {/* Focus Zen Mode */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onUpdateSettings({ focusMode: !settings.focusMode })}
+          className="size-8 rounded-full text-[#2B2623] dark:text-[#FAF5EE] hover:bg-[#E5DDD2] cursor-pointer"
+          title={settings.focusMode ? "Tắt chế độ tập trung" : "Chế độ đọc tập trung (Zen Mode)"}
+        >
+          {settings.focusMode ? (
+            <Minimize2 className="size-3.5 text-rose-500" />
+          ) : (
+            <Maximize2 className="size-3.5" />
+          )}
+        </Button>
+
+        {/* Next Chapter */}
+        {nextChapterId ? (
+          <Link href={`/chuong/${nextChapterId}`}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8 rounded-full text-[#2B2623] dark:text-[#FAF5EE] hover:bg-[#E5DDD2] cursor-pointer"
+              title="Chương sau"
+            >
+              <ChevronRight className="size-4" />
+            </Button>
+          </Link>
+        ) : (
+          <Button
+            variant="ghost"
+            size="icon"
+            disabled
+            className="size-8 rounded-full opacity-30 text-[#5C5146]"
+          >
+            <ChevronRight className="size-4" />
+          </Button>
+        )}
+      </div>
     </aside>
   );
+
+  return createPortal(content, document.body);
 }

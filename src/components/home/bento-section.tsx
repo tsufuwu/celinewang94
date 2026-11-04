@@ -16,15 +16,12 @@ export function BentoSection({ chapters }: BentoSectionProps) {
         <div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[8px] bg-[#F4DFAD] text-[#2B2623] border-2 border-[#2B2623] shadow-[1.5px_2px_0px_#2B2623] text-[10px] font-mono font-bold uppercase tracking-wider mb-2">
             <Sparkles className="size-3 text-[#2B2623]" />
-            <span>BENTO STREAM · DÒNG CHẢY MỚI</span>
+            <span>CẬP NHẬT MỚI</span>
           </div>
           <h2 className="font-serif text-2xl sm:text-3xl text-[#2B2623] dark:text-[#FAF5EE] font-bold tracking-tight">
-            Cập Nhật &amp; Lời Nhắn Mới
+            Chương Mới &amp; Thảo Luận
           </h2>
         </div>
-        <span className="text-xs text-[#5C5146] dark:text-[#C4B9AD] font-mono hidden sm:inline-block font-semibold">
-          Dòng chảy Media naranja
-        </span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -99,19 +96,13 @@ export function BentoSection({ chapters }: BentoSectionProps) {
           </div>
         </div>
 
-        {/* Right Column: Latest Sidebar Comments from WordPress (5 cols) */}
+        {/* Right Column: Latest Sidebar Comments (5 cols) */}
         <div className="lg:col-span-5 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <span className="text-xs font-mono uppercase tracking-wider text-[#5C5146] dark:text-[#C4B9AD] flex items-center gap-1.5 font-bold">
               <MessageCircle className="size-3.5 text-[#E07B4C]" />
-              Bình Luận Từ Các Quả Cam
+              Bình luận
             </span>
-            <Link
-              href="/tro-chuyen"
-              className="text-[11px] text-[#E07B4C] hover:underline font-mono font-bold"
-            >
-              Góc trò chuyện →
-            </Link>
           </div>
 
           <div className="flex flex-col gap-3.5">
@@ -144,26 +135,10 @@ export function BentoSection({ chapters }: BentoSectionProps) {
             ) : (
               <div className="p-4 rounded-[16px] bg-[#FDFBF7] dark:bg-[#241F1C] border-2 border-[#2B2623] shadow-[2px_3px_0px_#2B2623] text-center">
                 <p className="text-xs font-serif italic text-[#5C5146] dark:text-[#C4B9AD]">
-                  Chưa có bình luận mới. Hãy là người đầu tiên để lại cảm nghĩ của bạn tại các chương truyện!
+                  Chưa có bình luận mới
                 </p>
               </div>
             )}
-
-            {/* Quick Link to Guestbook */}
-            <ScrollReveal animation="scale-up" delay={200}>
-              <div className="p-4 rounded-[16px] bg-[#E5DDD2] dark:bg-[#2A2420] border-2 border-[#2B2623] shadow-[2px_3px_0px_#2B2623] text-center">
-                <p className="text-xs text-[#5C5146] dark:text-[#C4B9AD] mb-3 font-medium">
-                  Bạn vừa đọc xong một chương truyện hay và muốn chia sẻ cảm xúc?
-                </p>
-                <Link
-                  href="/tro-chuyen"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[12px] bg-[#E07B4C] text-white border-2 border-[#2B2623] shadow-[2px_3px_0px_#2B2623] text-xs font-bold hover:bg-[#DC7648] active:translate-x-[1px] active:translate-y-[2px] active:shadow-none transition-all"
-                >
-                  <MessageCircle className="size-3.5" />
-                  <span>Gửi lời nhắn tới Celine</span>
-                </Link>
-              </div>
-            </ScrollReveal>
           </div>
         </div>
       </div>

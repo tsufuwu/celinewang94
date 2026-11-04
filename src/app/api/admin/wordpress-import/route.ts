@@ -224,7 +224,6 @@ export async function POST(req: NextRequest) {
 
     revalidatePath("/");
     revalidatePath("/admin");
-    revalidatePath("/tro-chuyen");
 
     return NextResponse.json({
       success: true,

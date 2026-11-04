@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Lock, Sparkles, ArrowRight, AlertCircle } from "lucide-react";
+import { Lock, ArrowRight, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { loginAdmin } from "@/app/admin/actions";
@@ -28,70 +28,63 @@ export function AdminLogin() {
   };
 
   return (
-    <div className="min-h-[75vh] flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md p-8 rounded-3xl bg-card border border-border/70 shadow-xl text-center">
-        {/* Medallion */}
-        <div className="size-16 rounded-full bg-orange-100/70 dark:bg-orange-950/40 border border-orange-300 dark:border-orange-800 flex items-center justify-center mx-auto mb-5 shadow-inner">
-          <OrangeLogo className="size-9" />
+    <div className="min-h-[70vh] flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-sm p-6 sm:p-8 rounded-[20px] bg-[#FAF5EE] dark:bg-[#1F1B18] border-2 border-[#2B2623] shadow-[3px_5px_0px_#2B2623] text-center">
+        {/* Logo */}
+        <div className="size-14 rounded-full bg-[#F4DFAD] border-2 border-[#2B2623] shadow-[1.5px_2px_0px_#2B2623] flex items-center justify-center mx-auto mb-4">
+          <OrangeLogo className="size-8" />
         </div>
 
-        <div className="flex items-center justify-center gap-1.5 text-xs font-mono uppercase tracking-widest text-muted-foreground mb-2">
-          <Sparkles className="size-3.5 text-primary" />
-          <span>Khu Vực Quản Trị</span>
-        </div>
-
-        <h1 className="font-serif text-2xl sm:text-3xl text-foreground font-medium tracking-tight mb-1">
-          Bàn Làm Việc
+        <h1 className="font-serif text-2xl font-bold text-[#2B2623] dark:text-[#FAF5EE] mb-5 tracking-tight">
+          Nhập Mật Mã Trang Web
         </h1>
-        <p className="text-xs text-primary font-medium mb-1">Chỉ dành cho Celine Wang</p>
-        <p className="text-xs text-muted-foreground mb-6 leading-relaxed">
-          Vui lòng nhập mật khẩu Quản trị viên (ADMIN_PASSWORD) để truy cập hệ thống quản lý.
-        </p>
 
         {error && (
-          <div className="mb-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-200 border border-rose-200 text-xs flex items-center gap-2 text-left">
-            <AlertCircle className="size-4 shrink-0 text-rose-600" />
+          <div className="mb-4 p-3 rounded-[12px] bg-[#EBBAB5] text-[#2B2623] border-2 border-[#2B2623] text-xs font-mono font-bold flex items-center gap-2 text-left shadow-[1.5px_2px_0px_#2B2623]">
+            <AlertCircle className="size-4 shrink-0 text-rose-800" />
             <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3.5">
           <div className="relative text-left">
-            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-[#5C5146]" />
             <Input
               type="password"
               required
               autoFocus
-              placeholder="Nhập mật khẩu quản trị..."
+              placeholder="Nhập mật mã trang web..."
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="pl-10 h-10 rounded-xl bg-background border-border/80 text-sm"
+              className="pl-10 h-11 rounded-[12px] bg-[#FDFBF7] dark:bg-[#25201C] border-2 border-[#2B2623] shadow-[1.5px_2px_0px_#2B2623] text-sm font-sans"
             />
           </div>
 
           <Button
             type="submit"
             disabled={isPending || !password.trim()}
-            className="w-full rounded-xl h-10 text-sm flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+            className="w-full rounded-[12px] h-11 text-xs font-mono font-bold bg-[#E07B4C] hover:bg-[#DC7648] text-white border-2 border-[#2B2623] shadow-[2px_3px_0px_#2B2623] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50"
           >
-            <span>{isPending ? "Đang xác thực..." : "Đăng nhập bằng Mật khẩu"}</span>
+            <span>{isPending ? "Đang xác thực..." : "Xác nhận truy cập"}</span>
             <ArrowRight className="size-4" />
           </Button>
         </form>
 
         <div className="relative my-5">
           <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-border/60" />
+            <span className="w-full border-t-2 border-[#2B2623]/15" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground font-mono">HOẶC</span>
+            <span className="bg-[#FAF5EE] dark:bg-[#1F1B18] px-2 text-[#5C5146] font-mono font-bold">
+              HOẶC
+            </span>
           </div>
         </div>
 
         {/* Google OAuth Login for Admin */}
         <a
           href="/api/auth/google?returnTo=/admin"
-          className="w-full inline-flex items-center justify-center gap-2.5 px-4 py-2.5 rounded-xl border-2 border-[#2B2623] bg-[#FAF5EE] hover:bg-[#F4DFAD] text-[#2B2623] font-bold text-xs shadow-[2px_3px_0px_#2B2623] active:translate-x-[1px] active:translate-y-[1.5px] active:shadow-none transition-all cursor-pointer"
+          className="w-full inline-flex items-center justify-center gap-2.5 px-4 py-2.5 rounded-[12px] border-2 border-[#2B2623] bg-[#FAF5EE] hover:bg-[#F4DFAD] text-[#2B2623] font-bold text-xs shadow-[2px_3px_0px_#2B2623] active:translate-x-[1px] active:translate-y-[1.5px] active:shadow-none transition-all cursor-pointer"
         >
           <svg className="size-4" viewBox="0 0 24 24">
             <path
@@ -111,14 +104,9 @@ export function AdminLogin() {
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
             />
           </svg>
-          <span>Đăng nhập bằng Google Admin</span>
+          <span>Đăng nhập Google Admin</span>
         </a>
-
-        <p className="text-[11px] text-muted-foreground/80 mt-6 font-mono">
-          Tự động phân quyền Quản trị viên cho các email khai báo trong ADMIN_EMAILS
-        </p>
       </div>
     </div>
   );
 }
-

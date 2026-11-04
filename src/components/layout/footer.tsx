@@ -26,9 +26,6 @@ export function Footer() {
             <Link href="/kho-truyen" className="hover:text-[#E07B4C] transition-colors">
               Thư viện
             </Link>
-            <Link href="/tro-chuyen" className="hover:text-[#E07B4C] transition-colors">
-              Góc trò chuyện
-            </Link>
             <Link href="/admin" className="hover:text-[#E07B4C] transition-colors">
               Quản trị
             </Link>

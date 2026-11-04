@@ -206,10 +206,10 @@ export function UserNav() {
             <Link
               href="/admin"
               onClick={() => setIsOpen(false)}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-[10px] bg-[#E07B4C]/15 hover:bg-[#E07B4C]/25 text-[#E07B4C] text-xs font-bold transition-colors mb-2"
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-[10px] bg-[#E07B4C] hover:bg-[#DC7648] text-white text-xs font-bold transition-colors mb-2 border border-[#2B2623] shadow-[1.5px_2px_0px_#2B2623]"
             >
               <ShieldCheck className="size-4" />
-              <span>Bảng Quản Trị (Admin)</span>
+              <span>Chỉnh sửa trang web</span>
             </Link>
           )}
 

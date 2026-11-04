@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, MessageCircleHeart, Library, Menu } from "lucide-react";
+import { BookOpen, Library, Menu, Sliders } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
@@ -11,15 +11,16 @@ import { OrangeLogo } from "./orange-logo";
 import { BgmPlayer } from "@/components/media/bgm-player";
 import { NotificationBell } from "./notification-bell";
 import { UserNav } from "@/components/auth/user-nav";
+import { useAuth } from "@/components/auth/auth-context";
 
 export function Header() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = React.useState(false);
+  const { user } = useAuth();
 
   const navItems = [
     { label: "Trang chủ", href: "/", icon: BookOpen },
     { label: "Thư viện", href: "/kho-truyen", icon: Library },
-    { label: "Trò chuyện", href: "/tro-chuyen", icon: MessageCircleHeart },
   ];
 
   return (
@@ -74,6 +75,19 @@ export function Header() {
           <ThemeToggle />
           <UserNav />
 
+          {/* Admin Edit Site Button */}
+          {user?.role === "ADMIN" && (
+            <Link
+              href="/admin"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[12px] bg-[#E07B4C] hover:bg-[#DC7648] text-white border-2 border-[#2B2623] shadow-[2px_3px_0px_#2B2623] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none text-xs font-bold font-mono transition-all shrink-0"
+              title="Chỉnh sửa trang web"
+            >
+              <Sliders className="size-3.5" />
+              <span className="hidden sm:inline">Chỉnh sửa trang web</span>
+              <span className="sm:hidden">Sửa web</span>
+            </Link>
+          )}
+
           {/* Mobile Sheet Trigger */}
           <div className="md:hidden">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -108,6 +122,17 @@ export function Header() {
                       </Link>
                     );
                   })}
+
+                  {user?.role === "ADMIN" && (
+                    <Link
+                      href="/admin"
+                      onClick={() => setIsOpen(false)}
+                      className="px-4 py-2.5 rounded-[12px] text-sm flex items-center gap-3 font-bold bg-[#E07B4C] text-white border-2 border-[#2B2623] shadow-[2px_3px_0px_#2B2623] mt-2"
+                    >
+                      <Sliders className="size-4 shrink-0" />
+                      <span>Chỉnh sửa trang web</span>
+                    </Link>
+                  )}
                 </div>
                 <div className="mt-auto pt-6 border-t border-border/60 text-xs text-muted-foreground italic font-serif">
                   ars longa, vita brevis – nghệ thuật trường tồn, cuộc đời ngắn ngủi

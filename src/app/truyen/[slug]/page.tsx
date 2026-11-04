@@ -17,19 +17,7 @@ interface StoryDetailPageProps {
   params: Promise<{ slug: string }>;
 }
 
-export const revalidate = 60;
-
-export async function generateStaticParams() {
-  return [
-    { slug: "om-lay-trong-luc" },
-    { slug: "sternstunde" },
-    { slug: "de-profundis" },
-    { slug: "bay-buc-thu-duoc-gui-den-sau-cai-chet-cua-ke-hoang-tuong" },
-    { slug: "mat-bao" },
-    { slug: "bong-nhiet-do-thap" },
-    { slug: "gio-tin-phong-thoi-ve-phia-bien" },
-  ];
-}
+export const dynamic = "force-dynamic";
 
 export default async function StoryDetailPage({ params }: StoryDetailPageProps) {
   const { slug } = await params;

@@ -25,6 +25,7 @@ import {
   deleteStory,
   type AdminStoryItem,
 } from "@/app/admin/actions";
+import { StructuredStoryForm, type StructuredStoryData } from "./structured-story-form";
 
 interface StoryManagerProps {
   initialStories: AdminStoryItem[];
@@ -334,223 +335,58 @@ export function StoryManager({ initialStories }: StoryManagerProps) {
         })}
       </div>
 
-      {/* Modal / Dialog Form for Create & Edit */}
+      {/* Structured Modal / Form for Create & Edit */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-          <div className="w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 rounded-3xl bg-card border border-border shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between pb-4 border-b border-border/60 mb-5">
-              <h3 className="font-serif text-xl font-medium text-foreground">
-                {editingStory ? "Chỉnh Sửa Bộ Truyện" : "Thêm Bộ Truyện Mới"}
-              </h3>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-
-            {feedback && (
-              <div
-                className={`p-3 rounded-xl mb-4 text-xs flex items-center gap-2 ${
-                  feedback.type === "success"
-                    ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200"
-                    : "bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200"
-                }`}
-              >
-                {feedback.type === "success" ? (
-                  <CheckCircle2 className="size-4 shrink-0 text-emerald-600" />
-                ) : (
-                  <AlertCircle className="size-4 shrink-0 text-rose-600" />
-                )}
-                <span>{feedback.text}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                {/* Title */}
-                <div>
-                  <label className="block text-xs font-medium text-muted-foreground mb-1">
-                    Tên truyện <span className="text-rose-500">*</span>
-                  </label>
-                  <Input
-                    name="title"
-                    required
-                    value={title}
-                    onChange={(e) => handleTitleChange(e.target.value)}
-                    placeholder="Ví dụ: Tiệm Sách Cũ Lúc Nửa Đêm..."
-                    className="h-9 rounded-xl text-xs bg-background border-border/80"
-                  />
-                </div>
-
-                {/* Slug */}
-                <div>
-                  <label className="block text-xs font-medium text-muted-foreground mb-1">
-                    Đường dẫn (Slug) <span className="text-rose-500">*</span>
-                  </label>
-                  <Input
-                    name="slug"
-                    required
-                    value={slug}
-                    onChange={(e) => setSlug(e.target.value)}
-                    placeholder="tiem-sach-cu-luc-nua-dem"
-                    className="h-9 rounded-xl text-xs font-mono bg-background border-border/80"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                {/* Author */}
-                <div>
-                  <label className="block text-xs font-medium text-muted-foreground mb-1">
-                    Tác giả <span className="text-rose-500">*</span>
-                  </label>
-                  <Input
-                    name="author"
-                    required
-                    value={author}
-                    onChange={(e) => setAuthor(e.target.value)}
-                    placeholder="Tên tác giả hoặc dịch giả..."
-                    className="h-9 rounded-xl text-xs bg-background border-border/80"
-                  />
-                </div>
-
-                {/* Status */}
-                <div>
-                  <label className="block text-xs font-medium text-muted-foreground mb-1">
-                    Trạng thái
-                  </label>
-                  <select
-                    name="status"
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value as "ONGOING" | "COMPLETED" | "DROPPED")}
-                    className="w-full h-9 rounded-xl text-xs px-3 bg-background border border-border/80 text-foreground"
-                  >
-                    <option value="ONGOING">Đang tiến hành (ONGOING)</option>
-                    <option value="COMPLETED">Hoàn thành (COMPLETED)</option>
-                    <option value="DROPPED">Tạm dừng (DROPPED)</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Tags */}
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">
-                  Thể loại / Tags (cách nhau bằng dấu phẩy)
-                </label>
-                <Input
-                  name="tags"
-                  value={tags}
-                  onChange={(e) => setTags(e.target.value)}
-                  placeholder="Chữa lành, Đời thường, Kỳ ảo..."
-                  className="h-9 rounded-xl text-xs bg-background border-border/80"
-                />
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">
-                  Tóm tắt / Giới thiệu tác phẩm
-                </label>
-                <Textarea
-                  name="description"
-                  rows={3}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Vài dòng giới thiệu ngắn gọn về câu chuyện..."
-                  className="rounded-xl text-xs bg-background border-border/80 resize-none leading-relaxed"
-                />
-              </div>
-
-              {/* Cover Image Upload via Web Canvas API */}
-              <div className="p-4 rounded-2xl bg-muted/30 border border-border/70 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="block text-xs font-medium text-foreground">
-                    Ảnh bìa truyện (Nén Web Canvas API ➜ Cloudflare R2)
-                  </span>
-                  {compressionInfo && (
-                    <Badge variant="outline" className="text-[10px] font-mono text-emerald-700 bg-emerald-50 border-emerald-300">
-                      {compressionInfo}
-                    </Badge>
-                  )}
-                </div>
-
-                <div className="flex items-start gap-4">
-                  {/* Cover preview */}
-                  <div className="relative w-20 h-28 shrink-0 rounded-xl overflow-hidden bg-background border border-border/80 shadow-xs flex items-center justify-center text-muted-foreground">
-                    {coverPreview ? (
-                      <Image
-                        src={coverPreview}
-                        alt="Preview"
-                        fill
-                        sizes="80px"
-                        className="object-cover"
-                      />
-                    ) : (
-                      <Upload className="size-6 text-muted-foreground/60" />
-                    )}
-                  </div>
-
-                  <div className="flex-1 space-y-2">
-                    <div>
-                      <label className="block text-[11px] font-mono text-muted-foreground mb-1">
-                        Chọn ảnh từ máy (Tự động nén WebP ngay trên trình duyệt):
-                      </label>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileChange}
-                        className="text-xs text-muted-foreground file:mr-2.5 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-secondary file:text-foreground hover:file:bg-secondary/80 cursor-pointer"
-                      />
-                    </div>
-
-                    <div className="pt-1">
-                      <label className="block text-[11px] font-mono text-muted-foreground mb-1">
-                        Hoặc nhập liên kết ảnh trực tiếp:
-                      </label>
-                      <Input
-                        name="coverUrl"
-                        value={coverUrl}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setCoverUrl(val);
-                          setCompressedWebpBlob(null);
-                          if (val.startsWith("http") || val.startsWith("data:")) {
-                            setCoverPreview(val);
-                          }
-                        }}
-                        placeholder="https://..."
-                        className="h-8 text-xs rounded-xl bg-background border-border/80"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="pt-3 border-t border-border/60 flex items-center justify-end gap-2.5">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsModalOpen(false)}
-                  className="rounded-xl text-xs h-9"
-                >
-                  Hủy bỏ
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isPending}
-                  className="rounded-xl text-xs h-9 px-5 shadow-xs"
-                >
-                  {isPending ? "Đang nén & lưu..." : editingStory ? "Lưu thay đổi" : "Tạo truyện"}
-                </Button>
-              </div>
-            </form>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/60 backdrop-blur-xs animate-in fade-in-50">
+          <div className="w-full max-w-4xl max-h-[92vh] overflow-y-auto">
+            <StructuredStoryForm
+              initialData={
+                editingStory
+                  ? {
+                      id: editingStory.id,
+                      title: editingStory.title,
+                      slug: editingStory.slug,
+                      author: editingStory.author,
+                      status: editingStory.status,
+                      tags: editingStory.tags,
+                      coverUrl: editingStory.coverUrl,
+                      description: editingStory.description,
+                    }
+                  : null
+              }
+              onSuccess={(saved) => {
+                setStories((prev) => {
+                  const existingIdx = prev.findIndex((s) => s.slug === saved.slug || s.id === saved.id);
+                  const newItem: AdminStoryItem = {
+                    id: saved.id || `story_${Date.now()}`,
+                    title: saved.title,
+                    slug: saved.slug,
+                    author: saved.author,
+                    status: saved.status as "ONGOING" | "COMPLETED" | "DROPPED",
+                    tags: saved.tags,
+                    coverUrl: saved.coverUrl || null,
+                    description: saved.description || null,
+                    createdAt: existingIdx >= 0 ? prev[existingIdx].createdAt : new Date(),
+                    updatedAt: new Date(),
+                    _count: {
+                      chapters: existingIdx >= 0 ? prev[existingIdx]._count?.chapters || 0 : 0,
+                      reviews: 0,
+                    },
+                  };
+                  if (existingIdx >= 0) {
+                    const copy = [...prev];
+                    copy[existingIdx] = { ...copy[existingIdx], ...newItem };
+                    return copy;
+                  }
+                  return [newItem, ...prev];
+                });
+                setIsModalOpen(false);
+              }}
+              onCancel={() => setIsModalOpen(false)}
+            />
           </div>
         </div>
       )}
-    </div>
+      </div>
   );
 }

@@ -14,6 +14,7 @@ import { CodeMirrorEditor } from "./codemirror-editor";
 import { TiptapEditor } from "./tiptap-editor";
 import { LivePreview } from "./live-preview";
 import { TemplateModal } from "./template-modal";
+import { StructuredStoryForm } from "../structured-story-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -622,24 +623,53 @@ export function StudioEditor({ stories: initialStories, initialTemplates = [] }:
             </Button>
           )}
 
-          {/* Save Button */}
-          <Button
-            type="button"
-            size="sm"
-            onClick={handleSave}
-            disabled={isPending}
-            className="h-8 px-3.5 text-xs rounded-xl bg-[#E07B4C] hover:bg-[#DC7648] text-white border-2 border-[#2B2623] shadow-[2px_2.5px_0px_#2B2623] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none font-bold font-mono flex items-center gap-1.5"
-            title="Lưu nội dung (Ctrl+S)"
-          >
-            <Save className="size-3.5" />
-            <span>
-              {isPending
-                ? "Đang lưu..."
-                : isNewChapter
-                ? "Tạo Chương Mới"
-                : "Lưu Thay Đổi"}
-            </span>
-          </Button>
+          {/* Live Page Preview in new tab */}
+          {targetType === "story" && currentStory?.slug && (
+            <Link
+              href={`/truyen/${currentStory.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="h-8 px-2.5 text-xs rounded-xl border-2 border-[#2B2623] bg-[#FAF5EE] hover:bg-[#E5DDD2] dark:bg-[#2A2420] text-[#2B2623] dark:text-[#FAF5EE] shadow-[1.5px_2px_0px_#2B2623] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none font-bold font-mono flex items-center gap-1.5 transition-all"
+              title="Mở trang giới thiệu truyện này trên web trong tab mới để xem thành quả"
+            >
+              <ExternalLink className="size-3.5 text-[#E07B4C]" />
+              <span className="hidden sm:inline">Xem Trang</span>
+            </Link>
+          )}
+
+          {targetType === "chapter" && currentChapter && !isNewChapter && (
+            <Link
+              href={`/chuong/${currentChapter.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="h-8 px-2.5 text-xs rounded-xl border-2 border-[#2B2623] bg-[#FAF5EE] hover:bg-[#E5DDD2] dark:bg-[#2A2420] text-[#2B2623] dark:text-[#FAF5EE] shadow-[1.5px_2px_0px_#2B2623] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none font-bold font-mono flex items-center gap-1.5 transition-all"
+              title="Mở chương truyện này trên web đọc truyện trong tab mới để xem thành quả"
+            >
+              <ExternalLink className="size-3.5 text-[#E07B4C]" />
+              <span className="hidden sm:inline">Xem Trang</span>
+            </Link>
+          )}
+
+          {/* Save Button (Chapter Mode) */}
+          {targetType === "chapter" && (
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleSave}
+              disabled={isPending}
+              className="h-8 px-3.5 text-xs rounded-xl bg-[#E07B4C] hover:bg-[#DC7648] text-white border-2 border-[#2B2623] shadow-[2px_2.5px_0px_#2B2623] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none font-bold font-mono flex items-center gap-1.5"
+              title="Lưu nội dung chương (Ctrl+S)"
+            >
+              <Save className="size-3.5" />
+              <span>
+                {isPending
+                  ? "Đang lưu..."
+                  : isNewChapter
+                  ? "Tạo Chương Mới"
+                  : "Lưu Thay Đổi"}
+              </span>
+            </Button>
+          )}
         </div>
       </header>
 
@@ -932,105 +962,139 @@ export function StudioEditor({ stories: initialStories, initialTemplates = [] }:
 
       {/* 3. Main Workspace Area */}
       <div className="flex-1 flex overflow-hidden relative">
-        {/* VIEW MODE 1: VISUAL (Tiptap) */}
-        {viewMode === "visual" && (
-          <div className="flex-1 flex flex-col h-full overflow-hidden bg-background">
-            <TiptapEditor
-              value={htmlContent}
-              onChange={(newHtml) => setHtmlContent(newHtml)}
-            />
-          </div>
-        )}
-
-        {/* VIEW MODE 2: CODE (CodeMirror) */}
-        {viewMode === "code" && (
-          <div className="flex-1 flex flex-col h-full overflow-hidden">
-            <CodeMirrorEditor
-              value={htmlContent}
-              onChange={(newCode) => setHtmlContent(newCode)}
-            />
-          </div>
-        )}
-
-        {/* VIEW MODE 3: SPLIT (Code/Visual + Live Preview) */}
-        {viewMode === "split" && (
-          <div className="flex-1 flex flex-col md:flex-row h-full overflow-hidden">
-            {/* Left Split Pane: Editor */}
-            <div className="flex-1 flex flex-col h-1/2 md:h-full md:w-1/2 border-b md:border-b-0 md:border-r border-[#2B2623]/20 overflow-hidden bg-background">
-              {/* Split Editor Header Tab */}
-              <div className="h-8 border-b border-[#2B2623]/10 bg-[#E5DDD2]/50 dark:bg-[#2A2420] px-3 flex items-center justify-between text-[11px] font-mono text-[#5C5146] shrink-0">
-                <span className="font-bold flex items-center gap-1.5">
-                  {splitEditorType === "code" ? (
-                    <Code2 className="size-3 text-[#E07B4C]" />
-                  ) : (
-                    <FileText className="size-3 text-[#E07B4C]" />
-                  )}
-                  {splitEditorType === "code" ? "MÃ NGUỒN HTML" : "TRÌNH SOẠN THẢO TRỰC QUAN"}
-                </span>
-
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => setSplitEditorType("code")}
-                    className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                      splitEditorType === "code"
-                        ? "bg-[#FAF5EE] text-[#2B2623] shadow-xs"
-                        : "text-[#5C5146] hover:text-[#2B2623]"
-                    }`}
-                  >
-                    HTML
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSplitEditorType("visual")}
-                    className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                      splitEditorType === "visual"
-                        ? "bg-[#FAF5EE] text-[#2B2623] shadow-xs"
-                        : "text-[#5C5146] hover:text-[#2B2623]"
-                    }`}
-                  >
-                    Visual
-                  </button>
-                </div>
-              </div>
-
-              {/* Active Editor in Split */}
-              <div className="flex-1 overflow-hidden">
-                {splitEditorType === "code" ? (
-                  <CodeMirrorEditor
-                    value={htmlContent}
-                    onChange={(newCode) => setHtmlContent(newCode)}
-                  />
-                ) : (
-                  <TiptapEditor
-                    value={htmlContent}
-                    onChange={(newHtml) => setHtmlContent(newHtml)}
-                  />
-                )}
-              </div>
+        {/* If in Story Mode: Show Standardized Structured Story Form */}
+        {targetType === "story" ? (
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-[#FAF5EE] dark:bg-[#1A1614] flex justify-center">
+            <div className="w-full max-w-4xl">
+              <StructuredStoryForm
+                initialData={
+                  currentStory
+                    ? {
+                        id: currentStory.id,
+                        title: currentStory.title,
+                        slug: currentStory.slug,
+                        author: currentStory.author,
+                        status: currentStory.status || "ONGOING",
+                        tags: currentStory.tags || [],
+                        coverUrl: currentStory.coverUrl,
+                        description: currentStory.description,
+                        contentHtml: currentStory.contentHtml,
+                      }
+                    : null
+                }
+                onSuccess={(saved) => {
+                  setFeedback({
+                    type: "success",
+                    text: `Đã lưu thông tin truyện "${saved.title}" thành công!`,
+                  });
+                }}
+              />
             </div>
-
-            {/* Right Split Pane: Live Preview */}
-            <div className="flex-1 flex flex-col h-1/2 md:h-full md:w-1/2 overflow-hidden bg-[#FAF5EE] dark:bg-[#1A1614]">
-              <div className="h-8 border-b border-[#2B2623]/10 bg-[#E5DDD2]/50 dark:bg-[#2A2420] px-3 flex items-center justify-between text-[11px] font-mono text-[#5C5146] shrink-0">
-                <span className="font-bold flex items-center gap-1.5">
-                  <Eye className="size-3 text-[#E07B4C]" />
-                  XEM TRƯỚC THỜI GIAN THỰC (LIVE PREVIEW)
-                </span>
-                <span className="text-[10px] italic text-[#5C5146]/70">
-                  {targetType === "story" ? "Bố cục Trang Giới Thiệu" : "Giao diện Bài Đọc"}
-                </span>
-              </div>
-              <div className="flex-1 overflow-y-auto">
-                <LivePreview
-                  content={htmlContent}
-                  customCss={customCss}
-                  chapters={currentStory?.chapters || []}
-                  storySlug={currentStory?.slug}
+          </div>
+        ) : (
+          /* If in Chapter Mode: Render Visual / Code / Split */
+          <>
+            {/* VIEW MODE 1: VISUAL (Tiptap) */}
+            {viewMode === "visual" && (
+              <div className="flex-1 flex flex-col h-full overflow-hidden bg-background">
+                <TiptapEditor
+                  value={htmlContent}
+                  onChange={(newHtml) => setHtmlContent(newHtml)}
                 />
               </div>
-            </div>
-          </div>
+            )}
+
+            {/* VIEW MODE 2: CODE (CodeMirror) */}
+            {viewMode === "code" && (
+              <div className="flex-1 flex flex-col h-full overflow-hidden">
+                <CodeMirrorEditor
+                  value={htmlContent}
+                  onChange={(newCode) => setHtmlContent(newCode)}
+                />
+              </div>
+            )}
+
+            {/* VIEW MODE 3: SPLIT (Code/Visual + Live Preview) */}
+            {viewMode === "split" && (
+              <div className="flex-1 flex flex-col md:flex-row h-full overflow-hidden">
+                {/* Left Split Pane: Editor */}
+                <div className="flex-1 flex flex-col h-1/2 md:h-full md:w-1/2 border-b md:border-b-0 md:border-r border-[#2B2623]/20 overflow-hidden bg-background">
+                  {/* Split Editor Header Tab */}
+                  <div className="h-8 border-b border-[#2B2623]/10 bg-[#E5DDD2]/50 dark:bg-[#2A2420] px-3 flex items-center justify-between text-[11px] font-mono text-[#5C5146] shrink-0">
+                    <span className="font-bold flex items-center gap-1.5">
+                      {splitEditorType === "code" ? (
+                        <Code2 className="size-3 text-[#E07B4C]" />
+                      ) : (
+                        <FileText className="size-3 text-[#E07B4C]" />
+                      )}
+                      {splitEditorType === "code" ? "MÃ NGUỒN HTML" : "TRÌNH SOẠN THẢO TRỰC QUAN"}
+                    </span>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setSplitEditorType("code")}
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          splitEditorType === "code"
+                            ? "bg-[#FAF5EE] text-[#2B2623] shadow-xs"
+                            : "text-[#5C5146] hover:text-[#2B2623]"
+                        }`}
+                      >
+                        HTML
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSplitEditorType("visual")}
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          splitEditorType === "visual"
+                            ? "bg-[#FAF5EE] text-[#2B2623] shadow-xs"
+                            : "text-[#5C5146] hover:text-[#2B2623]"
+                        }`}
+                      >
+                        Visual
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Active Editor in Split */}
+                  <div className="flex-1 overflow-hidden">
+                    {splitEditorType === "code" ? (
+                      <CodeMirrorEditor
+                        value={htmlContent}
+                        onChange={(newCode) => setHtmlContent(newCode)}
+                      />
+                    ) : (
+                      <TiptapEditor
+                        value={htmlContent}
+                        onChange={(newHtml) => setHtmlContent(newHtml)}
+                      />
+                    )}
+                  </div>
+                </div>
+
+                {/* Right Split Pane: Live Preview */}
+                <div className="flex-1 flex flex-col h-1/2 md:h-full md:w-1/2 overflow-hidden bg-[#FAF5EE] dark:bg-[#1A1614]">
+                  <div className="h-8 border-b border-[#2B2623]/10 bg-[#E5DDD2]/50 dark:bg-[#2A2420] px-3 flex items-center justify-between text-[11px] font-mono text-[#5C5146] shrink-0">
+                    <span className="font-bold flex items-center gap-1.5">
+                      <Eye className="size-3 text-[#E07B4C]" />
+                      XEM TRƯỚC THỜI GIAN THỰC (LIVE PREVIEW)
+                    </span>
+                    <span className="text-[10px] italic text-[#5C5146]/70">
+                      Giao diện Bài Đọc
+                    </span>
+                  </div>
+                  <div className="flex-1 overflow-y-auto">
+                    <LivePreview
+                      content={htmlContent}
+                      customCss={customCss}
+                      chapters={currentStory?.chapters || []}
+                      storySlug={currentStory?.slug}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {/* Custom CSS Slide Drawer (for story mode) */}

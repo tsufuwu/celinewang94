@@ -150,12 +150,12 @@ export function TiptapEditor({ value, onChange, className = "" }: TiptapEditorPr
     setFootnoteExplanation("");
     selectionRangeRef.current = null;
 
-    // Return focus to editor AFTER modal unmounts
-    setTimeout(() => {
+    // Return focus to editor cleanly so text selection and cursor remain 100% responsive
+    requestAnimationFrame(() => {
       if (editor && !editor.isDestroyed) {
         editor.commands.focus();
       }
-    }, 50);
+    });
   };
 
   // Hotkey listener for footnote (Alt+N or Ctrl+Shift+F)
@@ -454,8 +454,14 @@ export function TiptapEditor({ value, onChange, className = "" }: TiptapEditorPr
       <div
         className="flex-1 overflow-y-auto cursor-text bg-background select-text p-2 sm:p-4"
         onClick={(e) => {
+          if (!editor || !editor.view) return;
           if (e.target === e.currentTarget) {
-            editor.commands.focus("end");
+            const pos = editor.view.posAtCoords({ left: e.clientX, top: e.clientY });
+            if (pos) {
+              editor.chain().focus().setTextSelection(pos.pos).run();
+            } else {
+              editor.commands.focus("end");
+            }
           }
         }}
       >

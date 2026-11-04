@@ -248,7 +248,10 @@ export function ChapterReader({
       ([entry]) => {
         setIsFooterVisible(entry.isIntersecting);
       },
-      { threshold: 0.1 }
+      {
+        rootMargin: "0px 0px 120px 0px",
+        threshold: 0,
+      }
     );
     observer.observe(el);
 
@@ -624,7 +627,7 @@ export function ChapterReader({
         {/* Bottom Navigation Links */}
         <footer
           ref={footerRef}
-          className="mt-16 sm:mt-24 pt-8 pb-28 sm:pb-36 border-t border-border/60 flex flex-col sm:flex-row items-center justify-between gap-4"
+          className="mt-16 sm:mt-24 pt-8 pb-36 sm:pb-48 border-t border-border/60 flex flex-col sm:flex-row items-center justify-between gap-4"
         >
           <div className="flex items-center gap-2">
             {prevChapterId ? (

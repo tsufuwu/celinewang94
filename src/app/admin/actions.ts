@@ -665,6 +665,10 @@ export interface EditorStoryOption {
   slug: string;
   title: string;
   author: string;
+  status?: string;
+  tags?: string[];
+  coverUrl?: string | null;
+  description?: string | null;
   contentHtml?: string | null;
   customCss?: string | null;
   chapters: EditorChapterOption[];
@@ -697,6 +701,10 @@ export async function getEditorStories(): Promise<EditorStoryOption[]> {
           slug: s.slug,
           title: s.title,
           author: s.author,
+          status: s.status || "ONGOING",
+          tags: (s.tags as string[]) || [],
+          coverUrl: s.coverUrl,
+          description: s.description,
           contentHtml: s.contentHtml,
           customCss: s.customCss,
           chapters: allChapters
@@ -735,6 +743,10 @@ export async function getEditorStories(): Promise<EditorStoryOption[]> {
     slug: s.slug,
     title: s.title,
     author: s.author,
+    status: s.status,
+    tags: s.tags,
+    coverUrl: s.coverUrl,
+    description: s.description,
     contentHtml: null,
     customCss: null,
     chapters: [],

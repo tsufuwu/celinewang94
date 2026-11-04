@@ -309,18 +309,54 @@
 
 /* Studio Tiptap ProseMirror Text Selection and Cursor Fixes */
 .ProseMirror {
+  position: relative;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  white-space: break-spaces;
+  -webkit-font-variant-ligatures: none;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0;
   min-height: 450px;
   outline: none !important;
   cursor: text !important;
   user-select: text !important;
   -webkit-user-select: text !important;
   pointer-events: auto !important;
+  caret-color: #E07B4C !important;
 }
 
 .ProseMirror * {
   user-select: text !important;
   -webkit-user-select: text !important;
   pointer-events: auto !important;
+}
+
+/* Ensure selected text is ALWAYS highlighted clearly in warm pastel gold */
+.ProseMirror ::selection,
+.ProseMirror *::selection {
+  background-color: #F4DFAD !important;
+  color: #2B2623 !important;
+}
+
+.ProseMirror ::-moz-selection,
+.ProseMirror *::-moz-selection {
+  background-color: #F4DFAD !important;
+  color: #2B2623 !important;
+}
+
+/* Override ProseMirror default hidden selection so blur doesn't hide selection */
+.ProseMirror-hideselection *::selection,
+.ProseMirror-hideselection ::selection {
+  background-color: #F4DFAD !important;
+  color: #2B2623 !important;
+}
+
+.ProseMirror-hideselection {
+  caret-color: #E07B4C !important;
+}
+
+.ProseMirror-selectednode {
+  outline: 2px solid #E07B4C !important;
 }
 
 .ProseMirror p {

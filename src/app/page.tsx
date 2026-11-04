@@ -25,11 +25,11 @@ export default async function HomePage() {
       {/* 1. Hero Spotlight Slider + Characters & Works + Heartfelt Memories */}
       <ArchiveHero stories={stories} />
 
-      {/* 2. Bento Stream: Recent Chapters + Reader Comments from WordPress */}
-      <BentoSection chapters={recentChapters} />
-
-      {/* 3. Stories Archive with Category Tabs & Multi-Tag Search Filter */}
+      {/* 2. Stories Archive with Category Tabs & Multi-Tag Search Filter */}
       <StoryList initialStories={stories} />
+
+      {/* 3. Bento Stream: Recent Chapters + Reader Comments from WordPress */}
+      <BentoSection chapters={recentChapters} />
     </div>
   );
 }

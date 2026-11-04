@@ -4,8 +4,6 @@ import * as React from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
-  saveStoryContentHtml,
-  createOrUpdateChapterAction,
   deleteChapterAction,
   saveEditorTemplate,
   EditorTemplateItem,
@@ -193,14 +191,24 @@ export function StudioEditor({ stories: initialStories, initialTemplates = [] }:
     return () => window.removeEventListener("keydown", handleKeyDown);
   });
 
-  // Save Content
+  // Save Content via stable REST API (immune to Server Action deployment hash mismatch)
   const handleSave = () => {
     if (!currentStory) return;
 
     startTransition(async () => {
       try {
         if (targetType === "story") {
-          const res = await saveStoryContentHtml(currentStory.id, htmlContent, customCss);
+          const resp = await fetch("/api/admin/save-story", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              storyId: currentStory.id,
+              contentHtml: htmlContent,
+              customCss,
+            }),
+          });
+          const res = await resp.json();
+
           if (res.success) {
             setFeedback({ type: "success", text: res.message });
             setStories((prev) =>
@@ -220,16 +228,21 @@ export function StudioEditor({ stories: initialStories, initialTemplates = [] }:
           const effectivePasswordHint = isChapterLocked && chapterPasswordHint.trim() ? chapterPasswordHint.trim() : null;
           const effectiveLockMessage = isChapterLocked && chapterLockMessage.trim() ? chapterLockMessage.trim() : null;
 
-          const res = await createOrUpdateChapterAction({
-            id: isNewChapter ? undefined : currentChapter?.id,
-            storyId: currentStory.id,
-            chapterNumber,
-            title: chapterTitle,
-            contentHtml: htmlContent,
-            password: effectivePassword,
-            passwordHint: effectivePasswordHint,
-            lockMessage: effectiveLockMessage,
+          const resp = await fetch("/api/admin/save-chapter", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              id: isNewChapter ? undefined : currentChapter?.id,
+              storyId: currentStory.id,
+              chapterNumber,
+              title: chapterTitle,
+              contentHtml: htmlContent,
+              password: effectivePassword,
+              passwordHint: effectivePasswordHint,
+              lockMessage: effectiveLockMessage,
+            }),
           });
+          const res = await resp.json();
 
           if (res.success && res.chapterId) {
             const savedChapterId = res.chapterId;

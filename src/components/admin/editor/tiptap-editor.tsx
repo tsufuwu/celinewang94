@@ -49,8 +49,8 @@ export function TiptapEditor({ value, onChange, className = "" }: TiptapEditorPr
   const [footnoteExplanation, setFootnoteExplanation] = React.useState("");
   const selectionRangeRef = React.useRef<{ from: number; to: number } | null>(null);
 
-  // Distinguish between internal typing and external prop updates
-  const isInternalUpdateRef = React.useRef(false);
+  // Track the last value emitted or synced to prevent circular setContent destruction
+  const lastEmittedValueRef = React.useRef(value);
 
   const editor = useEditor({
     extensions: [
@@ -70,8 +70,9 @@ export function TiptapEditor({ value, onChange, className = "" }: TiptapEditorPr
     content: value || "<p>Bắt đầu viết tác phẩm của bạn...</p>",
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
-      isInternalUpdateRef.current = true;
-      onChange(editor.getHTML());
+      const html = editor.getHTML();
+      lastEmittedValueRef.current = html;
+      onChange(html);
     },
     editorProps: {
       attributes: {
@@ -85,11 +86,14 @@ export function TiptapEditor({ value, onChange, className = "" }: TiptapEditorPr
   React.useEffect(() => {
     if (!editor) return;
 
-    if (isInternalUpdateRef.current) {
-      isInternalUpdateRef.current = false;
+    // If the value in props matches what this Tiptap editor just emitted, IGNORE completely.
+    // This prevents setContent from destroying DOM and cursor on internal edits or modal close!
+    if (value === lastEmittedValueRef.current) {
       return;
     }
 
+    // Only update if value changed from an OUTSIDE source (e.g. switching chapter/story)
+    lastEmittedValueRef.current = value;
     const currentHtml = editor.getHTML();
     if (value !== currentHtml) {
       editor.commands.setContent(value || "<p></p>", { emitUpdate: false });
@@ -119,7 +123,7 @@ export function TiptapEditor({ value, onChange, className = "" }: TiptapEditorPr
     const range = selectionRangeRef.current;
 
     // Standard shortcode format used by ChapterReader: [cụm từ][[lời giải thích]]
-    const footnoteString = `[${target}][[${note}]]`;
+    const footnoteString = `[${target}][[${note}]] `;
 
     if (range && range.from !== range.to) {
       editor
@@ -136,10 +140,22 @@ export function TiptapEditor({ value, onChange, className = "" }: TiptapEditorPr
         .run();
     }
 
+    // Immediately record emitted HTML so the effect ignores the upcoming parent re-render
+    const newHtml = editor.getHTML();
+    lastEmittedValueRef.current = newHtml;
+    onChange(newHtml);
+
     setFootnoteModalOpen(false);
     setFootnoteTargetWord("");
     setFootnoteExplanation("");
     selectionRangeRef.current = null;
+
+    // Return focus to editor AFTER modal unmounts
+    setTimeout(() => {
+      if (editor && !editor.isDestroyed) {
+        editor.commands.focus();
+      }
+    }, 50);
   };
 
   // Hotkey listener for footnote (Alt+N or Ctrl+Shift+F)

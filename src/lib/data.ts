@@ -173,40 +173,7 @@ export function extractPlaylistId(urlOrId: string): string {
 // Curated official background playlist
 export const DEFAULT_BGM_PLAYLIST: BgmTrackItem[] = [];
 
-export const RECENT_SIDEBAR_COMMENTS: SidebarCommentItem[] = [
-  {
-    id: "sc_1",
-    author: "mxijoan",
-    content: "Truyện cuốn xỉu luôn á chị ơi, em đọc một lèo từ tối qua tới giờ chưa dứt ra được 🍊🥺",
-    targetChapter: "[EG] Chương 44: Dưới ánh đèn sân băng",
-    chapterId: "ch_omlay_44",
-    timeAgo: "2 giờ trước",
-  },
-  {
-    id: "sc_2",
-    author: "Little meow meow.",
-    content: "Cảm ơn Celine nhiều vì bản dịch mượt mà và các đoạn chú thích văn hóa siêu có tâm!",
-    targetChapter: "Phần I: Thư gửi từ vực sâu khổ đau",
-    chapterId: "ch_deprofundis_1",
-    timeAgo: "5 giờ trước",
-  },
-  {
-    id: "sc_3",
-    author: "xinh gái nóng tính",
-    content: "Đoạn trên sân băng miêu tả đẹp đến phát khóc, hóng chương tiếp theo của nhà Cam quá nè 🧡",
-    targetChapter: "Chương 1: Những bông tuyết đầu tiên",
-    chapterId: "ch_omlay_1",
-    timeAgo: "Hôm qua",
-  },
-  {
-    id: "sc_4",
-    author: "Cam Ngọt Mọng Nước",
-    content: "Mỗi lần mệt mỏi lại ghé Media Naranja đọc vài chương, cảm giác bình yên và ấm áp lạ lùng.",
-    targetChapter: "Chương 1: Tiếng sóng vỗ mạn thuyền",
-    chapterId: "ch_giotinphong_1",
-    timeAgo: "2 ngày trước",
-  },
-];
+export const RECENT_SIDEBAR_COMMENTS: SidebarCommentItem[] = [];
 
 export const FALLBACK_STORIES: StoryItem[] = [
   {

@@ -27,6 +27,7 @@ import { OrangeLogo } from "@/components/layout/orange-logo";
 import { renderParagraphWithFootnotes } from "./inline-footnote";
 import { AntiCopyShield } from "./anti-copy-shield";
 import { useAuth } from "@/components/auth/auth-context";
+import { CommentSection } from "@/components/comments/comment-section";
 
 export interface ParagraphData {
   index: number;
@@ -126,8 +127,6 @@ export function ChapterReader({
   const [bookmarkSavedMsg, setBookmarkSavedMsg] = React.useState(false);
   const currentParagraphIndexRef = React.useRef(0);
   const lastSyncTimeRef = React.useRef(Date.now());
-  const footerRef = React.useRef<HTMLElement | null>(null);
-  const [isFooterVisible, setIsFooterVisible] = React.useState(false);
   const [settings, setSettings] = React.useState<ReadingSettings>({
     fontSize: 17,
     lineHeight: "normal",
@@ -238,27 +237,6 @@ export function ChapterReader({
       sections.forEach((sec) => observer.unobserve(sec));
     };
   }, [isUnlocked, chapter.id, chapter.paragraphs.length, chapter.story.slug]);
-
-  // Observer to hide floating toolbar when user reaches bottom footer navigation
-  React.useEffect(() => {
-    const el = footerRef.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsFooterVisible(entry.isIntersecting);
-      },
-      {
-        rootMargin: "0px 0px 120px 0px",
-        threshold: 0,
-      }
-    );
-    observer.observe(el);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, []);
 
   // 2. Check for saved reading position on initial load (LocalStorage or D1 Cloud)
   React.useEffect(() => {
@@ -624,9 +602,11 @@ export function ChapterReader({
           })}
         </article>
 
+        {/* Chapter-wide Comments Section */}
+        <CommentSection targetType="chapter" targetId={chapter.id} />
+
         {/* Bottom Navigation Links */}
         <footer
-          ref={footerRef}
           className="mt-16 sm:mt-24 pt-8 pb-36 sm:pb-48 border-t border-border/60 flex flex-col sm:flex-row items-center justify-between gap-4"
         >
           <div className="flex items-center gap-2">
@@ -699,7 +679,7 @@ export function ChapterReader({
         </footer>
       </main>
 
-      {/* Floating Toolbar (Font size, Spacing, Themes, Chapter nav) */}
+      {/* Floating Toolbar Docked in Corner */}
       <ReadingToolbar
         settings={settings}
         onUpdateSettings={handleUpdateSettings}
@@ -708,7 +688,6 @@ export function ChapterReader({
         currentChapterNumber={chapter.chapterNumber}
         totalChapters={allChapters.length}
         onOpenChapterSelector={() => setIsChapterDrawerOpen(true)}
-        isHidden={isFooterVisible}
       />
 
       {/* Chapter Selector Drawer / Modal */}

@@ -4,7 +4,6 @@ import * as React from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
-  deleteChapterAction,
   saveEditorTemplate,
   EditorTemplateItem,
   EditorStoryOption,
@@ -299,7 +298,12 @@ export function StudioEditor({ stories: initialStories, initialTemplates = [] }:
 
     startTransition(async () => {
       try {
-        const res = await deleteChapterAction(currentChapter.id);
+        const resp = await fetch("/api/admin/delete-chapter", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chapterId: currentChapter.id }),
+        });
+        const res = await resp.json();
         if (res.success) {
           setFeedback({ type: "success", text: "Đã xóa chương thành công!" });
           setStories((prev) =>
@@ -426,22 +430,20 @@ export function StudioEditor({ stories: initialStories, initialTemplates = [] }:
                 setTargetType("story");
                 setIsNewChapter(false);
               }}
-              className={`px-2.5 py-1 rounded-[8px] font-bold transition-all ${
-                targetType === "story"
-                  ? "bg-[#FAF5EE] dark:bg-[#1F1B18] text-[#2B2623] dark:text-[#FAF5EE] shadow-[1px_1.5px_0px_#2B2623]"
-                  : "text-[#5C5146] dark:text-[#C4B9AD] hover:text-[#2B2623]"
-              }`}
+              className={`px-2.5 py-1 rounded-[8px] font-bold transition-all ${targetType === "story"
+                ? "bg-[#FAF5EE] dark:bg-[#1F1B18] text-[#2B2623] dark:text-[#FAF5EE] shadow-[1px_1.5px_0px_#2B2623]"
+                : "text-[#5C5146] dark:text-[#C4B9AD] hover:text-[#2B2623]"
+                }`}
             >
               Giới Thiệu
             </button>
             <button
               type="button"
               onClick={() => setTargetType("chapter")}
-              className={`px-2.5 py-1 rounded-[8px] font-bold transition-all ${
-                targetType === "chapter"
-                  ? "bg-[#E07B4C] text-white shadow-[1px_1.5px_0px_#2B2623]"
-                  : "text-[#5C5146] dark:text-[#C4B9AD] hover:text-[#2B2623]"
-              }`}
+              className={`px-2.5 py-1 rounded-[8px] font-bold transition-all ${targetType === "chapter"
+                ? "bg-[#E07B4C] text-white shadow-[1px_1.5px_0px_#2B2623]"
+                : "text-[#5C5146] dark:text-[#C4B9AD] hover:text-[#2B2623]"
+                }`}
             >
               Chương Truyện
             </button>
@@ -496,11 +498,10 @@ export function StudioEditor({ stories: initialStories, initialTemplates = [] }:
                 type="button"
                 size="sm"
                 onClick={handleAddNewChapterClick}
-                className={`h-8 px-2.5 text-xs rounded-xl font-mono font-bold border-2 border-[#2B2623] shadow-[1.5px_2px_0px_#2B2623] transition-all flex items-center gap-1 ${
-                  isNewChapter
-                    ? "bg-[#BDCEAF] text-[#2B2623]"
-                    : "bg-[#E07B4C] hover:bg-[#DC7648] text-white"
-                }`}
+                className={`h-8 px-2.5 text-xs rounded-xl font-mono font-bold border-2 border-[#2B2623] shadow-[1.5px_2px_0px_#2B2623] transition-all flex items-center gap-1 ${isNewChapter
+                  ? "bg-[#BDCEAF] text-[#2B2623]"
+                  : "bg-[#E07B4C] hover:bg-[#DC7648] text-white"
+                  }`}
                 title="Tạo thêm một chương mới cho bộ truyện này"
               >
                 <Plus className="size-3.5" />
@@ -538,11 +539,10 @@ export function StudioEditor({ stories: initialStories, initialTemplates = [] }:
           <button
             type="button"
             onClick={() => setViewMode("visual")}
-            className={`px-2.5 py-1 rounded-[8px] font-bold transition-all flex items-center gap-1 ${
-              viewMode === "visual"
-                ? "bg-[#FAF5EE] dark:bg-[#1F1B18] text-[#2B2623] dark:text-[#FAF5EE] shadow-[1px_1.5px_0px_#2B2623]"
-                : "text-[#5C5146] dark:text-[#C4B9AD] hover:text-[#2B2623]"
-            }`}
+            className={`px-2.5 py-1 rounded-[8px] font-bold transition-all flex items-center gap-1 ${viewMode === "visual"
+              ? "bg-[#FAF5EE] dark:bg-[#1F1B18] text-[#2B2623] dark:text-[#FAF5EE] shadow-[1px_1.5px_0px_#2B2623]"
+              : "text-[#5C5146] dark:text-[#C4B9AD] hover:text-[#2B2623]"
+              }`}
             title="Chế độ Trực quan Visual WYSIWYG"
           >
             <FileText className="size-3.5" />
@@ -552,11 +552,10 @@ export function StudioEditor({ stories: initialStories, initialTemplates = [] }:
           <button
             type="button"
             onClick={() => setViewMode("code")}
-            className={`px-2.5 py-1 rounded-[8px] font-bold transition-all flex items-center gap-1 ${
-              viewMode === "code"
-                ? "bg-[#FAF5EE] dark:bg-[#1F1B18] text-[#2B2623] dark:text-[#FAF5EE] shadow-[1px_1.5px_0px_#2B2623]"
-                : "text-[#5C5146] dark:text-[#C4B9AD] hover:text-[#2B2623]"
-            }`}
+            className={`px-2.5 py-1 rounded-[8px] font-bold transition-all flex items-center gap-1 ${viewMode === "code"
+              ? "bg-[#FAF5EE] dark:bg-[#1F1B18] text-[#2B2623] dark:text-[#FAF5EE] shadow-[1px_1.5px_0px_#2B2623]"
+              : "text-[#5C5146] dark:text-[#C4B9AD] hover:text-[#2B2623]"
+              }`}
             title="Chế độ Code HTML Sandbox"
           >
             <Code2 className="size-3.5" />
@@ -566,11 +565,10 @@ export function StudioEditor({ stories: initialStories, initialTemplates = [] }:
           <button
             type="button"
             onClick={() => setViewMode("split")}
-            className={`px-2.5 py-1 rounded-[8px] font-bold transition-all flex items-center gap-1 ${
-              viewMode === "split"
-                ? "bg-[#FAF5EE] dark:bg-[#1F1B18] text-[#2B2623] dark:text-[#FAF5EE] shadow-[1px_1.5px_0px_#2B2623]"
-                : "text-[#5C5146] dark:text-[#C4B9AD] hover:text-[#2B2623]"
-            }`}
+            className={`px-2.5 py-1 rounded-[8px] font-bold transition-all flex items-center gap-1 ${viewMode === "split"
+              ? "bg-[#FAF5EE] dark:bg-[#1F1B18] text-[#2B2623] dark:text-[#FAF5EE] shadow-[1px_1.5px_0px_#2B2623]"
+              : "text-[#5C5146] dark:text-[#C4B9AD] hover:text-[#2B2623]"
+              }`}
             title="Chế độ Chia đôi màn hình Live Preview"
           >
             <Columns2 className="size-3.5" />
@@ -676,11 +674,10 @@ export function StudioEditor({ stories: initialStories, initialTemplates = [] }:
       {/* Feedback Toast */}
       {feedback && (
         <div
-          className={`px-4 py-2 text-xs font-mono font-bold border-b-2 border-[#2B2623] flex items-center justify-between transition-all ${
-            feedback.type === "success"
-              ? "bg-[#BDCEAF] text-[#2B2623]"
-              : "bg-[#EBBAB5] text-[#2B2623]"
-          }`}
+          className={`px-4 py-2 text-xs font-mono font-bold border-b-2 border-[#2B2623] flex items-center justify-between transition-all ${feedback.type === "success"
+            ? "bg-[#BDCEAF] text-[#2B2623]"
+            : "bg-[#EBBAB5] text-[#2B2623]"
+            }`}
         >
           <div className="flex items-center gap-2">
             {feedback.type === "success" ? (
@@ -736,11 +733,10 @@ export function StudioEditor({ stories: initialStories, initialTemplates = [] }:
               variant="outline"
               size="sm"
               onClick={() => setShowPasswordBox((prev) => !prev)}
-              className={`h-8 px-2.5 text-xs rounded-xl font-mono font-bold border-2 border-[#2B2623] shadow-[1px_1.5px_0px_#2B2623] flex items-center gap-1.5 transition-all cursor-pointer ${
-                isChapterLocked
-                  ? "bg-[#EBBAB5] text-[#2B2623] hover:bg-[#E2A6A0]"
-                  : "bg-[#FAF5EE] dark:bg-[#2A2420] text-[#5C5146] hover:text-[#2B2623] hover:bg-[#E5DDD2]"
-              }`}
+              className={`h-8 px-2.5 text-xs rounded-xl font-mono font-bold border-2 border-[#2B2623] shadow-[1px_1.5px_0px_#2B2623] flex items-center gap-1.5 transition-all cursor-pointer ${isChapterLocked
+                ? "bg-[#EBBAB5] text-[#2B2623] hover:bg-[#E2A6A0]"
+                : "bg-[#FAF5EE] dark:bg-[#2A2420] text-[#5C5146] hover:text-[#2B2623] hover:bg-[#E5DDD2]"
+                }`}
               title="Cài đặt khóa chương, mật khẩu, gợi ý và lời nhắn"
             >
               {isChapterLocked ? (
@@ -843,11 +839,10 @@ export function StudioEditor({ stories: initialStories, initialTemplates = [] }:
                       setChapterLockMessage("");
                     }
                   }}
-                  className={`px-3 py-1.5 rounded-[10px] font-mono font-bold text-xs border-2 border-[#2B2623] transition-all flex items-center gap-1.5 cursor-pointer shadow-[1.5px_2px_0px_#2B2623] active:translate-x-[1px] active:translate-y-[1px] ${
-                    isChapterLocked
-                      ? "bg-[#EBBAB5] text-[#2B2623] hover:bg-[#E2A6A0]"
-                      : "bg-[#E5DDD2] text-[#5C5146] hover:bg-[#D5CDC2]"
-                  }`}
+                  className={`px-3 py-1.5 rounded-[10px] font-mono font-bold text-xs border-2 border-[#2B2623] transition-all flex items-center gap-1.5 cursor-pointer shadow-[1.5px_2px_0px_#2B2623] active:translate-x-[1px] active:translate-y-[1px] ${isChapterLocked
+                    ? "bg-[#EBBAB5] text-[#2B2623] hover:bg-[#E2A6A0]"
+                    : "bg-[#E5DDD2] text-[#5C5146] hover:bg-[#D5CDC2]"
+                    }`}
                 >
                   {isChapterLocked ? <Lock className="size-3.5" /> : <Unlock className="size-3.5" />}
                   <span>{isChapterLocked ? "Tắt Khóa (Mở Công Khai)" : "Bật Khóa Chương"}</span>

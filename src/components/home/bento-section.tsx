@@ -115,31 +115,39 @@ export function BentoSection({ chapters }: BentoSectionProps) {
           </div>
 
           <div className="flex flex-col gap-3.5">
-            {RECENT_SIDEBAR_COMMENTS.map((c, idx) => (
-              <ScrollReveal key={c.id} animation="fly-right" delay={idx * 70}>
-                <Link
-                  href={`/chuong/${c.chapterId}`}
-                  className="p-3.5 rounded-[16px] bg-[#FDFBF7] dark:bg-[#241F1C] border-2 border-[#2B2623] shadow-[2px_3px_0px_#2B2623] hover:translate-x-[0.5px] hover:translate-y-[1px] hover:shadow-[1.5px_2px_0px_#2B2623] active:translate-x-[2px] active:translate-y-[3px] active:shadow-none transition-all duration-200 block group"
-                >
-                  <div className="flex items-center justify-between gap-2 mb-1.5">
-                    <span className="text-xs font-bold text-[#2B2623] dark:text-[#FAF5EE] flex items-center gap-1.5">
-                      <span className="size-2 rounded-full bg-[#E07B4C]" />
-                      {c.author}
-                    </span>
-                    <span className="text-[10px] font-mono text-[#5C5146] dark:text-[#C4B9AD]">
-                      {c.timeAgo}
-                    </span>
-                  </div>
-                  <p className="text-xs text-[#5C5146] dark:text-[#C4B9AD] leading-relaxed line-clamp-2 italic mb-2">
-                    &ldquo;{c.content}&rdquo;
-                  </p>
-                  <div className="text-[10px] text-[#E07B4C] font-mono truncate group-hover:underline transition-colors flex items-center gap-1 font-semibold">
-                    <span>Tại:</span>
-                    <span className="underline decoration-dotted">{c.targetChapter}</span>
-                  </div>
-                </Link>
-              </ScrollReveal>
-            ))}
+            {RECENT_SIDEBAR_COMMENTS.length > 0 ? (
+              RECENT_SIDEBAR_COMMENTS.map((c, idx) => (
+                <ScrollReveal key={c.id} animation="fly-right" delay={idx * 70}>
+                  <Link
+                    href={`/chuong/${c.chapterId}`}
+                    className="p-3.5 rounded-[16px] bg-[#FDFBF7] dark:bg-[#241F1C] border-2 border-[#2B2623] shadow-[2px_3px_0px_#2B2623] hover:translate-x-[0.5px] hover:translate-y-[1px] hover:shadow-[1.5px_2px_0px_#2B2623] active:translate-x-[2px] active:translate-y-[3px] active:shadow-none transition-all duration-200 block group"
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <span className="text-xs font-bold text-[#2B2623] dark:text-[#FAF5EE] flex items-center gap-1.5">
+                        <span className="size-2 rounded-full bg-[#E07B4C]" />
+                        {c.author}
+                      </span>
+                      <span className="text-[10px] font-mono text-[#5C5146] dark:text-[#C4B9AD]">
+                        {c.timeAgo}
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#5C5146] dark:text-[#C4B9AD] leading-relaxed line-clamp-2 italic mb-2">
+                      &ldquo;{c.content}&rdquo;
+                    </p>
+                    <div className="text-[10px] text-[#E07B4C] font-mono truncate group-hover:underline transition-colors flex items-center gap-1 font-semibold">
+                      <span>Tại:</span>
+                      <span className="underline decoration-dotted">{c.targetChapter}</span>
+                    </div>
+                  </Link>
+                </ScrollReveal>
+              ))
+            ) : (
+              <div className="p-4 rounded-[16px] bg-[#FDFBF7] dark:bg-[#241F1C] border-2 border-[#2B2623] shadow-[2px_3px_0px_#2B2623] text-center">
+                <p className="text-xs font-serif italic text-[#5C5146] dark:text-[#C4B9AD]">
+                  Chưa có bình luận mới. Hãy là người đầu tiên để lại cảm nghĩ của bạn tại các chương truyện!
+                </p>
+              </div>
+            )}
 
             {/* Quick Link to Guestbook */}
             <ScrollReveal animation="scale-up" delay={200}>

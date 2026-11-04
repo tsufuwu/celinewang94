@@ -859,7 +859,7 @@ export async function saveProfileSettings(
         },
       });
 
-    revalidatePath("/gioi-thieu");
+    revalidatePath("/");
     return { success: true, message: "Đã lưu thông tin Giới Thiệu (CV) thành công!" };
   } catch (error: unknown) {
     return {

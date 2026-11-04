@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { BookOpen, Layers, ArrowRight } from "lucide-react";
+import { BookOpen, ArrowRight } from "lucide-react";
 import type { StoryItem, StoryCategory } from "@/lib/data";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
@@ -37,12 +37,8 @@ export function StoryList({ initialStories }: StoryListProps) {
       {/* Section Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 mb-8 border-b-2 border-[#2B2623]/20">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[8px] bg-[#BDCEAF] text-[#2B2623] border-2 border-[#2B2623] shadow-[1.5px_2px_0px_#2B2623] text-[10px] font-mono font-bold uppercase tracking-wider mb-2">
-            <Layers className="size-3 text-[#2B2623]" />
-            <span>KỆ SÁCH CỦA CELINE</span>
-          </div>
           <h2 className="font-serif text-2xl sm:text-3xl text-[#2B2623] dark:text-[#FAF5EE] font-bold tracking-tight">
-            Thư Viện &amp; Tác Phẩm
+            Thư Viện
           </h2>
         </div>
 

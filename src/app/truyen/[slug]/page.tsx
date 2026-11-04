@@ -50,6 +50,8 @@ export default async function StoryDetailPage({ params }: StoryDetailPageProps) 
           description: stories.description,
           status: stories.status,
           tags: stories.tags,
+          contentHtml: stories.contentHtml,
+          customCss: stories.customCss,
         })
         .from(stories)
         .where(eq(stories.slug, slug))

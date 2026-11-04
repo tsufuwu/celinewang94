@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, MessageCircleHeart, User, Library, Menu } from "lucide-react";
+import { BookOpen, MessageCircleHeart, Library, Menu } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
@@ -20,7 +20,6 @@ export function Header() {
     { label: "Trang chủ", href: "/", icon: BookOpen },
     { label: "Thư viện", href: "/kho-truyen", icon: Library },
     { label: "Trò chuyện", href: "/tro-chuyen", icon: MessageCircleHeart },
-    { label: "Giới thiệu (CV)", href: "/gioi-thieu", icon: User },
   ];
 
   return (

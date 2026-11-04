@@ -2,11 +2,11 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { getStories } from "@/lib/data";
 import { StoryList } from "@/components/home/story-list";
-import { Library, ChevronRight, BookOpen, Sparkles } from "lucide-react";
+import { Library, ChevronRight, BookOpen } from "lucide-react";
 import { OrangeLogo } from "@/components/layout/orange-logo";
 
 export const metadata: Metadata = {
-  title: "Thư Viện & Tác Phẩm | Media naranja",
+  title: "Thư Viện | Media naranja",
   description:
     "Toàn bộ tác phẩm, bản dịch đam mỹ, văn học chọn lọc và dự án lưu trữ của Celine Wang tại Media naranja.",
 };
@@ -33,19 +33,10 @@ export default async function KhoTruyenPage() {
       {/* Hero Banner Header for Library Archive */}
       <div className="relative rounded-[20px] bg-[#FAF5EE] dark:bg-[#1F1B18] border-2 border-[#2B2623] shadow-[3px_5px_0px_#2B2623] p-6 sm:p-10 mb-8 overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-3 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[10px] bg-[#BDCEAF] text-[#2B2623] border-2 border-[#2B2623] shadow-[2px_3px_0px_#2B2623] text-xs font-bold uppercase tracking-wider select-none">
-              <Sparkles className="size-3.5 text-[#2B2623]" />
-              <span>ARS LONGA, VITA BREVIS · THƯ VIỆN CHỌN LỌC</span>
-            </div>
-
+          <div className="max-w-2xl">
             <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-[#2B2623] dark:text-[#FAF5EE]">
-              Thư Viện &amp; Tác Phẩm
+              Thư Viện
             </h1>
-
-            <p className="text-sm sm:text-base text-[#5C5146] dark:text-[#C4B9AD] leading-relaxed font-sans font-normal">
-              Nơi lưu trữ những bộ truyện hoàn thành, các bản dịch công phu và những bản thảo đang được ấp ủ bởi Celine Wang. Chọn các danh mục bên dưới để tìm câu chuyện phù hợp với tâm trạng của bạn nhé.
-            </p>
           </div>
 
           {/* Quick Stats Box */}

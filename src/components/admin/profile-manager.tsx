@@ -186,15 +186,15 @@ export function ProfileManager({ initialProfile }: ProfileManagerProps) {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-[16px] bg-[#FAF5EE] dark:bg-[#241F1C] border-2 border-[#2B2623] shadow-[2px_3px_0px_#2B2623]">
         <div>
           <h2 className="font-serif text-lg font-bold text-[#2B2623] dark:text-[#FAF5EE]">
-            Chỉnh Sửa Trang Giới Thiệu (CV)
+            Chỉnh Sửa Hồ Sơ Tác Giả & Trang Web
           </h2>
           <p className="text-xs text-[#5C5146] dark:text-[#C4B9AD] mt-0.5">
-            Cập nhật thông tin tác giả, avatar, ảnh bìa, lời nhắn, kinh nghiệm và các dự án hiển thị tại <code className="font-mono text-[#E07B4C]">/gioi-thieu</code>.
+            Cập nhật thông tin tác giả, avatar, ảnh bìa, lời nhắn, kinh nghiệm và các dự án của Celine Wang.
           </p>
         </div>
 
         <div className="flex items-center gap-2 self-end sm:self-auto">
-          <Link href="/gioi-thieu" target="_blank">
+          <Link href="/" target="_blank">
             <Button
               type="button"
               variant="outline"
@@ -202,7 +202,7 @@ export function ProfileManager({ initialProfile }: ProfileManagerProps) {
               className="rounded-[10px] text-xs h-9 px-3 border-2 border-[#2B2623] shadow-[1.5px_2px_0px_#2B2623] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none font-bold"
             >
               <ExternalLink className="size-3 mr-1" />
-              <span>Xem trang CV</span>
+              <span>Xem trang chủ</span>
             </Button>
           </Link>
 

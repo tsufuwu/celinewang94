@@ -43,22 +43,17 @@ export function ReadingToolbar({
   currentChapterNumber,
   totalChapters,
   onOpenChapterSelector,
-  isHidden = false,
 }: ReadingToolbarProps) {
   const [isExpanded, setIsExpanded] = React.useState(false);
 
   return (
     <aside
       aria-label="Thanh công cụ đọc truyện"
-      className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center select-none transition-all duration-300 ${
-        isHidden
-          ? "translate-y-24 opacity-0 pointer-events-none"
-          : "translate-y-0 opacity-100"
-      }`}
+      className="fixed bottom-6 right-4 sm:right-6 z-40 flex flex-col items-end select-none transition-all duration-300"
     >
       {/* Expanded Controls Panel */}
       {isExpanded && (
-        <div className="mb-3 p-4 rounded-2xl bg-card/95 backdrop-blur-md border border-border/80 shadow-2xl w-[92vw] max-w-sm flex flex-col gap-3.5 transition-all animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div className="mb-3 p-4 rounded-[20px] bg-[#FAF5EE] dark:bg-[#1F1B18] border-2 border-[#2B2623] shadow-[4px_6px_0px_#2B2623] w-[90vw] max-w-sm flex flex-col gap-3.5 transition-all animate-in fade-in slide-in-from-bottom-2 duration-200">
           {/* Header row in panel */}
           <div className="flex items-center justify-between pb-2 border-b border-border/60 text-xs font-medium">
             <span className="font-serif text-foreground">Tùy Chỉnh Đọc Sách</span>
@@ -197,8 +192,8 @@ export function ReadingToolbar({
         </div>
       )}
 
-      {/* Main Floating Bar Pill */}
-      <div className="flex items-center gap-1.5 p-1.5 rounded-full bg-card/90 dark:bg-card/95 backdrop-blur-md border border-border/80 shadow-xl transition-transform hover:scale-102">
+      {/* Main Floating Bar Pill Docked in Corner */}
+      <div className="flex items-center gap-1.5 p-1.5 rounded-full bg-[#FAF5EE] dark:bg-[#25201C] border-2 border-[#2B2623] shadow-[2.5px_4px_0px_#2B2623] transition-transform hover:scale-102">
         {/* Previous Chapter */}
         {prevChapterId ? (
           <Link href={`/chuong/${prevChapterId}`}>

@@ -16,6 +16,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CommentSection } from "@/components/comments/comment-section";
 
 export interface UnifiedChapterItem {
   id: string;
@@ -518,6 +519,9 @@ export function StoryUnifiedView({ story, chapters, isAdmin = false }: UnifiedSt
           </div>
         )}
       </section>
+
+      {/* Story-wide Reviews / Comments Section */}
+      <CommentSection targetType="story" targetId={story.id} />
     </div>
   );
 }

@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
     const storyLink = storySlug ? `/truyen/${storySlug}#comment-${newReview.id}` : `/`;
 
     // Dispatch in-app and email notifications
-    dispatchCommentNotifications({
+    await dispatchCommentNotifications({
       actorName: newReview.authorName,
       actorId: session.id,
       content: newReview.content,

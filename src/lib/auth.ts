@@ -1,5 +1,6 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import crypto from "crypto";
 
 export interface AuthUser {
   id: string;
@@ -83,13 +84,16 @@ export async function verifyAuthToken(token?: string | null): Promise<AuthUser |
   if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, JWT_KEY);
+    const email = String(payload.email || "");
+    const isAdmin = payload.role === "ADMIN" || checkIsAdminEmail(email);
+
     return {
       id: String(payload.id),
-      email: String(payload.email),
+      email,
       name: String(payload.name || ""),
       nickname: payload.nickname ? String(payload.nickname) : undefined,
       image: payload.image ? String(payload.image) : undefined,
-      role: (payload.role === "ADMIN" ? "ADMIN" : "USER") as "USER" | "ADMIN",
+      role: isAdmin ? "ADMIN" : "USER",
       unlockedChapters: Array.isArray(payload.unlockedChapters)
         ? (payload.unlockedChapters as string[])
         : [],
@@ -106,7 +110,32 @@ export async function getAuthSession(): Promise<AuthUser | null> {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get(AUTH_COOKIE_NAME)?.value;
-    return await verifyAuthToken(token);
+    const session = await verifyAuthToken(token);
+    if (session) {
+      if (checkIsAdminEmail(session.email)) {
+        session.role = "ADMIN";
+      }
+      return session;
+    }
+
+    // Also support admin logged in via admin password cookie
+    const adminToken = cookieStore.get("admin_auth_token")?.value;
+    if (adminToken) {
+      const secret = process.env.ADMIN_PASSWORD || "admin_change_this_password";
+      const expected = crypto.createHash("sha256").update(`admin_${secret}_salt`).digest("hex");
+      if (adminToken === expected) {
+        return {
+          id: "admin_local",
+          email: "phultt.it@gmail.com",
+          name: "Quản trị viên",
+          nickname: "Admin",
+          role: "ADMIN",
+          unlockedChapters: [],
+        };
+      }
+    }
+
+    return null;
   } catch {
     return null;
   }

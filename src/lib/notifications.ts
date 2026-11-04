@@ -35,7 +35,7 @@ async function sendAdminNotificationEmail({
   // 1. Try Resend if API key is provided
   if (resendApiKey) {
     try {
-      await fetch("https://api.resend.com/emails", {
+      const res = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${resendApiKey}`,
@@ -49,14 +49,70 @@ async function sendAdminNotificationEmail({
           text,
         }),
       });
-      console.log(`[Notification Email] Sent via Resend to ${adminEmails.join(", ")}`);
-      return;
+      if (res.ok) {
+        console.log(`[Notification Email] Sent via Resend to ${adminEmails.join(", ")}`);
+        return;
+      }
+      const errText = await res.text();
+      console.warn(`[Notification Email] Resend error (${res.status}):`, errText);
     } catch (err) {
       console.warn("[Notification Email] Resend attempt failed:", err);
     }
   }
 
-  // 2. Try Cloudflare Worker Mailchannels API
+  // 2. Try Brevo (Sendinblue) API if key is provided
+  const brevoApiKey = process.env.BREVO_API_KEY;
+  if (brevoApiKey) {
+    try {
+      const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: {
+          "api-key": brevoApiKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sender: { name: "Media Naranja", email: "notifications@medianaranja.site" },
+          to: adminEmails.map((email) => ({ email })),
+          subject,
+          htmlContent: html,
+          textContent: text,
+        }),
+      });
+      if (res.ok) {
+        console.log(`[Notification Email] Sent via Brevo to ${adminEmails.join(", ")}`);
+        return;
+      }
+      const errText = await res.text();
+      console.warn(`[Notification Email] Brevo error (${res.status}):`, errText);
+    } catch (err) {
+      console.warn("[Notification Email] Brevo attempt failed:", err);
+    }
+  }
+
+  // 3. Try custom Webhook URL (e.g. Google Apps Script Webhook or custom relay)
+  const webhookUrl = process.env.EMAIL_WEBHOOK_URL;
+  if (webhookUrl) {
+    try {
+      const res = await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: adminEmails,
+          subject,
+          html,
+          text,
+        }),
+      });
+      if (res.ok) {
+        console.log(`[Notification Email] Sent via Webhook to ${adminEmails.join(", ")}`);
+        return;
+      }
+    } catch (err) {
+      console.warn("[Notification Email] Webhook attempt failed:", err);
+    }
+  }
+
+  // 4. Try Cloudflare Worker Mailchannels API
   try {
     const res = await fetch("https://api.mailchannels.net/tx/v1/send", {
       method: "POST",
@@ -213,13 +269,18 @@ export async function dispatchCommentNotifications(params: CreateCommentNotifica
 
     const emailText = `${adminTitle}\n\nNgười gửi: ${actorName}\nVị trí: ${targetTitle}\nNội dung: ${content}\nXem tại: ${fullLink}\nThời gian: ${now.toLocaleString("vi-VN")}`;
 
-    // Fire email sending asynchronously
-    sendAdminNotificationEmail({
-      subject: emailSubject,
-      html: emailHtml,
-      text: emailText,
-    }).catch((err) => console.warn("[sendAdminNotificationEmail error]:", err));
+    // Send email notification to all admins (awaited so Cloudflare Worker doesn't kill execution)
+    try {
+      await sendAdminNotificationEmail({
+        subject: emailSubject,
+        html: emailHtml,
+        text: emailText,
+      });
+    } catch (err) {
+      console.warn("[sendAdminNotificationEmail error]:", err);
+    }
   } catch (error) {
     console.error("[dispatchCommentNotifications error]:", error);
   }
 }
+

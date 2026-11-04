@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Dispatch in-app and email notifications
-    dispatchCommentNotifications({
+    await dispatchCommentNotifications({
       actorName: newComment.authorName,
       actorId: session.id,
       content: newComment.content,

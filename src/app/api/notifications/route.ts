@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, notifications } from "@/db";
-import { eq, or, desc } from "drizzle-orm";
-import { getAuthSession } from "@/lib/auth";
+import { eq, or, desc, sql } from "drizzle-orm";
+import { getAuthSession, checkIsAdminEmail } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -17,11 +17,15 @@ export async function GET() {
       return NextResponse.json({ notifications: [], unreadCount: 0 });
     }
 
-    const isAdmin = session.role === "ADMIN";
+    const isAdmin = session.role === "ADMIN" || checkIsAdminEmail(session.email);
 
     // Admins see notifications intended for admin OR directed to them personally
     const condition = isAdmin
-      ? or(eq(notifications.forAdmin, true), eq(notifications.userId, session.id))
+      ? or(
+          eq(notifications.forAdmin, true),
+          sql`${notifications.forAdmin} = 1`,
+          eq(notifications.userId, session.id)
+        )
       : eq(notifications.userId, session.id);
 
     const rows = await db
@@ -70,11 +74,15 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Database error" }, { status: 500 });
     }
 
-    const isAdmin = session.role === "ADMIN";
+    const isAdmin = session.role === "ADMIN" || checkIsAdminEmail(session.email);
 
     if (markAll) {
       const condition = isAdmin
-        ? or(eq(notifications.forAdmin, true), eq(notifications.userId, session.id))
+        ? or(
+            eq(notifications.forAdmin, true),
+            sql`${notifications.forAdmin} = 1`,
+            eq(notifications.userId, session.id)
+          )
         : eq(notifications.userId, session.id);
 
       await db

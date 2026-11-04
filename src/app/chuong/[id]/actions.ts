@@ -179,7 +179,7 @@ export async function createParagraphComment(
   }
 
   // Dispatch in-app and email notifications
-  dispatchCommentNotifications({
+  await dispatchCommentNotifications({
     actorName: commentData.authorName,
     actorId: user.id,
     content: commentData.content,

@@ -18,3 +18,4 @@ CREATE TABLE IF NOT EXISTS notifications (
 
 CREATE INDEX IF NOT EXISTS notif_user_idx ON notifications(user_id);
 CREATE INDEX IF NOT EXISTS notif_admin_idx ON notifications(for_admin, is_read);
+

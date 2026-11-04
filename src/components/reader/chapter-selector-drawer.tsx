@@ -2,8 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { X, Search, Lock, BookOpen, Check, ArrowRight } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { X, Lock, BookOpen, Check, ArrowRight } from "lucide-react";
 
 export interface ChapterSummaryItem {
   id: string;
@@ -32,7 +31,6 @@ export function ChapterSelectorDrawer({
   storySlug,
   onSelectChapter,
 }: ChapterSelectorDrawerProps) {
-  const [searchQuery, setSearchQuery] = React.useState("");
   const activeItemRef = React.useRef<HTMLAnchorElement>(null);
   const listContainerRef = React.useRef<HTMLDivElement>(null);
 
@@ -58,18 +56,6 @@ export function ChapterSelectorDrawer({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
-
-  // Filtered chapters
-  const filteredChapters = React.useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return allChapters;
-    return allChapters.filter((ch) => {
-      return (
-        ch.chapterNumber.toString().includes(q) ||
-        ch.title.toLowerCase().includes(q)
-      );
-    });
-  }, [allChapters, searchQuery]);
 
   if (!isOpen) return null;
 
@@ -129,35 +115,13 @@ export function ChapterSelectorDrawer({
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="p-3 sm:px-5 sm:pt-4 sm:pb-2 shrink-0 border-b border-[#2B2623]/10 bg-[#FAF5EE] dark:bg-[#1F1B18]">
-          <div className="relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-[#5C5146]/70 pointer-events-none" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Tìm nhanh số chương hoặc tên (ví dụ: 12, tuyết, kết thúc...)"
-              className="pl-10 pr-9 h-10 rounded-[12px] bg-[#FDFBF7] dark:bg-[#28221D] border-2 border-[#2B2623] text-xs font-mono shadow-[1.5px_2px_0px_#2B2623] focus-visible:ring-0 focus-visible:border-[#2B2623]"
-              autoFocus
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5C5146] hover:text-[#2B2623] p-1"
-              >
-                <X className="size-3.5" />
-              </button>
-            )}
-          </div>
-        </div>
-
         {/* Chapters List */}
         <div
           ref={listContainerRef}
           className="flex-1 overflow-y-auto p-3 sm:p-5 divide-y divide-[#2B2623]/10 custom-scrollbar"
         >
-          {filteredChapters.length > 0 ? (
-            filteredChapters.map((ch) => {
+          {allChapters.length > 0 ? (
+            allChapters.map((ch) => {
               const isActive = ch.id === currentChapterId;
               return (
                 <Link
@@ -215,7 +179,7 @@ export function ChapterSelectorDrawer({
             })
           ) : (
             <div className="py-10 text-center font-mono text-xs text-[#5C5146] dark:text-[#C4B9AD]">
-              Không tìm thấy chương nào phù hợp với &ldquo;{searchQuery}&rdquo;
+              Chưa có chương nào trong danh sách.
             </div>
           )}
         </div>

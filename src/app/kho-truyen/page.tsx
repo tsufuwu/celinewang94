@@ -44,7 +44,7 @@ export default async function KhoTruyenPage() {
             </h1>
 
             <p className="text-sm sm:text-base text-[#5C5146] dark:text-[#C4B9AD] leading-relaxed font-sans font-normal">
-              Nơi lưu trữ những bộ truyện hoàn thành, các bản dịch công phu và những bản thảo đang được ấp ủ bởi Celine Wang. Dùng thanh tìm kiếm và danh mục bên dưới để tìm câu chuyện phù hợp với tâm trạng của bạn.
+              Nơi lưu trữ những bộ truyện hoàn thành, các bản dịch công phu và những bản thảo đang được ấp ủ bởi Celine Wang. Chọn các danh mục bên dưới để tìm câu chuyện phù hợp với tâm trạng của bạn nhé.
             </p>
           </div>
 

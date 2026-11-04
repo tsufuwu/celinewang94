@@ -3,9 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Search, X, BookOpen, Layers, ArrowRight } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { BookOpen, Layers, ArrowRight } from "lucide-react";
 import type { StoryItem, StoryCategory } from "@/lib/data";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
@@ -23,32 +21,16 @@ const CATEGORIES: { label: string; value: "ALL" | StoryCategory }[] = [
 
 export function StoryList({ initialStories }: StoryListProps) {
   const [selectedCategory, setSelectedCategory] = React.useState<"ALL" | StoryCategory>("ALL");
-  const [searchQuery, setSearchQuery] = React.useState("");
 
   const handleClearFilters = () => {
     setSelectedCategory("ALL");
-    setSearchQuery("");
   };
 
-  // Filtered stories: category matches AND search matches
+  // Filtered stories: category matches
   const filteredStories = React.useMemo(() => {
-    return initialStories.filter((story) => {
-      // Category filter
-      if (selectedCategory !== "ALL" && story.category !== selectedCategory) {
-        return false;
-      }
-
-      // Search query filter
-      const matchesSearch =
-        searchQuery.trim() === "" ||
-        story.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        story.author.toLowerCase().includes(searchQuery.toLowerCase());
-
-      return matchesSearch;
-    });
-  }, [initialStories, selectedCategory, searchQuery]);
-
-  const hasActiveFilters = selectedCategory !== "ALL" || searchQuery.trim() !== "";
+    if (selectedCategory === "ALL") return initialStories;
+    return initialStories.filter((story) => story.category === selectedCategory);
+  }, [initialStories, selectedCategory]);
 
   return (
     <section className="my-16" id="kho-truyen">
@@ -73,7 +55,7 @@ export function StoryList({ initialStories }: StoryListProps) {
       </div>
 
       {/* Category Navigation Pills (Squircle: borderless, #E5DDD2 active, font-bold) */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-6 scrollbar-none">
+      <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-8 scrollbar-none">
         {CATEGORIES.map((cat) => {
           const isSelected = selectedCategory === cat.value;
           return (
@@ -92,49 +74,14 @@ export function StoryList({ initialStories }: StoryListProps) {
         })}
       </div>
 
-      {/* Search Bar & Tag Toggle Controls */}
-      <div className="flex flex-col gap-4 mb-8">
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-[#5C5146] pointer-events-none" />
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Tìm theo tên truyện, tác giả (larivegauche, Oscar Wilde, Trĩ Sở...)"
-            className="pl-11 pr-10 h-12 rounded-[14px] bg-[#FDFBF7] dark:bg-[#241F1C] border-2 border-[#2B2623] shadow-[2px_3px_0px_#2B2623] text-sm text-[#2B2623] dark:text-[#FAF5EE] placeholder:text-[#5C5146]/60 focus-visible:ring-0 focus-visible:border-[#2B2623]"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#5C5146] hover:text-[#2B2623] p-1"
-            >
-              <X className="size-4" />
-            </button>
-          )}
-        </div>
-
-        {hasActiveFilters && (
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleClearFilters}
-              className="text-xs font-mono font-bold text-[#E07B4C] hover:bg-[#E07B4C]/10 h-7 px-2.5 rounded-[8px]"
-            >
-              <X className="size-3 mr-1" />
-              Xóa bộ lọc
-            </Button>
-          </div>
-        )}
-      </div>
-
       {/* Story Grid */}
       {filteredStories.length === 0 ? (
         <div className="text-center py-16 px-4 rounded-[20px] border-2 border-dashed border-[#2B2623]/30 bg-[#FDFBF7] dark:bg-[#241F1C]">
           <p className="font-serif text-lg font-bold text-[#2B2623] dark:text-[#FAF5EE] mb-1">
-            Chưa tìm thấy truyện nào khớp với bộ lọc
+            Chưa có truyện nào trong danh mục này
           </p>
           <p className="text-xs text-[#5C5146] dark:text-[#C4B9AD] mb-4">
-            Thử gỡ bớt tag hoặc xóa từ khóa tìm kiếm xem sao bạn nhé.
+            Bấm nút bên dưới để quay lại xem tất cả truyện nhé.
           </p>
           <button
             onClick={handleClearFilters}

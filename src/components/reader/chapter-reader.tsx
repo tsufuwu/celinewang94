@@ -471,8 +471,8 @@ export function ChapterReader({
         </aside>
       )}
 
-      {/* Main Content Area */}
-      <main className="max-w-3xl mx-auto px-4 sm:px-8 py-8 sm:py-16">
+      {/* Main Content Area with generous bottom padding so footer is never overlapped by floating toolbar */}
+      <main className="max-w-3xl mx-auto px-4 sm:px-8 pt-8 sm:pt-16 pb-36 sm:pb-44">
         {/* Navigation Bar (hidden in focus mode) */}
         {!settings.focusMode && (
           <nav
@@ -602,7 +602,7 @@ export function ChapterReader({
         </article>
 
         {/* Bottom Navigation Links */}
-        <footer className="mt-16 sm:mt-24 pt-8 border-t border-border/60 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <footer className="mt-16 sm:mt-24 pt-8 pb-10 border-t border-border/60 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             {prevChapterId ? (
               <Link

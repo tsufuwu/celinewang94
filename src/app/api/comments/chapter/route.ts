@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, paragraphComments, chapters, stories, generateId } from "@/db";
-import { eq, and, desc } from "drizzle-orm";
-import { getAuthSession } from "@/lib/auth";
+import { eq, and, desc, or } from "drizzle-orm";
+import { getAuthSession, checkIsAdminEmail } from "@/lib/auth";
 import { dispatchCommentNotifications } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
@@ -242,13 +242,20 @@ export async function DELETE(request: NextRequest) {
 
     const targetComment = rows[0];
     const isOwner = targetComment.userId && targetComment.userId === session.id;
-    const isAdmin = session.role === "ADMIN";
+    const isAdmin = session.role === "ADMIN" || checkIsAdminEmail(session.email);
 
     if (!isOwner && !isAdmin) {
       return NextResponse.json({ error: "Bạn không có quyền xóa bình luận này." }, { status: 403 });
     }
 
-    await db.delete(paragraphComments).where(eq(paragraphComments.id, commentId));
+    await db
+      .delete(paragraphComments)
+      .where(
+        or(
+          eq(paragraphComments.id, commentId),
+          eq(paragraphComments.parentId, commentId)
+        )
+      );
 
     return NextResponse.json({ success: true, message: "Đã xóa bình luận." });
   } catch (error) {

@@ -181,6 +181,11 @@ export function ChapterReader({
     setComments((prev) => [...prev, newComment]);
   };
 
+  // Callback when a comment is deleted
+  const handleCommentDeleted = (deletedId: string) => {
+    setComments((prev) => prev.filter((c) => c.id !== deletedId));
+  };
+
   // Calculate comments count per paragraph
   const commentCountsByParagraph = React.useMemo(() => {
     const map = new Map<number, { count: number; hasTypoReport: boolean }>();
@@ -800,6 +805,7 @@ export function ChapterReader({
           paragraphText={activeParagraph.text}
           comments={comments}
           onCommentAdded={handleCommentAdded}
+          onCommentDeleted={handleCommentDeleted}
         />
       )}
     </div>

@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { getDb, paragraphComments, chapters, stories, generateId } from "@/db";
-import { eq } from "drizzle-orm";
-import { getAuthSession } from "@/lib/auth";
+import { eq, or } from "drizzle-orm";
+import { getAuthSession, checkIsAdminEmail } from "@/lib/auth";
 import { dispatchCommentNotifications } from "@/lib/notifications";
 
 export interface ParagraphCommentItem {
@@ -202,3 +202,64 @@ export async function createParagraphComment(
     newComment: commentData,
   };
 }
+
+export async function deleteParagraphComment(
+  commentId: string
+): Promise<{ success: boolean; message: string }> {
+  const user = await getAuthSession();
+  if (!user) {
+    return { success: false, message: "Vui lòng đăng nhập." };
+  }
+
+  const isAdmin = user.role === "ADMIN" || checkIsAdminEmail(user.email);
+
+  try {
+    const db = await getDb();
+    if (db) {
+      const rows = await db
+        .select()
+        .from(paragraphComments)
+        .where(eq(paragraphComments.id, commentId))
+        .limit(1);
+
+      if (rows.length === 0) {
+        return { success: false, message: "Không tìm thấy bình luận." };
+      }
+
+      const target = rows[0];
+      const isOwner = target.userId && target.userId === user.id;
+
+      if (!isOwner && !isAdmin) {
+        return { success: false, message: "Bạn không có quyền xóa bình luận này." };
+      }
+
+      await db
+        .delete(paragraphComments)
+        .where(
+          or(
+            eq(paragraphComments.id, commentId),
+            eq(paragraphComments.parentId, commentId)
+          )
+        );
+
+      revalidatePath(`/chuong/${target.chapterId}`);
+      return { success: true, message: "Đã xóa bình luận thành công!" };
+    } else {
+      // In-memory fallback
+      const idx = inMemoryParagraphComments.findIndex((c) => c.id === commentId);
+      if (idx !== -1) {
+        const item = inMemoryParagraphComments[idx];
+        if (!isAdmin && item.userId !== user.id) {
+          return { success: false, message: "Bạn không có quyền xóa bình luận này." };
+        }
+        inMemoryParagraphComments.splice(idx, 1);
+        return { success: true, message: "Đã xóa bình luận thành công!" };
+      }
+      return { success: false, message: "Không tìm thấy bình luận." };
+    }
+  } catch (error) {
+    console.error("Error deleting paragraph comment:", error);
+    return { success: false, message: "Lỗi hệ thống khi xóa bình luận." };
+  }
+}
+

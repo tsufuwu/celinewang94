@@ -13,13 +13,18 @@ import {
   Sparkles,
   Pencil,
   X,
+  Trash2,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { createParagraphComment, type ParagraphCommentItem } from "@/app/chuong/[id]/actions";
+import {
+  createParagraphComment,
+  deleteParagraphComment,
+  type ParagraphCommentItem,
+} from "@/app/chuong/[id]/actions";
 import { stripFootnotes } from "./inline-footnote";
 import { useAuth } from "@/components/auth/auth-context";
 
@@ -54,6 +59,7 @@ interface ParagraphSheetProps {
   paragraphText: string;
   comments: ParagraphCommentItem[];
   onCommentAdded: (newComment: ParagraphCommentItem) => void;
+  onCommentDeleted?: (deletedId: string) => void;
 }
 
 export function ParagraphSheet({
@@ -64,11 +70,13 @@ export function ParagraphSheet({
   paragraphText,
   comments,
   onCommentAdded,
+  onCommentDeleted,
 }: ParagraphSheetProps) {
   const { user, loginWithGoogle, updateNickname } = useAuth();
   const [content, setContent] = React.useState("");
   const [isTypoReport, setIsTypoReport] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [deletingId, setDeletingId] = React.useState<string | null>(null);
   const [feedback, setFeedback] = React.useState<{ type: "success" | "error"; text: string } | null>(null);
 
   // Change Name Modal State
@@ -156,6 +164,26 @@ export function ParagraphSheet({
     }
   };
 
+  const handleDeleteComment = async (commentId: string) => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa bình luận này không?")) return;
+
+    setDeletingId(commentId);
+    setFeedback(null);
+    try {
+      const res = await deleteParagraphComment(commentId);
+      if (res.success) {
+        onCommentDeleted?.(commentId);
+        setFeedback({ type: "success", text: res.message });
+      } else {
+        setFeedback({ type: "error", text: res.message });
+      }
+    } catch {
+      setFeedback({ type: "error", text: "Lỗi khi xóa bình luận." });
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
@@ -219,6 +247,19 @@ export function ParagraphSheet({
                     const isAdmin = comment.authorName.includes("[Admin]") || comment.authorName.toLowerCase().includes("celine");
                     const displayName = comment.authorName.replace(/\[Admin\]\s*/g, "");
 
+                    const isCurrentUserAdmin = Boolean(
+                      user &&
+                        (user.role === "ADMIN" ||
+                          [
+                            "celinewang9494@gmail.com",
+                            "celinewang94@gmail.com",
+                            "phultt.it@gmail.com",
+                            "levan09041980@gmail.com",
+                          ].includes(user.email?.toLowerCase() || ""))
+                    );
+                    const isOwner = Boolean(user && comment.userId && user.id === comment.userId);
+                    const canDelete = isCurrentUserAdmin || isOwner;
+
                     return (
                       <div
                         key={comment.id}
@@ -249,12 +290,29 @@ export function ParagraphSheet({
                               </Badge>
                             )}
                           </div>
-                          <time className="text-[10px] font-mono text-muted-foreground shrink-0">
-                            {new Date(comment.createdAt).toLocaleDateString("vi-VN", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </time>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <time className="text-[10px] font-mono text-muted-foreground">
+                              {new Date(comment.createdAt).toLocaleDateString("vi-VN", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </time>
+                            {canDelete && (
+                              <button
+                                type="button"
+                                disabled={deletingId === comment.id}
+                                onClick={() => handleDeleteComment(comment.id)}
+                                className="p-1 text-muted-foreground hover:text-rose-600 dark:hover:text-rose-400 transition-colors rounded hover:bg-rose-100/60 dark:hover:bg-rose-950/40 disabled:opacity-50 cursor-pointer"
+                                title="Xóa bình luận"
+                              >
+                                {deletingId === comment.id ? (
+                                  <span className="size-3 block border-2 border-rose-500 border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  <Trash2 className="size-3.5" />
+                                )}
+                              </button>
+                            )}
+                          </div>
                         </div>
                         <p className="text-foreground/90 font-sans whitespace-pre-line pl-4">
                           {comment.content}

@@ -399,7 +399,17 @@ export function CommentSection({
   ) {
     const isAdmin = c.authorName.startsWith("[Admin]");
     const isOwner = user && c.userId && user.id === c.userId;
-    const canManage = isOwner || (user && user.role === "ADMIN");
+    const isUserAdmin = Boolean(
+      user &&
+        (user.role === "ADMIN" ||
+          [
+            "celinewang9494@gmail.com",
+            "celinewang94@gmail.com",
+            "phultt.it@gmail.com",
+            "levan09041980@gmail.com",
+          ].includes(user.email?.toLowerCase() || ""))
+    );
+    const canManage = isOwner || isUserAdmin;
     const isEditing = editingCommentId === c.id;
     const isReplying = replyingCommentId === c.id;
 

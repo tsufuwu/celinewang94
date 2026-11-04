@@ -38,6 +38,7 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
   let chapter: ChapterData | null = null;
   let prevChapterId: string | null = null;
   let nextChapterId: string | null = null;
+  let allChapters: { id: string; chapterNumber: number; title: string; password?: string | null; wordCount?: number }[] = [];
 
   try {
     const db = await getDb();
@@ -83,6 +84,20 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
 
         prevChapterId = prevRows[0]?.id || null;
         nextChapterId = nextRows[0]?.id || null;
+
+        const allChaptersRows = await db
+          .select({
+            id: chapters.id,
+            chapterNumber: chapters.chapterNumber,
+            title: chapters.title,
+            password: chapters.password,
+            wordCount: chapters.wordCount,
+          })
+          .from(chapters)
+          .where(eq(chapters.storyId, currentCh.storyId))
+          .orderBy(asc(chapters.chapterNumber));
+
+        allChapters = allChaptersRows;
 
         chapter = {
           id: currentCh.id,
@@ -175,6 +190,18 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
     }
   }
 
+  if (allChapters.length === 0 && chapter) {
+    allChapters = [
+      {
+        id: chapter.id,
+        chapterNumber: chapter.chapterNumber,
+        title: chapter.title,
+        password: chapter.password,
+        wordCount: chapter.wordCount,
+      },
+    ];
+  }
+
   const initialComments = await getParagraphComments(chapter.id);
 
   return (
@@ -183,6 +210,7 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
       initialComments={initialComments}
       prevChapterId={prevChapterId}
       nextChapterId={nextChapterId}
+      allChapters={allChapters}
     />
   );
 }

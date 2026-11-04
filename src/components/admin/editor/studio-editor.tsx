@@ -5,15 +5,19 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
   saveStoryContentHtml,
-  saveChapterContentHtml,
+  createOrUpdateChapterAction,
+  deleteChapterAction,
   saveEditorTemplate,
   EditorTemplateItem,
+  EditorStoryOption,
+  EditorChapterOption,
 } from "@/app/admin/actions";
 import { CodeMirrorEditor } from "./codemirror-editor";
 import { TiptapEditor } from "./tiptap-editor";
 import { LivePreview } from "./live-preview";
 import { TemplateModal } from "./template-modal";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   ArrowLeft,
   Save,
@@ -24,34 +28,27 @@ import {
   FileText,
   Check,
   AlertCircle,
-  BookmarkPlus,
   Palette,
   ExternalLink,
+  Plus,
+  Trash2,
+  Lock,
+  KeyRound,
+  Quote,
+  AlignLeft,
+  Scissors,
 } from "lucide-react";
-
-export interface EditorStoryOption {
-  id: string;
-  slug: string;
-  title: string;
-  author: string;
-  contentHtml?: string | null;
-  customCss?: string | null;
-  chapters: {
-    id: string;
-    chapterNumber: number;
-    title: string;
-    contentHtml?: string | null;
-    password?: string | null;
-  }[];
-}
 
 interface StudioEditorProps {
   stories: EditorStoryOption[];
   initialTemplates?: EditorTemplateItem[];
 }
 
-export function StudioEditor({ stories, initialTemplates = [] }: StudioEditorProps) {
+export function StudioEditor({ stories: initialStories, initialTemplates = [] }: StudioEditorProps) {
   const searchParams = useSearchParams();
+
+  // Local Stories State to allow dynamic chapter additions/deletions without page reloads
+  const [stories, setStories] = React.useState<EditorStoryOption[]>(initialStories);
 
   // 1. Target States
   const urlStoryId = searchParams.get("storyId") || stories[0]?.id || "";
@@ -63,30 +60,35 @@ export function StudioEditor({ stories, initialTemplates = [] }: StudioEditorPro
   const [selectedStoryId, setSelectedStoryId] = React.useState<string>(urlStoryId);
   const [selectedChapterId, setSelectedChapterId] = React.useState<string>(urlChapterId);
 
-  // Active Story & Chapter
+  // Is creating a brand new chapter
+  const [isNewChapter, setIsNewChapter] = React.useState<boolean>(false);
+
+  // Active Story
   const currentStory = React.useMemo(() => {
     return stories.find((s) => s.id === selectedStoryId) || stories[0];
   }, [stories, selectedStoryId]);
 
+  // Active Chapter
   const currentChapter = React.useMemo(() => {
-    if (!currentStory) return null;
-    return currentStory.chapters.find((c) => c.id === selectedChapterId) || currentStory.chapters[0] || null;
-  }, [currentStory, selectedChapterId]);
+    if (!currentStory || isNewChapter) return null;
+    return (
+      currentStory.chapters.find((c) => c.id === selectedChapterId) ||
+      currentStory.chapters[0] ||
+      null
+    );
+  }, [currentStory, selectedChapterId, isNewChapter]);
+
+  // Form Fields for Chapter Editing
+  const [chapterNumber, setChapterNumber] = React.useState<number>(1);
+  const [chapterTitle, setChapterTitle] = React.useState<string>("");
+  const [chapterPassword, setChapterPassword] = React.useState<string>("");
+  const [chapterPasswordHint, setChapterPasswordHint] = React.useState<string>("");
+  const [showPasswordBox, setShowPasswordBox] = React.useState<boolean>(false);
 
   // Content States
   const [htmlContent, setHtmlContent] = React.useState<string>("");
   const [customCss, setCustomCss] = React.useState<string>("");
   const [isCssDrawerOpen, setIsCssDrawerOpen] = React.useState(false);
-
-  // Load initial content when story/chapter selection changes
-  React.useEffect(() => {
-    if (targetType === "story" && currentStory) {
-      setHtmlContent(currentStory.contentHtml || "");
-      setCustomCss(currentStory.customCss || "");
-    } else if (targetType === "chapter" && currentChapter) {
-      setHtmlContent(currentChapter.contentHtml || "");
-    }
-  }, [targetType, currentStory, currentChapter]);
 
   // 2. View Mode: "visual" | "code" | "split"
   const [viewMode, setViewMode] = React.useState<"visual" | "code" | "split">("split");
@@ -103,6 +105,64 @@ export function StudioEditor({ stories, initialTemplates = [] }: StudioEditorPro
   const [isPending, startTransition] = React.useTransition();
   const [feedback, setFeedback] = React.useState<{ type: "success" | "error"; text: string } | null>(null);
 
+  // Load content when story/chapter selection changes
+  React.useEffect(() => {
+    if (targetType === "story" && currentStory) {
+      setIsNewChapter(false);
+      setHtmlContent(currentStory.contentHtml || "");
+      setCustomCss(currentStory.customCss || "");
+    } else if (targetType === "chapter") {
+      if (isNewChapter) {
+        // Prepare new chapter defaults
+        const maxNum = currentStory
+          ? currentStory.chapters.reduce((max, c) => Math.max(max, c.chapterNumber), 0)
+          : 0;
+        setChapterNumber(maxNum + 1);
+        setChapterTitle(`Chương ${maxNum + 1}`);
+        setChapterPassword("");
+        setChapterPasswordHint("");
+        setShowPasswordBox(false);
+        setHtmlContent("");
+      } else if (currentChapter) {
+        setChapterNumber(currentChapter.chapterNumber);
+        setChapterTitle(currentChapter.title);
+        setChapterPassword(currentChapter.password || "");
+        setChapterPasswordHint(currentChapter.passwordHint || "");
+        setShowPasswordBox(Boolean(currentChapter.password));
+
+        // Load content: if contentHtml was null, reconstruct from paragraphs
+        const contentToLoad =
+          currentChapter.contentHtml ||
+          (currentChapter.paragraphs && currentChapter.paragraphs.length > 0
+            ? currentChapter.paragraphs.map((p) => `<p>${p.text}</p>`).join("\n")
+            : "");
+        setHtmlContent(contentToLoad);
+      }
+    }
+  }, [targetType, currentStory, currentChapter, isNewChapter]);
+
+  // Click Handler for "+ Thêm chương mới"
+  const handleAddNewChapterClick = () => {
+    setTargetType("chapter");
+    setIsNewChapter(true);
+    setSelectedChapterId("");
+    const maxNum = currentStory
+      ? currentStory.chapters.reduce((max, c) => Math.max(max, c.chapterNumber), 0)
+      : 0;
+    setChapterNumber(maxNum + 1);
+    setChapterTitle(`Chương ${maxNum + 1}`);
+    setChapterPassword("");
+    setChapterPasswordHint("");
+    setShowPasswordBox(false);
+    setHtmlContent("");
+  };
+
+  // Click Handler when selecting an existing chapter
+  const handleSelectExistingChapter = (chapterId: string) => {
+    setIsNewChapter(false);
+    setSelectedChapterId(chapterId);
+  };
+
   // Keyboard shortcut Ctrl+S / Cmd+S
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -117,28 +177,149 @@ export function StudioEditor({ stories, initialTemplates = [] }: StudioEditorPro
 
   // Save Content
   const handleSave = () => {
+    if (!currentStory) return;
+
     startTransition(async () => {
       try {
-        let res: { success: boolean; message: string };
-
         if (targetType === "story") {
-          if (!currentStory) return;
-          res = await saveStoryContentHtml(currentStory.id, htmlContent, customCss);
+          const res = await saveStoryContentHtml(currentStory.id, htmlContent, customCss);
+          if (res.success) {
+            setFeedback({ type: "success", text: res.message });
+            setStories((prev) =>
+              prev.map((s) =>
+                s.id === currentStory.id
+                  ? { ...s, contentHtml: htmlContent, customCss }
+                  : s
+              )
+            );
+            setTimeout(() => setFeedback(null), 3500);
+          } else {
+            setFeedback({ type: "error", text: res.message });
+          }
         } else {
-          if (!currentChapter) return;
-          res = await saveChapterContentHtml(currentChapter.id, htmlContent);
-        }
+          // Chapter Mode: Save or Create chapter
+          const res = await createOrUpdateChapterAction({
+            id: isNewChapter ? undefined : currentChapter?.id,
+            storyId: currentStory.id,
+            chapterNumber,
+            title: chapterTitle,
+            contentHtml: htmlContent,
+            password: chapterPassword,
+            passwordHint: chapterPasswordHint,
+          });
 
-        if (res.success) {
-          setFeedback({ type: "success", text: res.message });
-          setTimeout(() => setFeedback(null), 3500);
-        } else {
-          setFeedback({ type: "error", text: res.message });
+          if (res.success && res.chapterId) {
+            const savedChapterId = res.chapterId;
+            setFeedback({ type: "success", text: res.message });
+
+            // Update local stories state
+            const updatedChapterObj: EditorChapterOption = {
+              id: savedChapterId,
+              storyId: currentStory.id,
+              chapterNumber,
+              title: chapterTitle || `Chương ${chapterNumber}`,
+              contentHtml: htmlContent,
+              password: chapterPassword || null,
+              passwordHint: chapterPasswordHint || null,
+            };
+
+            setStories((prev) =>
+              prev.map((s) => {
+                if (s.id !== currentStory.id) return s;
+                const existingIdx = s.chapters.findIndex((c) => c.id === savedChapterId);
+                const newChapters = [...s.chapters];
+                if (existingIdx >= 0) {
+                  newChapters[existingIdx] = updatedChapterObj;
+                } else {
+                  newChapters.push(updatedChapterObj);
+                }
+                newChapters.sort((a, b) => a.chapterNumber - b.chapterNumber);
+                return { ...s, chapters: newChapters };
+              })
+            );
+
+            setIsNewChapter(false);
+            setSelectedChapterId(savedChapterId);
+            setTimeout(() => setFeedback(null), 3500);
+          } else {
+            setFeedback({ type: "error", text: res.message });
+          }
         }
       } catch (err: unknown) {
         setFeedback({ type: "error", text: (err as Error)?.message || "Lỗi lưu dữ liệu." });
       }
     });
+  };
+
+  // Delete Chapter Handler
+  const handleDeleteChapter = () => {
+    if (!currentChapter) return;
+    const confirmDelete = window.confirm(
+      `Bạn có chắc chắn muốn xóa Chương ${currentChapter.chapterNumber}: "${currentChapter.title}" không? Hành động này không thể hoàn tác.`
+    );
+    if (!confirmDelete) return;
+
+    startTransition(async () => {
+      try {
+        const res = await deleteChapterAction(currentChapter.id);
+        if (res.success) {
+          setFeedback({ type: "success", text: "Đã xóa chương thành công!" });
+          setStories((prev) =>
+            prev.map((s) => {
+              if (s.id !== currentStory.id) return s;
+              return {
+                ...s,
+                chapters: s.chapters.filter((c) => c.id !== currentChapter.id),
+              };
+            })
+          );
+          setSelectedChapterId("");
+          setIsNewChapter(false);
+          setTimeout(() => setFeedback(null), 3000);
+        } else {
+          setFeedback({ type: "error", text: res.message });
+        }
+      } catch (err: unknown) {
+        setFeedback({ type: "error", text: (err as Error)?.message || "Lỗi khi xóa chương." });
+      }
+    });
+  };
+
+  // Text cleaner tools
+  const handleCleanText = (type: "quotes" | "spacing" | "wrapP") => {
+    let text = htmlContent;
+    if (type === "quotes") {
+      // Normalize curly quotes to Vietnamese standards
+      text = text
+        .replace(/[""]/g, '"')
+        .replace(/['']/g, "'")
+        .replace(/<<|>>/g, '"');
+      setFeedback({ type: "success", text: "Đã chuẩn hóa dấu ngoặc kép!" });
+    } else if (type === "spacing") {
+      // Remove excessive blank lines
+      text = text.replace(/\n{3,}/g, "\n\n");
+      setFeedback({ type: "success", text: "Đã dọn dẹp các dòng trống thừa!" });
+    } else if (type === "wrapP") {
+      // Auto wrap lines into <p> tags if not already wrapped
+      if (!text.includes("<p>")) {
+        text = text
+          .split("\n")
+          .map((l) => l.trim())
+          .filter(Boolean)
+          .map((l) => `<p>${l}</p>`)
+          .join("\n");
+        setFeedback({ type: "success", text: "Đã bọc toàn bộ văn bản vào các thẻ đoạn <p>!" });
+      }
+    }
+    setHtmlContent(text);
+    setTimeout(() => setFeedback(null), 2500);
+  };
+
+  // Fast insert snippet helper
+  const handleInsertSnippet = (snippet: string) => {
+    setHtmlContent((prev) => (prev ? `${prev}\n\n${snippet}` : snippet));
+    setFeedback({ type: "success", text: "Đã chèn mẫu nhanh vào bài viết!" });
+    setTimeout(() => setFeedback(null), 2000);
   };
 
   // Handle Template Selection
@@ -174,7 +355,7 @@ export function StudioEditor({ stories, initialTemplates = [] }: StudioEditorPro
     });
   };
 
-  // Calculate stats
+  // Calculate live word & character stats
   const charCount = htmlContent.length;
   const wordCount = htmlContent
     .replace(/<[^>]*>/g, " ")
@@ -183,80 +364,111 @@ export function StudioEditor({ stories, initialTemplates = [] }: StudioEditorPro
     .filter(Boolean).length;
 
   return (
-    <div className="flex flex-col h-screen w-full bg-background overflow-hidden select-none">
-      {/* 1. Studio Sticky Top Control Bar */}
-      <header className="h-14 border-b border-border/80 bg-background/95 backdrop-blur-md px-3 sm:px-6 flex items-center justify-between gap-3 shrink-0 z-30">
-        {/* Left: Back + Target Pickers */}
-        <div className="flex items-center gap-3">
+    <div className="flex flex-col h-screen w-full bg-[#FAF5EE] dark:bg-[#1A1614] text-[#2B2623] dark:text-[#FAF5EE] overflow-hidden select-none font-sans">
+      {/* 1. Studio Top Control Bar */}
+      <header className="h-14 border-b-2 border-[#2B2623]/20 bg-[#FAF5EE]/95 dark:bg-[#1F1B18]/95 backdrop-blur-md px-3 sm:px-6 flex items-center justify-between gap-3 shrink-0 z-30 shadow-[0_2px_4px_rgba(43,38,35,0.04)]">
+        {/* Left: Back + Mode Switchers */}
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <Link
             href="/admin"
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground font-mono transition-colors"
+            className="flex items-center gap-1.5 text-xs text-[#5C5146] dark:text-[#C4B9AD] hover:text-[#E07B4C] font-mono font-bold transition-colors shrink-0"
             title="Về Bàn làm việc Quản trị"
           >
             <ArrowLeft className="size-4" />
             <span className="hidden sm:inline">Admin</span>
           </Link>
 
-          <div className="h-4 w-px bg-border/80 hidden sm:block" />
+          <div className="h-4 w-px bg-[#2B2623]/20 hidden sm:block" />
 
-          {/* Target Type Switcher (Trang Truyện / Chương) */}
-          <div className="flex items-center gap-1 bg-muted/60 p-0.5 rounded-xl border border-border/70 text-xs">
+          {/* Mode Switcher: Giới Thiệu / Chương */}
+          <div className="flex items-center gap-1 bg-[#E5DDD2] dark:bg-[#2A2420] p-1 rounded-xl border border-[#2B2623]/30 text-xs font-mono shrink-0">
             <button
               type="button"
-              onClick={() => setTargetType("story")}
-              className={`px-2.5 py-1 rounded-lg font-serif transition-all ${
+              onClick={() => {
+                setTargetType("story");
+                setIsNewChapter(false);
+              }}
+              className={`px-2.5 py-1 rounded-[8px] font-bold transition-all ${
                 targetType === "story"
-                  ? "bg-background text-foreground font-medium shadow-2xs"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-[#FAF5EE] dark:bg-[#1F1B18] text-[#2B2623] dark:text-[#FAF5EE] shadow-[1px_1.5px_0px_#2B2623]"
+                  : "text-[#5C5146] dark:text-[#C4B9AD] hover:text-[#2B2623]"
               }`}
             >
-              Trang Giới Thiệu
+              Giới Thiệu
             </button>
             <button
               type="button"
               onClick={() => setTargetType("chapter")}
-              className={`px-2.5 py-1 rounded-lg font-serif transition-all ${
+              className={`px-2.5 py-1 rounded-[8px] font-bold transition-all ${
                 targetType === "chapter"
-                  ? "bg-background text-foreground font-medium shadow-2xs"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-[#E07B4C] text-white shadow-[1px_1.5px_0px_#2B2623]"
+                  : "text-[#5C5146] dark:text-[#C4B9AD] hover:text-[#2B2623]"
               }`}
             >
-              Nội Dung Chương
+              Chương Truyện
             </button>
           </div>
 
-          {/* Story Selector */}
+          {/* Story Selector Dropdown */}
           <select
             value={selectedStoryId}
             onChange={(e) => {
               setSelectedStoryId(e.target.value);
+              setIsNewChapter(false);
               const st = stories.find((s) => s.id === e.target.value);
               if (st && st.chapters.length > 0) {
                 setSelectedChapterId(st.chapters[0].id);
+              } else {
+                setSelectedChapterId("");
               }
             }}
-            className="h-8 max-w-[150px] sm:max-w-[200px] text-xs font-serif rounded-xl px-2.5 bg-muted/30 border border-border/80 text-foreground truncate focus:outline-none"
+            className="h-8 max-w-[130px] sm:max-w-[200px] text-xs font-serif font-bold rounded-xl px-2.5 bg-[#FAF5EE] dark:bg-[#2A2420] border-2 border-[#2B2623] text-[#2B2623] dark:text-[#FAF5EE] truncate shadow-[1.5px_2px_0px_#2B2623] focus:outline-none"
           >
             {stories.map((st) => (
               <option key={st.id} value={st.id}>
-                {st.title}
+                {st.title} ({st.chapters.length} ch)
               </option>
             ))}
           </select>
 
-          {/* Chapter Selector (if target is chapter) */}
+          {/* Chapter Selector Dropdown (if in chapter mode and has chapters) */}
           {targetType === "chapter" && currentStory && (
-            <select
-              value={selectedChapterId}
-              onChange={(e) => setSelectedChapterId(e.target.value)}
-              className="h-8 max-w-[140px] sm:max-w-[180px] text-xs font-mono rounded-xl px-2 bg-muted/30 border border-border/80 text-foreground truncate focus:outline-none"
-            >
-              {currentStory.chapters.map((ch) => (
-                <option key={ch.id} value={ch.id}>
-                  Ch.{ch.chapterNumber}: {ch.title}
-                </option>
-              ))}
-            </select>
+            <div className="flex items-center gap-1.5">
+              <select
+                value={isNewChapter ? "NEW" : selectedChapterId}
+                onChange={(e) => {
+                  if (e.target.value === "NEW") {
+                    handleAddNewChapterClick();
+                  } else {
+                    handleSelectExistingChapter(e.target.value);
+                  }
+                }}
+                className="h-8 max-w-[130px] sm:max-w-[200px] text-xs font-mono font-bold rounded-xl px-2.5 bg-[#FAF5EE] dark:bg-[#2A2420] border-2 border-[#2B2623] text-[#2B2623] dark:text-[#FAF5EE] truncate shadow-[1.5px_2px_0px_#2B2623] focus:outline-none"
+              >
+                {currentStory.chapters.map((ch) => (
+                  <option key={ch.id} value={ch.id}>
+                    #{ch.chapterNumber}: {ch.title} {ch.password ? "🔒" : ""}
+                  </option>
+                ))}
+                <option value="NEW">+ Thêm chương mới...</option>
+              </select>
+
+              {/* + Thêm chương mới Button */}
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleAddNewChapterClick}
+                className={`h-8 px-2.5 text-xs rounded-xl font-mono font-bold border-2 border-[#2B2623] shadow-[1.5px_2px_0px_#2B2623] transition-all flex items-center gap-1 ${
+                  isNewChapter
+                    ? "bg-[#BDCEAF] text-[#2B2623]"
+                    : "bg-[#E07B4C] hover:bg-[#DC7648] text-white"
+                }`}
+                title="Tạo thêm một chương mới cho bộ truyện này"
+              >
+                <Plus className="size-3.5" />
+                <span className="hidden md:inline">Thêm Chương</span>
+              </Button>
+            </div>
           )}
 
           {/* Open live page link */}
@@ -264,64 +476,81 @@ export function StudioEditor({ stories, initialTemplates = [] }: StudioEditorPro
             <Link
               href={`/truyen/${currentStory.slug}`}
               target="_blank"
-              className="text-muted-foreground hover:text-primary transition-colors p-1"
-              title="Xem trang thực tế trên web"
+              className="text-[#5C5146] hover:text-[#E07B4C] transition-colors p-1"
+              title="Xem trang giới thiệu thực tế trên web"
+            >
+              <ExternalLink className="size-3.5" />
+            </Link>
+          )}
+
+          {targetType === "chapter" && currentChapter && !isNewChapter && (
+            <Link
+              href={`/chuong/${currentChapter.id}`}
+              target="_blank"
+              className="text-[#5C5146] hover:text-[#E07B4C] transition-colors p-1"
+              title="Xem chương thực tế trên web đọc truyện"
             >
               <ExternalLink className="size-3.5" />
             </Link>
           )}
         </div>
 
-        {/* Center: Tri-Mode View Switcher */}
-        <div className="flex items-center gap-1 bg-muted/60 p-0.5 rounded-xl border border-border/70 text-xs font-mono">
-          <Button
+        {/* Center: View Switcher (Visual / Code / Split) */}
+        <div className="flex items-center gap-1 bg-[#E5DDD2] dark:bg-[#2A2420] p-1 rounded-xl border border-[#2B2623]/30 text-xs font-mono shrink-0">
+          <button
             type="button"
-            variant={viewMode === "visual" ? "secondary" : "ghost"}
-            size="sm"
             onClick={() => setViewMode("visual")}
-            className="h-7 px-2.5 text-xs rounded-lg flex items-center gap-1"
+            className={`px-2.5 py-1 rounded-[8px] font-bold transition-all flex items-center gap-1 ${
+              viewMode === "visual"
+                ? "bg-[#FAF5EE] dark:bg-[#1F1B18] text-[#2B2623] dark:text-[#FAF5EE] shadow-[1px_1.5px_0px_#2B2623]"
+                : "text-[#5C5146] dark:text-[#C4B9AD] hover:text-[#2B2623]"
+            }`}
             title="Chế độ Trực quan Visual WYSIWYG"
           >
             <FileText className="size-3.5" />
-            <span className="hidden md:inline">Trực quan</span>
-          </Button>
+            <span className="hidden lg:inline">Trực quan</span>
+          </button>
 
-          <Button
+          <button
             type="button"
-            variant={viewMode === "code" ? "secondary" : "ghost"}
-            size="sm"
             onClick={() => setViewMode("code")}
-            className="h-7 px-2.5 text-xs rounded-lg flex items-center gap-1"
-            title="Chế độ Code HTML / CSS Sandbox"
+            className={`px-2.5 py-1 rounded-[8px] font-bold transition-all flex items-center gap-1 ${
+              viewMode === "code"
+                ? "bg-[#FAF5EE] dark:bg-[#1F1B18] text-[#2B2623] dark:text-[#FAF5EE] shadow-[1px_1.5px_0px_#2B2623]"
+                : "text-[#5C5146] dark:text-[#C4B9AD] hover:text-[#2B2623]"
+            }`}
+            title="Chế độ Code HTML Sandbox"
           >
             <Code2 className="size-3.5" />
-            <span className="hidden md:inline">Code HTML</span>
-          </Button>
+            <span className="hidden lg:inline">Code HTML</span>
+          </button>
 
-          <Button
+          <button
             type="button"
-            variant={viewMode === "split" ? "secondary" : "ghost"}
-            size="sm"
             onClick={() => setViewMode("split")}
-            className="h-7 px-2.5 text-xs rounded-lg flex items-center gap-1"
+            className={`px-2.5 py-1 rounded-[8px] font-bold transition-all flex items-center gap-1 ${
+              viewMode === "split"
+                ? "bg-[#FAF5EE] dark:bg-[#1F1B18] text-[#2B2623] dark:text-[#FAF5EE] shadow-[1px_1.5px_0px_#2B2623]"
+                : "text-[#5C5146] dark:text-[#C4B9AD] hover:text-[#2B2623]"
+            }`}
             title="Chế độ Chia đôi màn hình Live Preview"
           >
             <Columns2 className="size-3.5" />
-            <span className="hidden md:inline">Split Live</span>
-          </Button>
+            <span className="hidden lg:inline">Split Live</span>
+          </button>
         </div>
 
-        {/* Right: Template Button, Custom CSS toggle, Save Button */}
-        <div className="flex items-center gap-2">
-          {/* Templates Gallery Button */}
+        {/* Right: Actions, Template & Save Button */}
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Templates Button */}
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={() => setIsTemplateModalOpen(true)}
-            className="h-8 px-3 text-xs rounded-xl border-orange-500/40 text-orange-600 dark:text-orange-400 hover:bg-orange-500/10 flex items-center gap-1.5 font-medium shadow-2xs"
+            className="h-8 px-2.5 text-xs rounded-xl border-2 border-[#2B2623] bg-[#FAF5EE] hover:bg-[#E5DDD2] dark:bg-[#2A2420] text-[#2B2623] dark:text-[#FAF5EE] shadow-[1.5px_2px_0px_#2B2623] flex items-center gap-1.5 font-bold font-mono"
           >
-            <Sparkles className="size-3.5 text-orange-500" />
+            <Sparkles className="size-3.5 text-[#E07B4C]" />
             <span className="hidden sm:inline">Chèn Mẫu</span>
           </Button>
 
@@ -332,11 +561,27 @@ export function StudioEditor({ stories, initialTemplates = [] }: StudioEditorPro
               variant={isCssDrawerOpen ? "secondary" : "ghost"}
               size="sm"
               onClick={() => setIsCssDrawerOpen((prev) => !prev)}
-              className="h-8 px-2.5 text-xs rounded-xl text-muted-foreground hover:text-foreground"
-              title="Chỉnh sửa Custom CSS riêng cho trang này"
+              className="h-8 px-2 text-xs rounded-xl font-mono text-[#5C5146] hover:text-[#2B2623]"
+              title="Chỉnh sửa CSS riêng cho trang này"
             >
               <Palette className="size-3.5 mr-1" />
               <span className="hidden lg:inline">CSS</span>
+            </Button>
+          )}
+
+          {/* Delete Chapter Button (only when editing existing chapter) */}
+          {targetType === "chapter" && !isNewChapter && currentChapter && (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={handleDeleteChapter}
+              disabled={isPending}
+              className="h-8 px-2.5 text-xs rounded-xl border-2 border-[#2B2623] bg-[#FAF5EE] hover:bg-rose-100 text-rose-600 shadow-[1.5px_2px_0px_#2B2623] font-bold font-mono"
+              title="Xóa chương này"
+            >
+              <Trash2 className="size-3.5" />
+              <span className="hidden sm:inline">Xóa</span>
             </Button>
           )}
 
@@ -346,11 +591,17 @@ export function StudioEditor({ stories, initialTemplates = [] }: StudioEditorPro
             size="sm"
             onClick={handleSave}
             disabled={isPending}
-            className="h-8 px-4 text-xs rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-medium shadow-xs flex items-center gap-1.5"
+            className="h-8 px-3.5 text-xs rounded-xl bg-[#E07B4C] hover:bg-[#DC7648] text-white border-2 border-[#2B2623] shadow-[2px_2.5px_0px_#2B2623] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none font-bold font-mono flex items-center gap-1.5"
             title="Lưu nội dung (Ctrl+S)"
           >
             <Save className="size-3.5" />
-            <span>{isPending ? "Đang lưu..." : "Lưu Thay Đổi"}</span>
+            <span>
+              {isPending
+                ? "Đang lưu..."
+                : isNewChapter
+                ? "Tạo Chương Mới"
+                : "Lưu Thay Đổi"}
+            </span>
           </Button>
         </div>
       </header>
@@ -358,252 +609,364 @@ export function StudioEditor({ stories, initialTemplates = [] }: StudioEditorPro
       {/* Feedback Toast */}
       {feedback && (
         <div
-          className={`px-4 py-2 text-xs font-mono flex items-center justify-between border-b animate-in slide-in-from-top-2 ${
+          className={`px-4 py-2 text-xs font-mono font-bold border-b-2 border-[#2B2623] flex items-center justify-between transition-all ${
             feedback.type === "success"
-              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
-              : "bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400"
+              ? "bg-[#BDCEAF] text-[#2B2623]"
+              : "bg-[#EBBAB5] text-[#2B2623]"
           }`}
         >
           <div className="flex items-center gap-2">
-            {feedback.type === "success" ? <Check className="size-4" /> : <AlertCircle className="size-4" />}
+            {feedback.type === "success" ? (
+              <Check className="size-4 text-emerald-800" />
+            ) : (
+              <AlertCircle className="size-4 text-rose-800" />
+            )}
             <span>{feedback.text}</span>
           </div>
           <button
-            type="button"
             onClick={() => setFeedback(null)}
-            className="text-xs opacity-70 hover:opacity-100"
+            className="text-xs hover:opacity-75 font-mono"
           >
             ✕
           </button>
         </div>
       )}
 
-      {/* Custom CSS Drawer (Collapsible) */}
-      {isCssDrawerOpen && targetType === "story" && (
-        <div className="border-b border-border/80 bg-muted/40 p-3 sm:px-6 animate-in slide-in-from-top-3">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-mono font-semibold text-foreground flex items-center gap-1.5">
-              <Palette className="size-3.5 text-orange-500" />
-              <span>CUSTOM CSS CHO TRANG TRUYỆN:</span>
-            </span>
-            <span className="text-[11px] font-mono text-muted-foreground">
-              (Viết các class CSS tùy biến không cần thẻ &lt;style&gt;)
-            </span>
+      {/* 2. Sub-Header: Chapter Metadata Inputs (when target is chapter) */}
+      {targetType === "chapter" && (
+        <div className="p-3 sm:px-6 bg-[#FDFBF7] dark:bg-[#241F1C] border-b-2 border-[#2B2623]/20 flex flex-wrap items-center justify-between gap-3 shrink-0">
+          {/* Chapter Number & Title */}
+          <div className="flex items-center gap-2 flex-1 min-w-[280px]">
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="text-xs font-mono font-bold text-[#5C5146] dark:text-[#C4B9AD]">
+                Số chương:
+              </span>
+              <Input
+                type="number"
+                min={1}
+                value={chapterNumber}
+                onChange={(e) => setChapterNumber(parseInt(e.target.value, 10) || 1)}
+                className="w-16 h-8 text-xs font-mono font-bold text-center rounded-[8px] bg-[#FAF5EE] dark:bg-[#2A2420] border-2 border-[#2B2623] shadow-[1px_1.5px_0px_#2B2623]"
+              />
+            </div>
+
+            <div className="flex-1 min-w-[180px]">
+              <Input
+                type="text"
+                value={chapterTitle}
+                onChange={(e) => setChapterTitle(e.target.value)}
+                placeholder="Tiêu đề chương (ví dụ: Những bông tuyết đầu tiên...)"
+                className="w-full h-8 text-xs font-serif font-bold rounded-[8px] bg-[#FAF5EE] dark:bg-[#2A2420] border-2 border-[#2B2623] shadow-[1px_1.5px_0px_#2B2623]"
+              />
+            </div>
           </div>
-          <textarea
-            rows={3}
-            value={customCss}
-            onChange={(e) => setCustomCss(e.target.value)}
-            placeholder=".my-custom-box { border: 2px solid #ea580c; border-radius: 8px; }"
-            className="w-full p-2.5 rounded-xl font-mono text-xs bg-background border border-border/80 text-foreground resize-none focus:outline-none focus:ring-1 focus:ring-orange-500"
-          />
+
+          {/* Quick Toolbar: Password Toggle, Text Cleaners, Word Counter */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Password Toggle Button */}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowPasswordBox((prev) => !prev)}
+              className={`h-8 px-2.5 text-xs rounded-xl font-mono font-bold border-2 border-[#2B2623] shadow-[1px_1.5px_0px_#2B2623] flex items-center gap-1 ${
+                chapterPassword
+                  ? "bg-[#EBBAB5] text-[#2B2623]"
+                  : "bg-[#FAF5EE] dark:bg-[#2A2420] text-[#5C5146]"
+              }`}
+              title="Thiết lập mật khẩu bảo vệ chương"
+            >
+              <Lock className="size-3" />
+              <span>{chapterPassword ? "Đã khóa Pass" : "Đặt Pass"}</span>
+            </Button>
+
+            {/* Formatting Quick Tools */}
+            <div className="hidden md:flex items-center gap-1 bg-[#E5DDD2] dark:bg-[#2A2420] p-0.5 rounded-lg border border-[#2B2623]/30">
+              <button
+                type="button"
+                onClick={() => handleCleanText("quotes")}
+                className="p-1 rounded text-xs hover:bg-[#FAF5EE] dark:hover:bg-[#1F1B18] text-[#5C5146]"
+                title="Chuẩn hóa dấu ngoặc kép & dấu câu"
+              >
+                <Quote className="size-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleCleanText("spacing")}
+                className="p-1 rounded text-xs hover:bg-[#FAF5EE] dark:hover:bg-[#1F1B18] text-[#5C5146]"
+                title="Dọn dẹp dòng trống thừa"
+              >
+                <Scissors className="size-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleCleanText("wrapP")}
+                className="p-1 rounded text-xs hover:bg-[#FAF5EE] dark:hover:bg-[#1F1B18] text-[#5C5146]"
+                title="Tự động bọc các dòng thành thẻ đoạn <p>"
+              >
+                <AlignLeft className="size-3.5" />
+              </button>
+            </div>
+
+            {/* Live Word Count Indicator */}
+            <div className="px-2.5 py-1 rounded-[8px] bg-[#E5DDD2] dark:bg-[#2A2420] border border-[#2B2623]/30 text-[11px] font-mono text-[#5C5146] dark:text-[#C4B9AD] font-bold">
+              <span>{wordCount.toLocaleString("vi-VN")} từ</span>
+              <span className="mx-1">•</span>
+              <span>{charCount.toLocaleString("vi-VN")} ký tự</span>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* 2. Main Workspace Surface */}
-      <main className="flex-1 overflow-hidden p-2 sm:p-4 bg-muted/10">
-        {/* MODE 1: VISUAL WYSIWYG */}
+      {/* Password & Hint Dropdown Box */}
+      {targetType === "chapter" && showPasswordBox && (
+        <div className="p-3 sm:px-6 bg-[#EBBAB5]/30 border-b-2 border-[#2B2623]/20 flex flex-wrap items-center gap-3 text-xs font-mono">
+          <div className="flex items-center gap-2">
+            <KeyRound className="size-4 text-[#2B2623]" />
+            <span className="font-bold">Mật khẩu chương:</span>
+            <Input
+              type="text"
+              value={chapterPassword}
+              onChange={(e) => setChapterPassword(e.target.value)}
+              placeholder="Nhập pass (ví dụ: haianhem)"
+              className="w-40 h-7 text-xs rounded bg-[#FAF5EE] border-2 border-[#2B2623]"
+            />
+          </div>
+          <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+            <span className="font-bold text-[#5C5146]">Gợi ý giải pass:</span>
+            <Input
+              type="text"
+              value={chapterPasswordHint}
+              onChange={(e) => setChapterPasswordHint(e.target.value)}
+              placeholder="Gợi ý câu hỏi để độc giả tìm mật khẩu..."
+              className="flex-1 h-7 text-xs rounded bg-[#FAF5EE] border-2 border-[#2B2623]"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* 3. Main Workspace Area */}
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* VIEW MODE 1: VISUAL (Tiptap) */}
         {viewMode === "visual" && (
-          <div className="h-full max-w-4xl mx-auto">
+          <div className="flex-1 flex flex-col h-full overflow-hidden bg-background">
             <TiptapEditor
               value={htmlContent}
-              onChange={(val) => setHtmlContent(val)}
+              onChange={(newHtml) => setHtmlContent(newHtml)}
             />
           </div>
         )}
 
-        {/* MODE 2: CODE HTML / CSS SANDBOX */}
+        {/* VIEW MODE 2: CODE (CodeMirror) */}
         {viewMode === "code" && (
-          <div className="h-full max-w-5xl mx-auto">
+          <div className="flex-1 flex flex-col h-full overflow-hidden">
             <CodeMirrorEditor
               value={htmlContent}
-              onChange={(val) => setHtmlContent(val)}
+              onChange={(newCode) => setHtmlContent(newCode)}
             />
           </div>
         )}
 
-        {/* MODE 3: SPLIT LIVE PREVIEW */}
+        {/* VIEW MODE 3: SPLIT (Code/Visual + Live Preview) */}
         {viewMode === "split" && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 h-full overflow-hidden">
-            {/* Left Column: Editor (Choice of Code or Visual) */}
-            <div className="lg:col-span-6 flex flex-col h-full overflow-hidden">
-              <div className="flex items-center justify-between mb-1.5 px-1">
-                <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground">
-                  <span>Trình soạn thảo:</span>
+          <div className="flex-1 flex flex-col md:flex-row h-full overflow-hidden">
+            {/* Left Split Pane: Editor */}
+            <div className="flex-1 flex flex-col h-1/2 md:h-full md:w-1/2 border-b md:border-b-0 md:border-r border-[#2B2623]/20 overflow-hidden bg-background">
+              {/* Split Editor Header Tab */}
+              <div className="h-8 border-b border-[#2B2623]/10 bg-[#E5DDD2]/50 dark:bg-[#2A2420] px-3 flex items-center justify-between text-[11px] font-mono text-[#5C5146] shrink-0">
+                <span className="font-bold flex items-center gap-1.5">
+                  {splitEditorType === "code" ? (
+                    <Code2 className="size-3 text-[#E07B4C]" />
+                  ) : (
+                    <FileText className="size-3 text-[#E07B4C]" />
+                  )}
+                  {splitEditorType === "code" ? "MÃ NGUỒN HTML" : "TRÌNH SOẠN THẢO TRỰC QUAN"}
+                </span>
+
+                <div className="flex items-center gap-1">
                   <button
                     type="button"
                     onClick={() => setSplitEditorType("code")}
-                    className={`px-2 py-0.5 rounded-md ${
+                    className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                       splitEditorType === "code"
-                        ? "bg-foreground text-background font-semibold"
-                        : "hover:bg-muted"
+                        ? "bg-[#FAF5EE] text-[#2B2623] shadow-xs"
+                        : "text-[#5C5146] hover:text-[#2B2623]"
                     }`}
                   >
-                    HTML / CSS
+                    HTML
                   </button>
                   <button
                     type="button"
                     onClick={() => setSplitEditorType("visual")}
-                    className={`px-2 py-0.5 rounded-md ${
+                    className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                       splitEditorType === "visual"
-                        ? "bg-foreground text-background font-semibold"
-                        : "hover:bg-muted"
+                        ? "bg-[#FAF5EE] text-[#2B2623] shadow-xs"
+                        : "text-[#5C5146] hover:text-[#2B2623]"
                     }`}
                   >
-                    Trực quan
+                    Visual
                   </button>
                 </div>
-
-                <span className="text-[11px] font-mono text-muted-foreground">
-                  {charCount.toLocaleString()} ký tự • {wordCount.toLocaleString()} chữ
-                </span>
               </div>
 
+              {/* Active Editor in Split */}
               <div className="flex-1 overflow-hidden">
                 {splitEditorType === "code" ? (
                   <CodeMirrorEditor
                     value={htmlContent}
-                    onChange={(val) => setHtmlContent(val)}
+                    onChange={(newCode) => setHtmlContent(newCode)}
                   />
                 ) : (
                   <TiptapEditor
                     value={htmlContent}
-                    onChange={(val) => setHtmlContent(val)}
+                    onChange={(newHtml) => setHtmlContent(newHtml)}
                   />
                 )}
               </div>
             </div>
 
-            {/* Right Column: Live Interactive Preview */}
-            <div className="lg:col-span-6 flex flex-col h-full overflow-hidden">
-              <div className="flex items-center justify-between mb-1.5 px-1 text-xs font-mono text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <Eye className="size-3.5 text-orange-500" />
-                  <span>XEM THỬ THỜI GIAN THỰC (LIVE PREVIEW)</span>
+            {/* Right Split Pane: Live Preview */}
+            <div className="flex-1 flex flex-col h-1/2 md:h-full md:w-1/2 overflow-hidden bg-[#FAF5EE] dark:bg-[#1A1614]">
+              <div className="h-8 border-b border-[#2B2623]/10 bg-[#E5DDD2]/50 dark:bg-[#2A2420] px-3 flex items-center justify-between text-[11px] font-mono text-[#5C5146] shrink-0">
+                <span className="font-bold flex items-center gap-1.5">
+                  <Eye className="size-3 text-[#E07B4C]" />
+                  XEM TRƯỚC THỜI GIAN THỰC (LIVE PREVIEW)
                 </span>
-                <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
-                  ● Realtime
+                <span className="text-[10px] italic text-[#5C5146]/70">
+                  {targetType === "story" ? "Bố cục Trang Giới Thiệu" : "Giao diện Bài Đọc"}
                 </span>
               </div>
-
-              <div className="flex-1 overflow-hidden">
+              <div className="flex-1 overflow-y-auto">
                 <LivePreview
                   content={htmlContent}
                   customCss={customCss}
                   chapters={currentStory?.chapters || []}
-                  storySlug={currentStory?.slug || ""}
+                  storySlug={currentStory?.slug}
                 />
               </div>
             </div>
           </div>
         )}
-      </main>
 
-      {/* 3. Bottom Status Bar */}
-      <footer className="h-7 border-t border-border/70 bg-background/90 px-4 flex items-center justify-between text-[11px] font-mono text-muted-foreground shrink-0 select-none">
-        <div className="flex items-center gap-3">
-          <span>
-            Đang biên tập:{" "}
-            <strong className="text-foreground">
-              {targetType === "story" ? currentStory?.title : currentChapter?.title}
-            </strong>
+        {/* Custom CSS Slide Drawer (for story mode) */}
+        {targetType === "story" && isCssDrawerOpen && (
+          <aside className="absolute right-0 top-0 bottom-0 w-80 sm:w-96 bg-[#FAF5EE] dark:bg-[#1F1B18] border-l-2 border-[#2B2623] shadow-2xl z-40 flex flex-col">
+            <div className="h-10 border-b border-[#2B2623]/20 px-3 flex items-center justify-between bg-[#E5DDD2]/60 font-mono text-xs font-bold">
+              <span className="flex items-center gap-1.5">
+                <Palette className="size-3.5 text-[#E07B4C]" />
+                CUSTOM CSS RIÊNG
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsCssDrawerOpen(false)}
+                className="text-xs hover:text-rose-500 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <CodeMirrorEditor
+                value={customCss}
+                onChange={(newCss) => setCustomCss(newCss)}
+              />
+            </div>
+          </aside>
+        )}
+      </div>
+
+      {/* 4. Bottom Quick Insertion & Action Footer */}
+      <footer className="h-8 border-t border-[#2B2623]/15 bg-[#FAF5EE] dark:bg-[#1F1B18] px-3 sm:px-6 flex items-center justify-between text-[11px] font-mono text-[#5C5146] dark:text-[#C4B9AD] shrink-0">
+        <div className="flex items-center gap-2 overflow-x-auto py-0.5">
+          <span className="font-bold shrink-0 text-[#2B2623] dark:text-[#FAF5EE]">
+            Chèn nhanh:
           </span>
-          <span className="hidden sm:inline">•</span>
-          <span className="hidden sm:inline">
-            Shortcodes: <code className="text-orange-600 dark:text-orange-400">[muc_luc]</code>,{" "}
-            <code className="text-orange-600 dark:text-orange-400">[bgm]</code>,{" "}
-            <code className="text-orange-600 dark:text-orange-400">[spoiler]</code>,{" "}
-            <code className="text-orange-600 dark:text-orange-400">Từ[[chú thích]]</code>
-          </span>
+          <button
+            type="button"
+            onClick={() => handleInsertSnippet("<blockquote>\n  <p>“Trích dẫn thư từ hoặc ký ức ở đây...”</p>\n</blockquote>")}
+            className="px-2 py-0.5 rounded bg-[#E5DDD2] hover:bg-[#E07B4C] hover:text-white dark:bg-[#2A2420] text-[#2B2623] dark:text-[#FAF5EE] font-bold border border-[#2B2623]/20 shrink-0"
+          >
+            + Trích dẫn
+          </button>
+          <button
+            type="button"
+            onClick={() => handleInsertSnippet('<div style="text-align: center; margin: 25px 0;">\n  ❄ • • • ❄\n</div>')}
+            className="px-2 py-0.5 rounded bg-[#E5DDD2] hover:bg-[#E07B4C] hover:text-white dark:bg-[#2A2420] text-[#2B2623] dark:text-[#FAF5EE] font-bold border border-[#2B2623]/20 shrink-0"
+          >
+            + Phân cảnh hoa tuyết
+          </button>
+          <button
+            type="button"
+            onClick={() => handleInsertSnippet('<InlineFootnote id="1" text="Nội dung chú thích giải nghĩa từ ngữ ở đây" />')}
+            className="px-2 py-0.5 rounded bg-[#E5DDD2] hover:bg-[#E07B4C] hover:text-white dark:bg-[#2A2420] text-[#2B2623] dark:text-[#FAF5EE] font-bold border border-[#2B2623]/20 shrink-0"
+          >
+            + Chú thích #1
+          </button>
         </div>
 
-        <div className="flex items-center gap-3">
-          <span>Phím tắt: Ctrl + S</span>
-          <span>•</span>
+        <div className="flex items-center gap-3 shrink-0">
+          <span className="hidden sm:inline">Ctrl + S để lưu</span>
           <button
             type="button"
             onClick={() => setIsSaveSnippetModalOpen(true)}
-            className="text-orange-600 dark:text-orange-400 hover:underline flex items-center gap-1"
+            className="hover:text-[#E07B4C] font-bold"
           >
-            <BookmarkPlus className="size-3" />
-            <span>Lưu thành mẫu riêng</span>
+            Lưu thành mẫu riêng →
           </button>
         </div>
       </footer>
 
-      {/* Template Selection Modal */}
+      {/* 5. Templates Modal */}
       <TemplateModal
         isOpen={isTemplateModalOpen}
         onClose={() => setIsTemplateModalOpen(false)}
-        onSelectTemplate={handleSelectTemplate}
         customTemplates={templates}
+        onSelectTemplate={handleSelectTemplate}
         onSaveCurrentAsSnippet={() => {
           setIsTemplateModalOpen(false);
           setIsSaveSnippetModalOpen(true);
         }}
       />
 
-      {/* Save as Snippet Dialog */}
+      {/* 6. Save Snippet Modal */}
       {isSaveSnippetModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in-50">
-          <div className="w-full max-w-md bg-background rounded-3xl border border-border p-6 shadow-2xl space-y-4">
-            <div className="flex items-center gap-2.5 text-foreground font-serif text-lg font-bold">
-              <div className="size-8 rounded-xl bg-orange-500/10 text-orange-600 flex items-center justify-center">
-                <BookmarkPlus className="size-4" />
-              </div>
-              <h3>Lưu Bố Cục Thành Mẫu Riêng</h3>
-            </div>
-
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Lưu khối HTML &amp; CSS đang soạn thảo thành mẫu riêng để tái sử dụng nhanh chóng cho các truyện sau.
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="w-full max-w-sm rounded-[20px] bg-[#FAF5EE] dark:bg-[#1F1B18] border-2 border-[#2B2623] p-5 shadow-[4px_5px_0px_#2B2623]">
+            <h3 className="font-serif text-base font-bold text-[#2B2623] dark:text-[#FAF5EE] mb-2">
+              Lưu Thành Mẫu Riêng (Snippet)
+            </h3>
+            <p className="text-xs text-[#5C5146] dark:text-[#C4B9AD] mb-4">
+              Lưu toàn bộ nội dung hiện tại thành một mẫu có thể tái sử dụng cho các chương hoặc tác phẩm khác.
             </p>
-
             <div className="space-y-3">
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">
-                  Tiêu đề mẫu <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={snippetTitle}
-                  onChange={(e) => setSnippetTitle(e.target.value)}
-                  placeholder="Ví dụ: Bảng nhân vật 3 cột phong cách hiện đại..."
-                  className="w-full h-9 px-3 rounded-xl border border-border bg-muted/20 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-orange-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">
-                  Mô tả ngắn
-                </label>
-                <textarea
-                  rows={2}
-                  value={snippetDesc}
-                  onChange={(e) => setSnippetDesc(e.target.value)}
-                  placeholder="Vài dòng mô tả công dụng của mẫu này..."
-                  className="w-full p-2.5 rounded-xl border border-border bg-muted/20 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-orange-500 resize-none"
-                />
-              </div>
+              <Input
+                value={snippetTitle}
+                onChange={(e) => setSnippetTitle(e.target.value)}
+                placeholder="Tên mẫu (ví dụ: Mẫu Thư Từ Vintage)"
+                className="h-9 text-xs rounded-[10px] border-2 border-[#2B2623]"
+              />
+              <Input
+                value={snippetDesc}
+                onChange={(e) => setSnippetDesc(e.target.value)}
+                placeholder="Mô tả ngắn gọn về mẫu này..."
+                className="h-9 text-xs rounded-[10px] border-2 border-[#2B2623]"
+              />
             </div>
-
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2 mt-4">
               <Button
-                type="button"
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={() => setIsSaveSnippetModalOpen(false)}
-                className="rounded-xl text-xs h-9"
+                className="rounded-[10px] text-xs font-mono"
               >
                 Hủy
               </Button>
               <Button
-                type="button"
                 size="sm"
                 onClick={handleSaveSnippet}
-                disabled={!snippetTitle.trim() || isPending}
-                className="rounded-xl text-xs h-9 px-5 bg-orange-600 hover:bg-orange-700 text-white font-medium"
+                disabled={isPending || !snippetTitle.trim()}
+                className="rounded-[10px] text-xs font-mono bg-[#E07B4C] hover:bg-[#DC7648] text-white"
               >
-                {isPending ? "Đang lưu..." : "Lưu vào kho mẫu"}
+                {isPending ? "Đang lưu..." : "Xác nhận lưu"}
               </Button>
             </div>
           </div>
@@ -612,4 +975,3 @@ export function StudioEditor({ stories, initialTemplates = [] }: StudioEditorPro
     </div>
   );
 }
-

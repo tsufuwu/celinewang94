@@ -101,7 +101,7 @@ function main() {
     { id: 'story_de_profundis', pageId: 356, title: 'De profundis' },
     { id: 'story_mat_bao', pageId: 5484, title: 'Mắt Bão' },
     { id: 'story_gio_tin_phong', pageId: 5730, title: 'Gió Tín Phong' },
-    { id: 'story_bay_buc_thu', pageId: 5946, title: 'Bảy Bức Thư' },
+    { id: 'story_bay_buc_thu', pageId: 5909, title: 'Bảy Bức Thư' },
     { id: 'story_bong_nhiet_do_thap', pageId: 2951, title: 'Bỏng Nhiệt Độ Thấp' }
   ];
 

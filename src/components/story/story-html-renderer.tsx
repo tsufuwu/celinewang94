@@ -289,14 +289,25 @@ export function StoryHtmlRenderer({
       const href = target.getAttribute("href");
       if (!href) return;
 
-      // 1. If internal app link, let Next router handle it smoothly
+      // 1. Smooth scroll for in-page anchors (e.g. #thu-1, #thu-2, #muc-luc)
+      if (href.startsWith("#") && href.length > 1) {
+        const id = href.slice(1);
+        const el = document.getElementById(id);
+        if (el) {
+          e.preventDefault();
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+          return;
+        }
+      }
+
+      // 2. If internal app link, let Next router handle it smoothly
       if (href.startsWith("/chuong/") || href.startsWith("/truyen/") || href === "/" || href.startsWith("/kho-truyen")) {
         e.preventDefault();
         router.push(href);
         return;
       }
 
-      // 2. Intercept any residual WordPress link to avoid leaving the app
+      // 3. Intercept any residual WordPress link to avoid leaving the app
       if (href.includes("celinewang94.wordpress.com")) {
         e.preventDefault();
         try {

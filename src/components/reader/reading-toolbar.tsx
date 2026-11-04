@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Sliders,
   X,
+  ListOrdered,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -28,6 +29,9 @@ interface ReadingToolbarProps {
   onUpdateSettings: (newSettings: Partial<ReadingSettings>) => void;
   prevChapterId?: string | null;
   nextChapterId?: string | null;
+  currentChapterNumber?: number;
+  totalChapters?: number;
+  onOpenChapterSelector?: () => void;
 }
 
 export function ReadingToolbar({
@@ -35,6 +39,9 @@ export function ReadingToolbar({
   onUpdateSettings,
   prevChapterId,
   nextChapterId,
+  currentChapterNumber,
+  totalChapters,
+  onOpenChapterSelector,
 }: ReadingToolbarProps) {
   const [isExpanded, setIsExpanded] = React.useState(false);
 
@@ -206,6 +213,22 @@ export function ReadingToolbar({
             className="size-8 rounded-full opacity-30 text-muted-foreground"
           >
             <ChevronLeft className="size-4" />
+          </Button>
+        )}
+
+        {/* Chapter Quick Selector Trigger */}
+        {onOpenChapterSelector && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onOpenChapterSelector}
+            className="h-8 px-2 rounded-full text-xs font-mono font-bold flex items-center gap-1 text-foreground hover:text-[#E07B4C]"
+            title="Mở mục lục để chọn chương bất kỳ"
+          >
+            <ListOrdered className="size-3.5 text-[#E07B4C]" />
+            <span>
+              {currentChapterNumber ? `${currentChapterNumber}/${totalChapters || "?"}` : "Mục lục"}
+            </span>
           </Button>
         )}
 

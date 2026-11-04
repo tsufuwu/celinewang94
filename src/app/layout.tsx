@@ -9,6 +9,7 @@ import { BgmModal } from "@/components/media/bgm-modal";
 import { getBgmPlaylistSetting } from "@/app/admin/actions";
 import { getAuthSession } from "@/lib/auth";
 import { AuthProvider } from "@/components/auth/auth-context";
+import { RouteProgress } from "@/components/layout/route-progress";
 
 const sans = Plus_Jakarta_Sans({
   subsets: ["latin", "vietnamese"],
@@ -66,6 +67,7 @@ export default async function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <AuthProvider initialUser={sessionUser}>
             <BgmProvider initialPlaylistId={bgmSetting.playlistId}>
+              <RouteProgress />
               <Header />
               <main className="flex-1">{children}</main>
               <Footer />

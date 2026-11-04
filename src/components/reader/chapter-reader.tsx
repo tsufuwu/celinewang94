@@ -15,11 +15,13 @@ import {
   Unlock,
   KeyRound,
   HelpCircle,
+  ListOrdered,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ParagraphSheet } from "./paragraph-sheet";
 import { ReadingToolbar, type ReadingSettings } from "./reading-toolbar";
+import { ChapterSelectorDrawer, type ChapterSummaryItem } from "./chapter-selector-drawer";
 import type { ParagraphCommentItem } from "@/app/chuong/[id]/actions";
 import { OrangeLogo } from "@/components/layout/orange-logo";
 import { renderParagraphWithFootnotes } from "./inline-footnote";
@@ -52,6 +54,7 @@ interface ChapterReaderProps {
   initialComments: ParagraphCommentItem[];
   prevChapterId?: string | null;
   nextChapterId?: string | null;
+  allChapters?: ChapterSummaryItem[];
 }
 
 export function ChapterReader({
@@ -59,9 +62,11 @@ export function ChapterReader({
   initialComments,
   prevChapterId,
   nextChapterId,
+  allChapters = [],
 }: ChapterReaderProps) {
   const { setTheme } = useTheme();
   const { user, isChapterUnlocked, saveUnlockedChapter } = useAuth();
+  const [isChapterDrawerOpen, setIsChapterDrawerOpen] = React.useState(false);
 
   // Password Protection State
   const [isUnlocked, setIsUnlocked] = React.useState<boolean>(() => {
@@ -592,6 +597,21 @@ export function ChapterReader({
               </Button>
             )}
 
+            {/* Chapter Quick Selector Center Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsChapterDrawerOpen(true)}
+              className="rounded-xl text-xs font-mono font-bold bg-[#FAF5EE] dark:bg-[#2A2420] border-2 border-[#2B2623] hover:border-[#E07B4C] hover:text-[#E07B4C] transition-all shadow-[1.5px_2px_0px_#2B2623] flex items-center gap-1.5 px-3"
+              title="Bấm để mở danh sách toàn bộ chương"
+            >
+              <ListOrdered className="size-3.5 text-[#E07B4C]" />
+              <span>
+                Chương {chapter.chapterNumber}
+                {allChapters.length > 0 ? ` / ${allChapters.length}` : ""}
+              </span>
+            </Button>
+
             {nextChapterId ? (
               <Link
                 href={`/chuong/${nextChapterId}`}
@@ -637,6 +657,20 @@ export function ChapterReader({
         onUpdateSettings={handleUpdateSettings}
         prevChapterId={prevChapterId}
         nextChapterId={nextChapterId}
+        currentChapterNumber={chapter.chapterNumber}
+        totalChapters={allChapters.length}
+        onOpenChapterSelector={() => setIsChapterDrawerOpen(true)}
+      />
+
+      {/* Chapter Selector Drawer / Modal */}
+      <ChapterSelectorDrawer
+        isOpen={isChapterDrawerOpen}
+        onClose={() => setIsChapterDrawerOpen(false)}
+        allChapters={allChapters}
+        currentChapterId={chapter.id}
+        storyTitle={chapter.story.title}
+        storySlug={chapter.story.slug}
+        onSelectChapter={() => syncProgressToD1(currentParagraphIndexRef.current)}
       />
 
       {/* Paragraph Comment & Typo Report Sheet */}

@@ -13,6 +13,7 @@ import {
   siteSettings,
 } from "@/db";
 import { eq, desc, asc } from "drizzle-orm";
+import * as cheerio from "cheerio";
 import { getAuthSession } from "@/lib/auth";
 import {
   FALLBACK_STORIES,
@@ -462,6 +463,156 @@ export async function saveStoryContentHtml(
   }
 }
 
+// Helper function to extract structured paragraphs from HTML or raw text
+function parseHtmlToParagraphs(html: string): { index: number; text: string }[] {
+  if (!html) return [];
+  const $ = cheerio.load(html, { xmlMode: false });
+  const paragraphs: { index: number; text: string }[] = [];
+  let idx = 1;
+
+  $("p").each((_, el) => {
+    const txt = $(el).text().trim();
+    if (txt) {
+      paragraphs.push({ index: idx++, text: txt });
+    }
+  });
+
+  // If no <p> tags found, split by lines / line breaks
+  if (paragraphs.length === 0) {
+    const rawLines = html
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<[^>]+>/g, "")
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean);
+
+    rawLines.forEach((line) => {
+      paragraphs.push({ index: idx++, text: line });
+    });
+  }
+
+  return paragraphs;
+}
+
+// Helper to count words
+function countWordsFromHtml(html: string): number {
+  if (!html) return 0;
+  const plain = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  return plain ? plain.split(" ").length : 0;
+}
+
+export interface ChapterSavePayload {
+  id?: string;
+  storyId: string;
+  chapterNumber: number;
+  title: string;
+  contentHtml: string;
+  password?: string | null;
+  passwordHint?: string | null;
+}
+
+export async function createOrUpdateChapterAction(
+  payload: ChapterSavePayload
+): Promise<{ success: boolean; message: string; chapterId?: string }> {
+  const isAuth = await checkAdminAuth();
+  if (!isAuth) return { success: false, message: "Chưa xác thực quyền quản trị." };
+
+  try {
+    const db = await getDb();
+    if (!db) return { success: false, message: "Không thể kết nối D1 Database." };
+
+    const wordCount = countWordsFromHtml(payload.contentHtml);
+    const paragraphs = parseHtmlToParagraphs(payload.contentHtml);
+    const now = new Date();
+
+    const targetChapterId = payload.id;
+
+    if (targetChapterId) {
+      // Check if exists
+      const existing = await db
+        .select({ id: chapters.id })
+        .from(chapters)
+        .where(eq(chapters.id, targetChapterId))
+        .limit(1);
+
+      if (existing && existing.length > 0) {
+        // Update existing chapter
+        await db
+          .update(chapters)
+          .set({
+            chapterNumber: payload.chapterNumber,
+            title: payload.title.trim() || `Chương ${payload.chapterNumber}`,
+            contentHtml: payload.contentHtml,
+            paragraphs,
+            wordCount,
+            password: payload.password?.trim() ? payload.password.trim() : null,
+            passwordHint: payload.passwordHint?.trim() ? payload.passwordHint.trim() : null,
+            updatedAt: now,
+          })
+          .where(eq(chapters.id, targetChapterId));
+
+        revalidatePath(`/chuong/${targetChapterId}`);
+        revalidatePath("/admin/editor");
+        return {
+          success: true,
+          message: `Đã lưu cập nhật Chương ${payload.chapterNumber} thành công!`,
+          chapterId: targetChapterId,
+        };
+      }
+    }
+
+    // Insert new chapter
+    const newId = generateId("ch");
+    await db.insert(chapters).values({
+      id: newId,
+      storyId: payload.storyId,
+      chapterNumber: payload.chapterNumber,
+      title: payload.title.trim() || `Chương ${payload.chapterNumber}`,
+      contentHtml: payload.contentHtml,
+      paragraphs,
+      wordCount,
+      password: payload.password?.trim() ? payload.password.trim() : null,
+      passwordHint: payload.passwordHint?.trim() ? payload.passwordHint.trim() : null,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    revalidatePath(`/chuong/${newId}`);
+    revalidatePath("/admin/editor");
+    return {
+      success: true,
+      message: `Đã tạo mới Chương ${payload.chapterNumber} thành công!`,
+      chapterId: newId,
+    };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      message: `Lỗi lưu chương: ${(error as Error)?.message || String(error)}`,
+    };
+  }
+}
+
+export async function deleteChapterAction(
+  chapterId: string
+): Promise<{ success: boolean; message: string }> {
+  const isAuth = await checkAdminAuth();
+  if (!isAuth) return { success: false, message: "Chưa xác thực quyền quản trị." };
+
+  try {
+    const db = await getDb();
+    if (!db) return { success: false, message: "Không thể kết nối D1 Database." };
+
+    await db.delete(chapters).where(eq(chapters.id, chapterId));
+    revalidatePath("/admin/editor");
+    return { success: true, message: "Đã xóa chương thành công!" };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      message: `Lỗi xóa chương: ${(error as Error)?.message || String(error)}`,
+    };
+  }
+}
+
 export async function saveChapterContentHtml(
   chapterId: string,
   contentHtml: string
@@ -473,10 +624,15 @@ export async function saveChapterContentHtml(
     const db = await getDb();
     if (!db) return { success: false, message: "Không thể kết nối D1 Database." };
 
+    const wordCount = countWordsFromHtml(contentHtml);
+    const paragraphs = parseHtmlToParagraphs(contentHtml);
+
     await db
       .update(chapters)
       .set({
         contentHtml,
+        paragraphs,
+        wordCount,
         updatedAt: new Date(),
       })
       .where(eq(chapters.id, chapterId));
@@ -488,6 +644,18 @@ export async function saveChapterContentHtml(
   }
 }
 
+export interface EditorChapterOption {
+  id: string;
+  storyId: string;
+  chapterNumber: number;
+  title: string;
+  contentHtml?: string | null;
+  paragraphs?: { index: number; text: string }[];
+  password?: string | null;
+  passwordHint?: string | null;
+  wordCount?: number;
+}
+
 export interface EditorStoryOption {
   id: string;
   slug: string;
@@ -495,13 +663,7 @@ export interface EditorStoryOption {
   author: string;
   contentHtml?: string | null;
   customCss?: string | null;
-  chapters: {
-    id: string;
-    chapterNumber: number;
-    title: string;
-    contentHtml?: string | null;
-    password?: string | null;
-  }[];
+  chapters: EditorChapterOption[];
 }
 
 export async function getEditorStories(): Promise<EditorStoryOption[]> {
@@ -516,7 +678,10 @@ export async function getEditorStories(): Promise<EditorStoryOption[]> {
           chapterNumber: chapters.chapterNumber,
           title: chapters.title,
           contentHtml: chapters.contentHtml,
+          paragraphs: chapters.paragraphs,
           password: chapters.password,
+          passwordHint: chapters.passwordHint,
+          wordCount: chapters.wordCount,
         })
         .from(chapters)
         .orderBy(asc(chapters.chapterNumber));
@@ -529,7 +694,29 @@ export async function getEditorStories(): Promise<EditorStoryOption[]> {
           author: s.author,
           contentHtml: s.contentHtml,
           customCss: s.customCss,
-          chapters: allChapters.filter((c) => c.storyId === s.id),
+          chapters: allChapters
+            .filter((c) => c.storyId === s.id)
+            .map((c) => {
+              // Reconstruct HTML text if contentHtml was null (e.g. from WordPress paragraphs import)
+              const paragraphsList = (c.paragraphs as { index: number; text: string }[]) || [];
+              const effectiveHtml =
+                c.contentHtml ||
+                (paragraphsList.length > 0
+                  ? paragraphsList.map((p) => `<p>${p.text}</p>`).join("\n")
+                  : "");
+
+              return {
+                id: c.id,
+                storyId: c.storyId,
+                chapterNumber: c.chapterNumber,
+                title: c.title,
+                contentHtml: effectiveHtml,
+                paragraphs: paragraphsList,
+                password: c.password,
+                passwordHint: c.passwordHint,
+                wordCount: c.wordCount,
+              };
+            }),
         }));
       }
     }

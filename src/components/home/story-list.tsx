@@ -7,6 +7,7 @@ import { Search, X, BookOpen, Layers, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import type { StoryItem, StoryCategory } from "@/lib/data";
+import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 interface StoryListProps {
   initialStories: StoryItem[];
@@ -144,7 +145,7 @@ export function StoryList({ initialStories }: StoryListProps) {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredStories.map((story) => {
+          {filteredStories.map((story, idx) => {
             const storyDetailLink = `/truyen/${story.slug}`;
             const chapterCountLabel =
               typeof story._count?.chapters === "number" && story._count.chapters > 0
@@ -154,10 +155,10 @@ export function StoryList({ initialStories }: StoryListProps) {
                 : "Đang cập nhật";
 
             return (
-              <div
-                key={story.id}
-                className="group flex flex-col justify-between rounded-[20px] bg-[#FDFBF7] dark:bg-[#241F1C] border-2 border-[#2B2623] shadow-[2px_4px_0px_#2B2623] hover:translate-x-[0.5px] hover:translate-y-[1px] hover:shadow-[1.5px_3px_0px_#2B2623] active:translate-x-[2px] active:translate-y-[4px] active:shadow-none transition-all duration-200 p-5 overflow-hidden"
-              >
+              <ScrollReveal key={story.id} animation="fly-up" delay={(idx % 6) * 70}>
+                <div
+                  className="group h-full flex flex-col justify-between rounded-[20px] bg-[#FDFBF7] dark:bg-[#241F1C] border-2 border-[#2B2623] shadow-[2px_4px_0px_#2B2623] hover:translate-x-[0.5px] hover:translate-y-[1px] hover:shadow-[1.5px_3px_0px_#2B2623] active:translate-x-[2px] active:translate-y-[4px] active:shadow-none transition-all duration-200 p-5 overflow-hidden"
+                >
                 <div>
                   {/* Top: Category & Chapter Count */}
                   <div className="flex items-center justify-between mb-3">
@@ -234,6 +235,7 @@ export function StoryList({ initialStories }: StoryListProps) {
                   </Link>
                 </div>
               </div>
+            </ScrollReveal>
             );
           })}
         </div>

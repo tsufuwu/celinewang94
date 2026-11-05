@@ -232,6 +232,7 @@ export async function deleteStory(id: string): Promise<{ success: boolean; messa
     if (db) {
       await db.delete(stories).where(eq(stories.id, id));
     }
+    cachedBgmSetting = null;
     revalidatePath("/");
     revalidatePath("/admin");
     return { success: true, message: "Đã xóa truyện thành công." };
@@ -453,6 +454,7 @@ export async function saveStoryContentHtml(
     const storyRow = await db.select({ slug: stories.slug }).from(stories).where(eq(stories.id, storyId)).limit(1);
     const slug = storyRow[0]?.slug;
 
+    cachedBgmSetting = null;
     revalidatePath("/");
     revalidatePath("/admin");
     if (slug) revalidatePath(`/truyen/${slug}`);
@@ -859,6 +861,7 @@ export async function saveProfileSettings(
         },
       });
 
+    cachedBgmSetting = null;
     revalidatePath("/");
     return { success: true, message: "Đã lưu thông tin Giới Thiệu (CV) thành công!" };
   } catch (error: unknown) {
@@ -873,10 +876,20 @@ export async function saveProfileSettings(
 // 8. BGM SETTINGS ACTIONS
 // ----------------------------------------------------
 
+let cachedBgmSetting: {
+  data: { playlistId: string; playlistUrl: string };
+  timestamp: number;
+} | null = null;
+
 export async function getBgmPlaylistSetting(): Promise<{
   playlistId: string;
   playlistUrl: string;
 }> {
+  const now = Date.now();
+  if (cachedBgmSetting && now - cachedBgmSetting.timestamp < 300_000) {
+    return cachedBgmSetting.data;
+  }
+
   try {
     const db = await getDb();
     if (db) {
@@ -888,10 +901,12 @@ export async function getBgmPlaylistSetting(): Promise<{
       if (rows && rows.length > 0 && rows[0].value) {
         const id = rows[0].value.trim();
         if (id) {
-          return {
+          const res = {
             playlistId: id,
             playlistUrl: `https://www.youtube.com/playlist?list=${id}`,
           };
+          cachedBgmSetting = { data: res, timestamp: now };
+          return res;
         }
       }
     }
@@ -899,10 +914,12 @@ export async function getBgmPlaylistSetting(): Promise<{
     console.warn("Could not query D1 BGM playlist setting:", error);
   }
 
-  return {
+  const fallback = {
     playlistId: "PLWsWIKUX9PRq7aPRAwjjwDid_e0_K2P3Y",
     playlistUrl: "https://www.youtube.com/playlist?list=PLWsWIKUX9PRq7aPRAwjjwDid_e0_K2P3Y",
   };
+  cachedBgmSetting = { data: fallback, timestamp: now };
+  return fallback;
 }
 
 export async function saveBgmPlaylistSetting(
@@ -939,6 +956,7 @@ export async function saveBgmPlaylistSetting(
         },
       });
 
+    cachedBgmSetting = null;
     revalidatePath("/");
     return {
       success: true,
@@ -1001,6 +1019,7 @@ export async function saveBgmPlaylist(
         },
       });
 
+    cachedBgmSetting = null;
     revalidatePath("/");
     return { success: true, message: "Đã cập nhật danh sách Nhạc Nền (BGM) thành công!" };
   } catch (error: unknown) {

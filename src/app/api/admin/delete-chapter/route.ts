@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb, chapters } from "@/db";
 import { eq } from "drizzle-orm";
 import { getAuthSession } from "@/lib/auth";
+import { invalidateDataCache } from "@/lib/data";
+import { revalidatePath } from "next/cache";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +22,8 @@ export async function POST(req: NextRequest) {
     const db = await getDb();
     if (db) {
       await db.delete(chapters).where(eq(chapters.id, chapterId));
+      invalidateDataCache();
+      revalidatePath("/");
       return NextResponse.json({ success: true, message: "Đã xóa chương thành công!" });
     }
 

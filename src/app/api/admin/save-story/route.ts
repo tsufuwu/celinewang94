@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb, stories } from "@/db";
 import { eq } from "drizzle-orm";
 import { checkAdminAuth } from "@/app/admin/actions";
+import { invalidateDataCache } from "@/lib/data";
 import { revalidatePath } from "next/cache";
 
 export async function POST(req: NextRequest) {
@@ -36,6 +37,7 @@ export async function POST(req: NextRequest) {
       })
       .where(eq(stories.id, storyId));
 
+    invalidateDataCache();
     revalidatePath(`/truyen/${existing[0].slug}`);
     revalidatePath("/admin/editor");
 

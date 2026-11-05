@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb, chapters } from "@/db";
 import { eq } from "drizzle-orm";
 import { checkAdminAuth } from "@/app/admin/actions";
+import { invalidateDataCache } from "@/lib/data";
 import { revalidatePath } from "next/cache";
 import * as cheerio from "cheerio";
 
@@ -113,6 +114,7 @@ export async function POST(req: NextRequest) {
       updatedAt: now,
     });
 
+    invalidateDataCache();
     revalidatePath(`/chuong/${newId}`);
     revalidatePath("/admin/editor");
 

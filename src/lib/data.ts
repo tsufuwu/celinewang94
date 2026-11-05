@@ -449,13 +449,34 @@ export const CHAPTER_PARAGRAPHS_MAP: Record<string, { index: number; text: strin
   ],
 };
 
+let cachedStories: { data: StoryItem[]; timestamp: number } | null = null;
+let cachedRecentChapters: { data: RecentChapterItem[]; timestamp: number } | null = null;
+
+export function invalidateDataCache() {
+  cachedStories = null;
+  cachedRecentChapters = null;
+}
+
 export async function getStories(): Promise<StoryItem[]> {
+  const now = Date.now();
+  if (cachedStories && now - cachedStories.timestamp < 60_000) {
+    return cachedStories.data;
+  }
+
   try {
     const db = await getDb();
     if (db) {
       const rows = await db
         .select({
-          story: stories,
+          id: stories.id,
+          slug: stories.slug,
+          title: stories.title,
+          author: stories.author,
+          coverUrl: stories.coverUrl,
+          description: stories.description,
+          status: stories.status,
+          tags: stories.tags,
+          updatedAt: stories.updatedAt,
           chapterCount: sql<number>`count(${chapters.id})`,
         })
         .from(stories)
@@ -464,8 +485,7 @@ export async function getStories(): Promise<StoryItem[]> {
         .orderBy(desc(stories.updatedAt));
 
       if (rows && rows.length > 0) {
-        return rows.map((r) => {
-          const s = r.story;
+        const result = rows.map((s) => {
           // Infer category from tags
           const tags = (s.tags as string[]) || [];
           let category: StoryCategory = "Đang cook";
@@ -478,11 +498,14 @@ export async function getStories(): Promise<StoryItem[]> {
             category,
             tags,
             _count: {
-              chapters: Number(r.chapterCount || 0),
+              chapters: Number(s.chapterCount || 0),
               reviews: 0,
             },
           } as unknown as StoryItem;
         });
+
+        cachedStories = { data: result, timestamp: now };
+        return result;
       }
     }
   } catch (error) {
@@ -492,13 +515,28 @@ export async function getStories(): Promise<StoryItem[]> {
 }
 
 export async function getRecentChapters(limit: number = 6): Promise<RecentChapterItem[]> {
+  const now = Date.now();
+  if (cachedRecentChapters && now - cachedRecentChapters.timestamp < 60_000) {
+    return cachedRecentChapters.data.slice(0, limit);
+  }
+
   try {
     const db = await getDb();
     if (db) {
       const rows = await db
         .select({
-          chapter: chapters,
-          story: stories,
+          id: chapters.id,
+          chapterNumber: chapters.chapterNumber,
+          title: chapters.title,
+          wordCount: chapters.wordCount,
+          createdAt: chapters.createdAt,
+          password: chapters.password,
+          passwordHint: chapters.passwordHint,
+          storyId: stories.id,
+          storySlug: stories.slug,
+          storyTitle: stories.title,
+          storyAuthor: stories.author,
+          storyCoverUrl: stories.coverUrl,
         })
         .from(chapters)
         .innerJoin(stories, eq(chapters.storyId, stories.id))
@@ -506,22 +544,25 @@ export async function getRecentChapters(limit: number = 6): Promise<RecentChapte
         .limit(limit);
 
       if (rows && rows.length > 0) {
-        return rows.map((r) => ({
-          id: r.chapter.id,
-          chapterNumber: r.chapter.chapterNumber,
-          title: r.chapter.title,
-          wordCount: r.chapter.wordCount,
-          createdAt: r.chapter.createdAt,
-          password: r.chapter.password,
-          passwordHint: r.chapter.passwordHint,
+        const result = rows.map((r) => ({
+          id: r.id,
+          chapterNumber: r.chapterNumber,
+          title: r.title,
+          wordCount: r.wordCount,
+          createdAt: r.createdAt,
+          password: r.password,
+          passwordHint: r.passwordHint,
           story: {
-            id: r.story.id,
-            slug: r.story.slug,
-            title: r.story.title,
-            author: r.story.author,
-            coverUrl: r.story.coverUrl,
+            id: r.storyId,
+            slug: r.storySlug,
+            title: r.storyTitle,
+            author: r.storyAuthor,
+            coverUrl: r.storyCoverUrl,
           },
         }));
+
+        cachedRecentChapters = { data: result, timestamp: now };
+        return result;
       }
     }
   } catch (error) {

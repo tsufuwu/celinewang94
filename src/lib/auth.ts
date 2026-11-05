@@ -1,6 +1,5 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
-import crypto from "crypto";
 
 export interface AuthUser {
   id: string;
@@ -122,7 +121,13 @@ export async function getAuthSession(): Promise<AuthUser | null> {
     const adminToken = cookieStore.get("admin_auth_token")?.value;
     if (adminToken) {
       const secret = process.env.ADMIN_PASSWORD || "admin_change_this_password";
-      const expected = crypto.createHash("sha256").update(`admin_${secret}_salt`).digest("hex");
+      const encoder = new TextEncoder();
+      const hashBuffer = await crypto.subtle.digest(
+        "SHA-256",
+        encoder.encode(`admin_${secret}_salt`)
+      );
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const expected = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
       if (adminToken === expected) {
         return {
           id: "admin_local",

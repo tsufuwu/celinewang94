@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 export interface ReadingSettings {
   fontSize: number; // e.g. 15, 17, 19, 22
   lineHeight: "compact" | "normal" | "loose";
-  fontFamily: "serif" | "sans";
+  fontFamily: "lora" | "alegreya" | "arial" | "futura" | "sans" | "serif";
   themeMode: "light" | "sepia" | "dark";
   focusMode: boolean;
 }
@@ -81,7 +81,7 @@ export function ReadingToolbar({
           <div className="flex items-center justify-between pb-2 border-b-2 border-[#2B2623]/15 text-xs font-medium">
             <span className="font-serif font-bold text-sm text-[#2B2623] dark:text-[#FAF5EE] flex items-center gap-1.5">
               <Sliders className="size-3.5 text-[#E07B4C]" />
-              <span>Tùy Chỉnh Đọc Sách</span>
+              <span>Tùy chỉnh</span>
             </span>
             <button
               onClick={() => setIsExpanded(false)}
@@ -141,29 +141,34 @@ export function ReadingToolbar({
           </div>
 
           {/* 3. Font Family Selector */}
-          <div className="flex items-center justify-between gap-2 text-xs pt-2 border-t border-[#2B2623]/10">
-            <span className="text-[#5C5146] dark:text-[#C4B9AD] font-mono">Font chữ:</span>
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => onUpdateSettings({ fontFamily: "serif" })}
-                className={`h-7 px-2.5 rounded-lg text-xs font-serif transition-all border ${
-                  settings.fontFamily === "serif"
-                    ? "bg-[#BDCEAF] text-[#2B2623] border-[#2B2623] font-bold shadow-[1px_1.5px_0px_#2B2623]"
-                    : "bg-[#E5DDD2] dark:bg-[#2A2420] text-[#5C5146] dark:text-[#C4B9AD] border-transparent"
-                }`}
-              >
-                Alegreya
-              </button>
-              <button
-                onClick={() => onUpdateSettings({ fontFamily: "sans" })}
-                className={`h-7 px-2.5 rounded-lg text-xs font-sans transition-all border ${
-                  settings.fontFamily === "sans"
-                    ? "bg-[#BDCEAF] text-[#2B2623] border-[#2B2623] font-bold shadow-[1px_1.5px_0px_#2B2623]"
-                    : "bg-[#E5DDD2] dark:bg-[#2A2420] text-[#5C5146] dark:text-[#C4B9AD] border-transparent"
-                }`}
-              >
-                Không chân
-              </button>
+          <div className="flex flex-col gap-1.5 text-xs pt-2 border-t border-[#2B2623]/10">
+            <span className="text-[#5C5146] dark:text-[#C4B9AD] font-mono text-[11px]">Font chữ:</span>
+            <div className="grid grid-cols-5 gap-1">
+              {[
+                { id: "lora", label: "Lora", fontClass: "font-reader-lora" },
+                { id: "alegreya", label: "Alegreya", fontClass: "font-reader-alegreya" },
+                { id: "arial", label: "Arial", fontClass: "font-reader-arial" },
+                { id: "futura", label: "Futura", fontClass: "font-reader-futura" },
+                { id: "sans", label: "Sans", fontClass: "font-reader-sans" },
+              ].map((f) => {
+                const isActive =
+                  settings.fontFamily === f.id ||
+                  (f.id === "lora" && settings.fontFamily === "serif");
+                return (
+                  <button
+                    key={f.id}
+                    onClick={() => onUpdateSettings({ fontFamily: f.id as ReadingSettings["fontFamily"] })}
+                    className={`h-7 px-1 rounded-lg text-xs transition-all border text-center truncate ${f.fontClass} ${
+                      isActive
+                        ? "bg-[#BDCEAF] text-[#2B2623] border-[#2B2623] font-bold shadow-[1px_1.5px_0px_#2B2623]"
+                        : "bg-[#E5DDD2] dark:bg-[#2A2420] text-[#5C5146] dark:text-[#C4B9AD] border-transparent hover:text-[#2B2623]"
+                    }`}
+                    title={`Chọn font ${f.label}`}
+                  >
+                    {f.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -178,7 +183,7 @@ export function ReadingToolbar({
                     ? "bg-[#FAF5EE] text-[#2B2623] border-[#2B2623] font-bold shadow-[1px_1.5px_0px_#2B2623]"
                     : "bg-[#E5DDD2] dark:bg-[#2A2420] text-[#5C5146] border-transparent"
                 }`}
-                title="Giao diện sáng giấy ấm"
+                title="Giao diện sáng giấy mềm"
               >
                 <Sun className="size-3 text-[#E07B4C]" />
                 <span>Sáng</span>
@@ -188,12 +193,12 @@ export function ReadingToolbar({
                 onClick={() => onUpdateSettings({ themeMode: "sepia" })}
                 className={`h-7 px-2.5 rounded-lg text-xs flex items-center gap-1 transition-all border ${
                   settings.themeMode === "sepia"
-                    ? "bg-[#F4DFAD] text-[#3D332A] border-[#2B2623] font-bold shadow-[1px_1.5px_0px_#2B2623]"
+                    ? "bg-[#F4E8D1] text-[#382B21] border-[#2B2623] font-bold shadow-[1px_1.5px_0px_#2B2623]"
                     : "bg-[#E5DDD2] dark:bg-[#2A2420] text-[#5C5146] border-transparent"
                 }`}
-                title="Giao diện vàng ấm Sepia dịu mắt"
+                title="Giao diện vàng ấm dịu mắt"
               >
-                <Coffee className="size-3 text-amber-700" />
+                <Coffee className="size-3 text-amber-800" />
                 <span>Ấm</span>
               </button>
 

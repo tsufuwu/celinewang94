@@ -17,6 +17,7 @@ import {
   HelpCircle,
   ListOrdered,
   BookOpen,
+  Edit3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,20 +74,56 @@ export function ChapterReader({
   const { user, isChapterUnlocked, saveUnlockedChapter } = useAuth();
   const [isChapterDrawerOpen, setIsChapterDrawerOpen] = React.useState(false);
 
+  // Check if current user is an Admin
+  const isAdmin =
+    user?.role === "ADMIN" ||
+    (user?.email &&
+      [
+        "phultt.it@gmail.com",
+        "celinewang9494@gmail.com",
+        "celinewang94@gmail.com",
+        "levan09041980@gmail.com",
+      ].includes(user.email.toLowerCase()));
+
   // Password Protection State
   const [isUnlocked, setIsUnlocked] = React.useState<boolean>(() => {
     if (!chapter.password) return true;
     try {
-      return localStorage.getItem(`unlocked_chapter_${chapter.id}`) === "true";
+      if (localStorage.getItem(`unlocked_chapter_${chapter.id}`) === "true") return true;
+      const savedPassesRaw = localStorage.getItem("mn_saved_passwords");
+      if (savedPassesRaw) {
+        const savedPasses = JSON.parse(savedPassesRaw) as string[];
+        const target = chapter.password.trim().toLowerCase();
+        if (Array.isArray(savedPasses) && savedPasses.includes(target)) return true;
+      }
     } catch {
       return false;
     }
+    return false;
   });
 
-  // Auto unlock if user account already unlocked this chapter in D1
+  // Auto unlock if user account already unlocked this chapter in D1 or saved pass matches
   React.useEffect(() => {
-    if (chapter.password && isChapterUnlocked(chapter.id)) {
+    if (!chapter.password) {
       setIsUnlocked(true);
+      return;
+    }
+    if (isChapterUnlocked(chapter.id)) {
+      setIsUnlocked(true);
+      return;
+    }
+    try {
+      const savedPassesRaw = localStorage.getItem("mn_saved_passwords");
+      if (savedPassesRaw) {
+        const savedPasses = JSON.parse(savedPassesRaw) as string[];
+        const target = chapter.password.trim().toLowerCase();
+        if (Array.isArray(savedPasses) && savedPasses.includes(target)) {
+          localStorage.setItem(`unlocked_chapter_${chapter.id}`, "true");
+          setIsUnlocked(true);
+        }
+      }
+    } catch {
+      // Ignored
     }
   }, [chapter.password, chapter.id, isChapterUnlocked]);
 
@@ -105,6 +142,13 @@ export function ChapterReader({
     if (entered === target) {
       try {
         localStorage.setItem(`unlocked_chapter_${chapter.id}`, "true");
+        // Cross-chapter shared password caching
+        const savedPassesRaw = localStorage.getItem("mn_saved_passwords");
+        const savedPasses: string[] = savedPassesRaw ? JSON.parse(savedPassesRaw) : [];
+        if (!savedPasses.includes(target)) {
+          savedPasses.push(target);
+          localStorage.setItem("mn_saved_passwords", JSON.stringify(savedPasses));
+        }
       } catch {
         // Ignored
       }
@@ -371,7 +415,18 @@ export function ChapterReader({
       : "leading-loose";
 
   // Font family mapping
-  const fontFamilyClass = settings.fontFamily === "serif" ? "font-serif" : "font-sans";
+  const fontFamilyClass =
+    settings.fontFamily === "lora"
+      ? "font-reader-lora"
+      : settings.fontFamily === "alegreya"
+      ? "font-reader-alegreya"
+      : settings.fontFamily === "arial"
+      ? "font-reader-arial"
+      : settings.fontFamily === "futura"
+      ? "font-reader-futura"
+      : settings.fontFamily === "sans"
+      ? "font-reader-sans"
+      : "font-reader-lora";
 
   // Theme mode container styling
   const isSepia = settings.themeMode === "sepia";
@@ -418,7 +473,7 @@ export function ChapterReader({
               <span>Gợi ý mật khẩu:</span>
             </div>
             <p className="text-foreground/90 italic">
-              {chapter.passwordHint || "Chương này chưa có gợi ý cụ thể. Nếu bạn chưa biết mật khẩu, hãy liên hệ nhà Cam nhé!"}
+              {chapter.passwordHint || "Chương này chưa có gợi ý cụ thể."}
             </p>
           </div>
 
@@ -447,12 +502,34 @@ export function ChapterReader({
 
             <Button
               type="submit"
-              className="w-full h-11 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-sm shadow-xs"
+              className="w-full h-11 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-sm shadow-xs cursor-pointer"
             >
               <Unlock className="size-4 mr-2" />
               Mở khóa đọc chương
             </Button>
           </form>
+
+          {/* Admin Fast Actions if Logged In as Admin */}
+          {isAdmin && (
+            <div className="pt-2 flex flex-col gap-2 border-t border-border/40">
+              <Button
+                type="button"
+                onClick={() => setIsUnlocked(true)}
+                variant="outline"
+                className="w-full h-10 rounded-2xl border-2 border-[#E07B4C] text-[#E07B4C] hover:bg-[#E07B4C]/10 text-xs font-mono font-bold cursor-pointer"
+              >
+                <Unlock className="size-3.5 mr-1.5" />
+                Đọc ngay không cần mật khẩu (Admin)
+              </Button>
+              <Link
+                href={`/admin/editor?storyId=${chapter.story.id}&chapterId=${chapter.id}`}
+                className="w-full inline-flex items-center justify-center gap-1.5 h-10 rounded-2xl bg-[#E07B4C] hover:bg-[#DC7648] text-white text-xs font-mono font-bold shadow-xs transition-colors"
+              >
+                <Edit3 className="size-3.5" />
+                Sửa chương trong Studio
+              </Link>
+            </div>
+          )}
 
           <div className="pt-2 flex items-center justify-center gap-3">
             <Link
@@ -478,7 +555,7 @@ export function ChapterReader({
     <AntiCopyShield>
       <div
         className={`min-h-screen transition-colors duration-300 ${
-          isSepia ? "reader-sepia" : ""
+          isSepia ? "reader-sepia" : "reader-light"
         }`}
       >
       {/* Reading Progress Top Bar */}
@@ -534,6 +611,20 @@ export function ChapterReader({
                 <BookOpen className="size-3.5" />
                 <span>Giới thiệu truyện</span>
               </Link>
+
+              {isAdmin && (
+                <>
+                  <span className="text-muted-foreground/40 font-mono">•</span>
+                  <Link
+                    href={`/admin/editor?storyId=${chapter.story.id}&chapterId=${chapter.id}`}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold font-mono px-3 py-1 rounded-full bg-[#E07B4C] text-white hover:bg-[#DC7648] transition-all shadow-xs"
+                    title="Mở chương này trong Studio để chỉnh sửa"
+                  >
+                    <Edit3 className="size-3.5" />
+                    <span>Sửa chương</span>
+                  </Link>
+                </>
+              )}
             </div>
 
             <div className="flex items-center gap-2">
@@ -742,7 +833,20 @@ export function ChapterReader({
               <span>{bookmarkSavedMsg ? "Đã lưu vào Tủ sách!" : "Đánh dấu đang đọc"}</span>
             </Button>
 
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              {isAdmin && (
+                <Link href={`/admin/editor?storyId=${chapter.story.id}&chapterId=${chapter.id}`}>
+                  <Button
+                    variant="outline"
+                    className="h-11 px-4 sm:px-5 rounded-[14px] text-xs sm:text-sm font-bold font-mono border-2 border-[#2B2623] bg-[#E07B4C] text-white hover:bg-[#DC7648] shadow-[2px_2.5px_0px_#2B2623] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all flex items-center gap-2 cursor-pointer"
+                    title="Mở chương này trong Studio để chỉnh sửa"
+                  >
+                    <Edit3 className="size-4" />
+                    <span>Sửa chương</span>
+                  </Button>
+                </Link>
+              )}
+
               <Link href={`/truyen/${chapter.story.slug}`}>
                 <Button
                   variant="outline"

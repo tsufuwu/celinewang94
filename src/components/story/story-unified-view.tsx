@@ -291,14 +291,14 @@ export function StoryUnifiedView({ story, chapters, isAdmin = false }: UnifiedSt
             </div>
           </div>
 
-          {/* Stats Bar (4 columns like sample) */}
+          {/* Stats Bar (4 columns - Real counts from database) */}
           <div className="grid grid-cols-4 gap-2 mt-6 pt-4 border-t-2 border-[#2B2623]/10 text-center font-mono">
             <div className="min-w-0">
               <span className="block text-[10px] text-[#5C5146] dark:text-[#C4B9AD] uppercase tracking-wider">
                 Lượt đọc
               </span>
               <b className="text-sm sm:text-base font-bold text-[#2B2623] dark:text-[#FAF5EE]">
-                {(chapters.length * 342).toLocaleString("vi-VN")}
+                0
               </b>
             </div>
             <div className="min-w-0 border-l border-[#2B2623]/15">
@@ -306,7 +306,7 @@ export function StoryUnifiedView({ story, chapters, isAdmin = false }: UnifiedSt
                 Yêu thích
               </span>
               <b className="text-sm sm:text-base font-bold text-[#2B2623] dark:text-[#FAF5EE]">
-                {(chapters.length * 28 + 12).toLocaleString("vi-VN")}
+                0
               </b>
             </div>
             <div className="min-w-0 border-l border-[#2B2623]/15">
@@ -322,7 +322,7 @@ export function StoryUnifiedView({ story, chapters, isAdmin = false }: UnifiedSt
                 Tổng số chữ
               </span>
               <b className="text-sm sm:text-base font-bold text-[#2B2623] dark:text-[#FAF5EE]">
-                {totalWords > 0 ? totalWords.toLocaleString("vi-VN") : "Đang tính"}
+                {totalWords > 0 ? totalWords.toLocaleString("vi-VN") : "0"}
               </b>
             </div>
           </div>
@@ -424,37 +424,35 @@ export function StoryUnifiedView({ story, chapters, isAdmin = false }: UnifiedSt
           </div>
         </div>
 
-        {/* 5-Column Stats Box */}
-        <div className="grid grid-cols-5 py-3 px-1 rounded-[20px] text-center bg-[#FDFBF7] dark:bg-[#1A1614] border border-[#2B2623]/20 shadow-[1.5px_2px_0px_#2B2623] font-mono">
+        {/* 4-Column Stats Box (Cleaned & accurate real counts) */}
+        <div className="grid grid-cols-4 py-3 px-1 rounded-[20px] text-center bg-[#FDFBF7] dark:bg-[#1A1614] border border-[#2B2623]/20 shadow-[1.5px_2px_0px_#2B2623] font-mono">
           <div className="min-w-0 px-1">
-            <small className="block text-[10.5px] sm:text-[11px] text-[#5C5146] dark:text-[#C4B9AD] truncate">
-              Truyện
-            </small>
-            <b className="text-xs sm:text-base font-bold text-[#2B2623] dark:text-[#FAF5EE]">16</b>
-          </div>
-          <div className="min-w-0 px-1 border-l border-[#2B2623]/15">
             <small className="block text-[10.5px] sm:text-[11px] text-[#5C5146] dark:text-[#C4B9AD] truncate">
               Chương
             </small>
-            <b className="text-xs sm:text-base font-bold text-[#2B2623] dark:text-[#FAF5EE]">418</b>
+            <b className="text-xs sm:text-base font-bold text-[#2B2623] dark:text-[#FAF5EE]">
+              {chapters.length}
+            </b>
           </div>
           <div className="min-w-0 px-1 border-l border-[#2B2623]/15">
             <small className="block text-[10.5px] sm:text-[11px] text-[#5C5146] dark:text-[#C4B9AD] truncate">
-              Số chữ
+              Tổng số chữ
             </small>
-            <b className="text-xs sm:text-base font-bold text-[#2B2623] dark:text-[#FAF5EE]">505k</b>
+            <b className="text-xs sm:text-base font-bold text-[#2B2623] dark:text-[#FAF5EE]">
+              {totalWords > 0 ? totalWords.toLocaleString("vi-VN") : "0"}
+            </b>
           </div>
           <div className="min-w-0 px-1 border-l border-[#2B2623]/15">
             <small className="block text-[10.5px] sm:text-[11px] text-[#5C5146] dark:text-[#C4B9AD] truncate">
               Lượt đọc
             </small>
-            <b className="text-xs sm:text-base font-bold text-[#2B2623] dark:text-[#FAF5EE]">47.1k</b>
+            <b className="text-xs sm:text-base font-bold text-[#2B2623] dark:text-[#FAF5EE]">0</b>
           </div>
           <div className="min-w-0 px-1 border-l border-[#2B2623]/15">
             <small className="block text-[10.5px] sm:text-[11px] text-[#5C5146] dark:text-[#C4B9AD] truncate">
               Yêu thích
             </small>
-            <b className="text-xs sm:text-base font-bold text-[#2B2623] dark:text-[#FAF5EE]">7.9k</b>
+            <b className="text-xs sm:text-base font-bold text-[#2B2623] dark:text-[#FAF5EE]">0</b>
           </div>
         </div>
       </section>

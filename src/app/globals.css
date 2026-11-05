@@ -365,3 +365,62 @@
   outline: none !important;
 }
 
+/* ========================================================================= */
+/* READER THEME MODES (SÁNG vs ẤM SEPIA)                                     */
+/* ========================================================================= */
+
+/* Sáng (Crisp Light Paper) */
+.reader-light {
+  background-color: #FAF5EE !important;
+  color: #2B2623 !important;
+}
+
+/* Ấm (Rich Warm Cozy Parchment / Sepia) - Khác biệt rõ rệt so với Sáng */
+.reader-sepia {
+  background-color: #F4E8D1 !important;
+  color: #382B21 !important;
+}
+
+.reader-sepia main,
+.reader-sepia article,
+.reader-sepia p,
+.reader-sepia h1,
+.reader-sepia h2,
+.reader-sepia span {
+  color: #382B21 !important;
+}
+
+.reader-sepia .group:hover {
+  background-color: rgba(216, 175, 120, 0.25) !important;
+}
+
+.reader-sepia header h1 {
+  color: #261B12 !important;
+}
+
+.reader-sepia .border-border\/60 {
+  border-color: rgba(56, 43, 33, 0.15) !important;
+}
+
+/* Reader Font Families */
+.font-reader-lora {
+  font-family: var(--font-serif), 'Lora', Georgia, serif !important;
+}
+
+.font-reader-alegreya {
+  font-family: var(--font-alegreya), 'Alegreya', Georgia, serif !important;
+}
+
+.font-reader-arial {
+  font-family: Arial, Helvetica, sans-serif !important;
+}
+
+.font-reader-futura {
+  font-family: 'Futura', 'Trebuchet MS', 'Segoe UI', sans-serif !important;
+}
+
+.font-reader-sans {
+  font-family: var(--font-sans), 'Be Vietnam Pro', sans-serif !important;
+}
+
+

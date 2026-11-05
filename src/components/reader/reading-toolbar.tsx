@@ -128,11 +128,10 @@ export function ReadingToolbar({
                 <button
                   key={mode}
                   onClick={() => onUpdateSettings({ lineHeight: mode })}
-                  className={`h-7 px-2.5 rounded-lg text-xs font-mono font-semibold transition-all border ${
-                    settings.lineHeight === mode
+                  className={`h-7 px-2.5 rounded-lg text-xs font-mono font-semibold transition-all border ${settings.lineHeight === mode
                       ? "bg-[#E07B4C] text-white border-[#2B2623] shadow-[1px_1.5px_0px_#2B2623]"
                       : "bg-[#E5DDD2] dark:bg-[#2A2420] text-[#5C5146] dark:text-[#C4B9AD] border-transparent hover:text-[#2B2623]"
-                  }`}
+                    }`}
                 >
                   {mode === "compact" ? "Gọn" : mode === "normal" ? "Vừa" : "Thoáng"}
                 </button>
@@ -158,11 +157,10 @@ export function ReadingToolbar({
                   <button
                     key={f.id}
                     onClick={() => onUpdateSettings({ fontFamily: f.id as ReadingSettings["fontFamily"] })}
-                    className={`h-7 px-1 rounded-lg text-xs transition-all border text-center truncate ${f.fontClass} ${
-                      isActive
+                    className={`h-7 px-1 rounded-lg text-xs transition-all border text-center truncate ${f.fontClass} ${isActive
                         ? "bg-[#BDCEAF] text-[#2B2623] border-[#2B2623] font-bold shadow-[1px_1.5px_0px_#2B2623]"
                         : "bg-[#E5DDD2] dark:bg-[#2A2420] text-[#5C5146] dark:text-[#C4B9AD] border-transparent hover:text-[#2B2623]"
-                    }`}
+                      }`}
                     title={`Chọn font ${f.label}`}
                   >
                     {f.label}
@@ -178,11 +176,10 @@ export function ReadingToolbar({
             <div className="flex items-center gap-1.5">
               <button
                 onClick={() => onUpdateSettings({ themeMode: "light" })}
-                className={`h-7 px-2.5 rounded-lg text-xs flex items-center gap-1 transition-all border ${
-                  settings.themeMode === "light"
+                className={`h-7 px-2.5 rounded-lg text-xs flex items-center gap-1 transition-all border ${settings.themeMode === "light"
                     ? "bg-[#FAF5EE] text-[#2B2623] border-[#2B2623] font-bold shadow-[1px_1.5px_0px_#2B2623]"
                     : "bg-[#E5DDD2] dark:bg-[#2A2420] text-[#5C5146] border-transparent"
-                }`}
+                  }`}
                 title="Giao diện sáng giấy mềm"
               >
                 <Sun className="size-3 text-[#E07B4C]" />
@@ -191,11 +188,10 @@ export function ReadingToolbar({
 
               <button
                 onClick={() => onUpdateSettings({ themeMode: "sepia" })}
-                className={`h-7 px-2.5 rounded-lg text-xs flex items-center gap-1 transition-all border ${
-                  settings.themeMode === "sepia"
+                className={`h-7 px-2.5 rounded-lg text-xs flex items-center gap-1 transition-all border ${settings.themeMode === "sepia"
                     ? "bg-[#F4E8D1] text-[#382B21] border-[#2B2623] font-bold shadow-[1px_1.5px_0px_#2B2623]"
                     : "bg-[#E5DDD2] dark:bg-[#2A2420] text-[#5C5146] border-transparent"
-                }`}
+                  }`}
                 title="Giao diện vàng ấm dịu mắt"
               >
                 <Coffee className="size-3 text-amber-800" />
@@ -204,11 +200,10 @@ export function ReadingToolbar({
 
               <button
                 onClick={() => onUpdateSettings({ themeMode: "dark" })}
-                className={`h-7 px-2.5 rounded-lg text-xs flex items-center gap-1 transition-all border ${
-                  settings.themeMode === "dark"
+                className={`h-7 px-2.5 rounded-lg text-xs flex items-center gap-1 transition-all border ${settings.themeMode === "dark"
                     ? "bg-[#25201C] text-[#FAF5EE] border-[#2B2623] font-bold shadow-[1px_1.5px_0px_#2B2623]"
                     : "bg-[#E5DDD2] dark:bg-[#2A2420] text-[#5C5146] border-transparent"
-                }`}
+                  }`}
                 title="Giao diện đêm tối"
               >
                 <Moon className="size-3 text-amber-300" />
@@ -265,11 +260,10 @@ export function ReadingToolbar({
           variant={isExpanded ? "secondary" : "ghost"}
           size="sm"
           onClick={() => setIsExpanded((prev) => !prev)}
-          className={`h-8 px-2.5 rounded-full text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer ${
-            isExpanded
+          className={`h-8 px-2.5 rounded-full text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer ${isExpanded
               ? "bg-[#E07B4C] text-white hover:bg-[#DC7648]"
               : "text-[#2B2623] dark:text-[#FAF5EE] hover:bg-[#E5DDD2]"
-          }`}
+            }`}
           title="Tùy chỉnh cỡ chữ, font và giao diện đọc"
         >
           <Sliders className="size-3.5 text-[#E07B4C]" />

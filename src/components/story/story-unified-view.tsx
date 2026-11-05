@@ -394,7 +394,7 @@ export function StoryUnifiedView({ story, chapters, isAdmin = false }: UnifiedSt
             onClick={() => setIsSynopsisExpanded((prev) => !prev)}
             className="rounded-full text-xs font-mono font-bold text-[#E07B4C] hover:text-[#DC7648] hover:bg-[#E07B4C]/10 flex items-center gap-1.5"
           >
-            <span>{isSynopsisExpanded ? "Thu gọn văn án" : "Xem thêm toàn bộ văn án"}</span>
+            <span>{isSynopsisExpanded ? "Thu gọn" : "Xem thêm"}</span>
             {isSynopsisExpanded ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
           </Button>
         </div>

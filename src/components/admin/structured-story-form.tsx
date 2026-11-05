@@ -162,7 +162,7 @@ export function StructuredStoryForm({
       }),
       Underline,
     ],
-    content: initialData?.contentHtml || "<p>Nhập văn án hoặc tóm tắt nội dung tác phẩm tại đây...</p>",
+    content: initialData?.contentHtml || "",
     immediatelyRender: false,
     editorProps: {
       attributes: {

@@ -14,6 +14,10 @@ import {
   Edit3,
   Clock,
   ArrowLeft,
+  Eye,
+  Heart,
+  MessageSquare,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CommentSection } from "@/components/comments/comment-section";
@@ -31,6 +35,9 @@ export interface UnifiedChapterItem {
   wordCount: number;
   password?: string | null;
   createdAt?: Date | string | null;
+  views?: number;
+  likes?: number;
+  commentsCount?: number;
 }
 
 export interface UnifiedStoryProps {
@@ -63,6 +70,33 @@ export function StoryUnifiedView({ story, chapters, isAdmin = false }: UnifiedSt
   const [savedProgress, setSavedProgress] = React.useState<{ chapterId: string; chapterNumber: number } | null>(null);
   const [isBookmarked, setIsBookmarked] = React.useState(false);
   const [bookmarkFeedback, setBookmarkFeedback] = React.useState(false);
+
+  // Metadata Box Hidden State (controlled by admin)
+  const [isMetadataBoxHidden, setIsMetadataBoxHidden] = React.useState<boolean>(
+    () => Boolean(story.tags && story.tags.includes("__hide_meta_box"))
+  );
+  const [isTogglingMetaBox, setIsTogglingMetaBox] = React.useState(false);
+
+  const handleToggleMetadataBox = async () => {
+    const nextState = !isMetadataBoxHidden;
+    setIsMetadataBoxHidden(nextState);
+    try {
+      setIsTogglingMetaBox(true);
+      await fetch("/api/admin/toggle-meta-box", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ storyId: story.id, hide: nextState }),
+      });
+    } catch {
+      // offline / ignored
+    } finally {
+      setIsTogglingMetaBox(false);
+    }
+  };
+
+  const visibleTags = React.useMemo(() => {
+    return (story.tags || []).filter((t) => !t.startsWith("__"));
+  }, [story.tags]);
 
   // Synopsis Expand / Collapse
   const [isSynopsisExpanded, setIsSynopsisExpanded] = React.useState(false);
@@ -226,8 +260,8 @@ export function StoryUnifiedView({ story, chapters, isAdmin = false }: UnifiedSt
 
             {/* Tag Pills */}
             <div className="flex flex-wrap justify-center md:justify-start gap-1.5 mt-2 mb-5">
-              {story.tags && story.tags.length > 0 ? (
-                story.tags.map((tag, idx) => (
+              {visibleTags && visibleTags.length > 0 ? (
+                visibleTags.map((tag, idx) => (
                   <span
                     key={tag}
                     className={`text-[11.5px] px-3 py-1 rounded-[13px] font-bold font-mono border border-[#2B2623]/30 shadow-[1px_1px_0px_#2B2623] ${
@@ -341,24 +375,53 @@ export function StoryUnifiedView({ story, chapters, isAdmin = false }: UnifiedSt
         </div>
 
         {/* Structured Metadata Box */}
-        <div className="p-4 rounded-[18px] bg-[#FAF5EE] dark:bg-[#2A2420] border border-[#2B2623]/20 space-y-1.5 text-xs sm:text-sm font-sans">
-          <p className="text-[#2B2623] dark:text-[#FAF5EE]">
-            <b className="font-bold text-[#E07B4C]">Edit / Dịch:</b> Celine Wang
-          </p>
-          <p className="text-[#2B2623] dark:text-[#FAF5EE]">
-            <b className="font-bold text-[#E07B4C]">Tình trạng:</b>{" "}
-            {isCompleted ? "Hoàn thành" : "Đang tiến hành"}
-          </p>
-          <p className="text-[#2B2623] dark:text-[#FAF5EE]">
-            <b className="font-bold text-[#E07B4C]">Thể loại:</b>{" "}
-            {story.tags && story.tags.length > 0 ? story.tags.join(" - ") : "Đang cập nhật"}
-          </p>
-          {story.description && (
-            <p className="text-[#5C5146] dark:text-[#C4B9AD] italic pt-1 border-t border-[#2B2623]/10">
-              {story.description}
+        {!isMetadataBoxHidden ? (
+          <div className="relative p-4 rounded-[18px] bg-[#FAF5EE] dark:bg-[#2A2420] border border-[#2B2623]/20 space-y-1.5 text-xs sm:text-sm font-sans group">
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={handleToggleMetadataBox}
+                disabled={isTogglingMetaBox}
+                className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-[10px] text-[11px] font-mono font-bold bg-[#FAF5EE] dark:bg-[#1F1B18] text-[#5C5146] hover:text-rose-600 dark:text-[#C4B9AD] dark:hover:text-rose-400 border border-[#2B2623]/20 hover:border-rose-400 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                title="Xóa/Ẩn khung thông tin Edit/Dịch, Tình trạng, Thể loại này"
+              >
+                <Trash2 className="size-3 text-rose-500" />
+                <span>Xóa khung này (Admin)</span>
+              </button>
+            )}
+            <p className="text-[#2B2623] dark:text-[#FAF5EE]">
+              <b className="font-bold text-[#E07B4C]">Edit / Dịch:</b> Celine Wang
             </p>
-          )}
-        </div>
+            <p className="text-[#2B2623] dark:text-[#FAF5EE]">
+              <b className="font-bold text-[#E07B4C]">Tình trạng:</b>{" "}
+              {isCompleted ? "Hoàn thành" : "Đang tiến hành"}
+            </p>
+            <p className="text-[#2B2623] dark:text-[#FAF5EE]">
+              <b className="font-bold text-[#E07B4C]">Thể loại:</b>{" "}
+              {visibleTags && visibleTags.length > 0 ? visibleTags.join(" - ") : "Đang cập nhật"}
+            </p>
+            {story.description && (
+              <p className="text-[#5C5146] dark:text-[#C4B9AD] italic pt-1 border-t border-[#2B2623]/10">
+                {story.description}
+              </p>
+            )}
+          </div>
+        ) : (
+          isAdmin && (
+            <div className="flex justify-end -mt-1">
+              <button
+                type="button"
+                onClick={handleToggleMetadataBox}
+                disabled={isTogglingMetaBox}
+                className="px-3 py-1 rounded-xl text-xs font-mono font-bold text-[#E07B4C] hover:bg-[#E07B4C]/10 border border-dashed border-[#E07B4C]/40 transition-all flex items-center gap-1.5 cursor-pointer"
+                title="Khôi phục lại khung thông tin tóm tắt biên tập"
+              >
+                <Sparkles className="size-3" />
+                <span>Khôi phục khung thông tin biên tập (Admin)</span>
+              </button>
+            </div>
+          )
+        )}
 
         {/* Main Synopsis Content (Alegreya Font, supports rich text) */}
         <div className="relative">
@@ -526,9 +589,24 @@ export function StoryUnifiedView({ story, chapters, isAdmin = false }: UnifiedSt
                         </span>
                       )}
                     </div>
-                    <p className="text-[11px] font-mono text-[#5C5146] dark:text-[#C4B9AD] mt-0.5">
-                      {ch.wordCount ? `${ch.wordCount.toLocaleString("vi-VN")} chữ` : "Đang cập nhật"}
-                    </p>
+                    <div className="flex items-center gap-2.5 sm:gap-3 text-[11px] font-mono text-[#5C5146] dark:text-[#C4B9AD] mt-1 flex-wrap">
+                      <span>{ch.wordCount ? `${ch.wordCount.toLocaleString("vi-VN")} chữ` : "Đang cập nhật"}</span>
+                      <span className="text-[#2B2623]/25 dark:text-[#FAF5EE]/25">•</span>
+                      <span className="inline-flex items-center gap-1" title="Lượt đọc">
+                        <Eye className="size-3 text-[#5C5146] dark:text-[#C4B9AD]" />
+                        <span>{ch.views ?? 0}</span>
+                      </span>
+                      <span className="text-[#2B2623]/25 dark:text-[#FAF5EE]/25">•</span>
+                      <span className="inline-flex items-center gap-1" title="Lượt thích">
+                        <Heart className="size-3 text-rose-500/80" />
+                        <span>{ch.likes ?? 0}</span>
+                      </span>
+                      <span className="text-[#2B2623]/25 dark:text-[#FAF5EE]/25">•</span>
+                      <span className="inline-flex items-center gap-1" title="Bình luận">
+                        <MessageSquare className="size-3 text-[#E07B4C]" />
+                        <span>{ch.commentsCount ?? 0}</span>
+                      </span>
+                    </div>
                   </div>
 
                   {/* Action Link Arrow */}

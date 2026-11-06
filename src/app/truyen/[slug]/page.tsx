@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import { getDb, stories, chapters } from "@/db";
-import { eq, asc } from "drizzle-orm";
+import { getDb, stories, chapters, paragraphComments } from "@/db";
+import { eq, asc, inArray, sql } from "drizzle-orm";
 import { FALLBACK_STORIES, type StoryItem } from "@/lib/data";
 import { StoryUnifiedView, type UnifiedChapterItem } from "@/components/story/story-unified-view";
 import { getAuthSession } from "@/lib/auth";
@@ -67,9 +67,34 @@ export default async function StoryDetailPage({ params }: StoryDetailPageProps) 
           .where(eq(chapters.storyId, story.id))
           .orderBy(asc(chapters.chapterNumber));
 
+        const chapterIds = dbChapters.map((c) => c.id);
+        const commentCountsMap = new Map<string, number>();
+
+        if (chapterIds.length > 0) {
+          try {
+            const commentRows = await db
+              .select({
+                chapterId: paragraphComments.chapterId,
+                count: sql<number>`count(*)`,
+              })
+              .from(paragraphComments)
+              .where(inArray(paragraphComments.chapterId, chapterIds))
+              .groupBy(paragraphComments.chapterId);
+
+            commentRows.forEach((r) => {
+              commentCountsMap.set(r.chapterId, Number(r.count) || 0);
+            });
+          } catch {
+            // Ignore error if table not yet populated
+          }
+        }
+
         chaptersList = dbChapters.map((c) => ({
           ...c,
           createdAt: c.createdAt ? new Date(c.createdAt).toISOString() : null,
+          views: 0,
+          likes: 0,
+          commentsCount: commentCountsMap.get(c.id) || 0,
         }));
       }
     }

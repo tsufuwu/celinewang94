@@ -81,7 +81,12 @@ export function StructuredStoryForm({
   const [status, setStatus] = React.useState<"ONGOING" | "COMPLETED" | "DROPPED">(
     (initialData?.status as "ONGOING" | "COMPLETED" | "DROPPED") || "ONGOING"
   );
-  const [tags, setTags] = React.useState<string[]>(initialData?.tags || ["Đam mỹ", "Hiện đại"]);
+  const [tags, setTags] = React.useState<string[]>(
+    () => (initialData?.tags || ["Đam mỹ", "Hiện đại"]).filter((t) => t !== "__hide_meta_box")
+  );
+  const [hideMetadataBox, setHideMetadataBox] = React.useState<boolean>(
+    () => Boolean(initialData?.tags?.includes("__hide_meta_box"))
+  );
   const [customTagInput, setCustomTagInput] = React.useState("");
 
   // Cover image states
@@ -254,6 +259,10 @@ export function StructuredStoryForm({
       }
 
       const synopsisHtml = synopsisEditor?.getHTML() || "";
+      const finalTags = tags.filter((t) => t !== "__hide_meta_box");
+      if (hideMetadataBox) {
+        finalTags.push("__hide_meta_box");
+      }
 
       const resp = await fetch("/api/admin/save-story-full", {
         method: "POST",
@@ -264,7 +273,7 @@ export function StructuredStoryForm({
           slug: slug.trim(),
           author: author.trim(),
           status,
-          tags,
+          tags: finalTags,
           coverUrl: finalCover,
           description: description.trim(),
           contentHtml: synopsisHtml,
@@ -282,7 +291,7 @@ export function StructuredStoryForm({
             slug: slug.trim(),
             author: author.trim(),
             status,
-            tags,
+            tags: finalTags,
             coverUrl: finalCover,
             description: description.trim(),
             contentHtml: synopsisHtml,
@@ -556,6 +565,18 @@ export function StructuredStoryForm({
             placeholder="Ví dụ: Bộ truyện trượt băng nghệ thuật gắn bó sâu sắc nhất với nhà Cam..."
             className="w-full p-2.5 rounded-xl bg-white dark:bg-[#2A2420] border-2 border-[#2B2623] shadow-[1.5px_2px_0px_#2B2623] font-sans text-xs focus:outline-none resize-none leading-relaxed"
           />
+        </div>
+
+        <div className="pt-2 border-t border-[#2B2623]/10">
+          <label className="flex items-center gap-2.5 cursor-pointer text-xs font-mono font-bold text-[#2B2623] dark:text-[#FAF5EE]">
+            <input
+              type="checkbox"
+              checked={hideMetadataBox}
+              onChange={(e) => setHideMetadataBox(e.target.checked)}
+              className="size-4 rounded border-2 border-[#2B2623] text-[#E07B4C] focus:ring-[#E07B4C] cursor-pointer"
+            />
+            <span>Xóa / Ẩn phần khung thông tin biên tập màu cam (Edit / Dịch, Tình trạng, Thể loại)</span>
+          </label>
         </div>
       </div>
 

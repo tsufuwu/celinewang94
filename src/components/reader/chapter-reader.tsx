@@ -31,6 +31,7 @@ import { AntiCopyShield } from "./anti-copy-shield";
 import { useAuth } from "@/components/auth/auth-context";
 import { CommentSection } from "@/components/comments/comment-section";
 import { saveBookshelfItem } from "@/lib/bookshelf";
+import { StoryHtmlRenderer } from "@/components/story/story-html-renderer";
 
 export interface ParagraphData {
   index: number;
@@ -45,6 +46,7 @@ export interface ChapterData {
   password?: string | null;
   passwordHint?: string | null;
   lockMessage?: string | null;
+  contentHtml?: string | null;
   paragraphs: ParagraphData[];
   story: {
     id: string;
@@ -431,6 +433,17 @@ export function ChapterReader({
   // Theme mode container styling
   const isSepia = settings.themeMode === "sepia";
 
+  // Check if chapter has rich custom HTML layouts (divs, styles, images, tables, etc.)
+  const hasCustomHtml = React.useMemo(() => {
+    if (!chapter.contentHtml) return false;
+    const trimmed = chapter.contentHtml.trim();
+    if (trimmed.length === 0) return false;
+    return (
+      /<div|<style|<table|<img|<iframe|<section|class=|style=/i.test(trimmed) ||
+      chapter.paragraphs.length === 0
+    );
+  }, [chapter.contentHtml, chapter.paragraphs.length]);
+
   // If chapter is locked by password
   if (!isUnlocked) {
     return (
@@ -683,66 +696,74 @@ export function ChapterReader({
           </div>
         </header>
 
-        {/* Paragraphs List */}
-        <article
-          className={`space-y-6 sm:space-y-8 text-foreground/90 transition-all duration-200 ${fontFamilyClass} ${fontSizeClass} ${lineHeightClass}`}
-        >
-          {chapter.paragraphs.map((p) => {
-            const commentMeta = commentCountsByParagraph.get(p.index);
-            const count = commentMeta?.count || 0;
-            const hasTypo = commentMeta?.hasTypoReport || false;
+        {/* Chapter Content: Custom HTML Layout or Standard Paragraphs */}
+        {hasCustomHtml ? (
+          <article
+            className={`select-text transition-all duration-200 ${fontFamilyClass} ${fontSizeClass} ${lineHeightClass}`}
+          >
+            <StoryHtmlRenderer content={chapter.contentHtml!} disableShield={true} />
+          </article>
+        ) : (
+          <article
+            className={`space-y-6 sm:space-y-8 text-foreground/90 transition-all duration-200 ${fontFamilyClass} ${fontSizeClass} ${lineHeightClass}`}
+          >
+            {chapter.paragraphs.map((p) => {
+              const commentMeta = commentCountsByParagraph.get(p.index);
+              const count = commentMeta?.count || 0;
+              const hasTypo = commentMeta?.hasTypoReport || false;
 
-            return (
-              <section
-                key={p.index}
-                id={`p-${p.index}`}
-                data-index={p.index}
-                className="group relative rounded-xl -mx-3 px-3 py-2 transition-colors duration-200 hover:bg-muted/50 cursor-pointer"
-                onClick={() => handleOpenParagraphSheet(p)}
-                title="Bấm vào đoạn để xem bình luận hoặc báo lỗi chính tả"
-              >
-                {/* Paragraph Content */}
-                <p className="text-left sm:text-justify indent-6 sm:indent-8 leading-relaxed">
-                  {renderParagraphWithFootnotes(p.text, p.index)}
-                </p>
-
-                {/* Comment Bubble Indicator at the right-bottom of the paragraph */}
-                <div
-                  className={`absolute right-1 bottom-0 sm:bottom-0.5 transition-all duration-200 ${
-                    count > 0
-                      ? "opacity-100 scale-100"
-                      : "opacity-75 sm:opacity-0 sm:group-hover:opacity-100 scale-100 sm:scale-95 sm:group-hover:scale-100"
-                  }`}
+              return (
+                <section
+                  key={p.index}
+                  id={`p-${p.index}`}
+                  data-index={p.index}
+                  className="group relative rounded-xl -mx-3 px-3 py-2 transition-colors duration-200 hover:bg-muted/50 cursor-pointer"
+                  onClick={() => handleOpenParagraphSheet(p)}
+                  title="Bấm vào đoạn để xem bình luận hoặc báo lỗi chính tả"
                 >
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleOpenParagraphSheet(p);
-                    }}
-                    title={count > 0 ? `${count} bình luận` : "Thêm bình luận hoặc báo lỗi"}
-                    className={`inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-mono px-2 py-0.5 rounded-full border shadow-xs transition-transform active:scale-90 cursor-pointer backdrop-blur-xs ${
-                      hasTypo
-                        ? "bg-rose-50 text-rose-800 border-rose-300 dark:bg-rose-950/70 dark:text-rose-200"
-                        : count > 0
-                        ? "bg-[#FAF5EE] text-[#E07B4C] border-[#E07B4C] dark:bg-[#25201C] dark:text-[#E07B4C] font-bold"
-                        : "bg-[#FAF5EE] dark:bg-[#25201C] text-[#5C5146] dark:text-[#C4B9AD] border-[#2B2623]/30 hover:border-[#E07B4C] hover:text-[#E07B4C]"
+                  {/* Paragraph Content */}
+                  <p className="text-left sm:text-justify indent-6 sm:indent-8 leading-relaxed">
+                    {renderParagraphWithFootnotes(p.text, p.index)}
+                  </p>
+
+                  {/* Comment Bubble Indicator at the right-bottom of the paragraph */}
+                  <div
+                    className={`absolute right-1 bottom-0 sm:bottom-0.5 transition-all duration-200 ${
+                      count > 0
+                        ? "opacity-100 scale-100"
+                        : "opacity-75 sm:opacity-0 sm:group-hover:opacity-100 scale-100 sm:scale-95 sm:group-hover:scale-100"
                     }`}
                   >
-                    {hasTypo ? (
-                      <Flag className="size-2.5 text-rose-600 dark:text-rose-400" />
-                    ) : (
-                      <MessageSquare className="size-2.5 text-[#E07B4C]" />
-                    )}
-                    <span>
-                      {count > 0 ? count : "+"}
-                    </span>
-                  </button>
-                </div>
-              </section>
-            );
-          })}
-        </article>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenParagraphSheet(p);
+                      }}
+                      title={count > 0 ? `${count} bình luận` : "Thêm bình luận hoặc báo lỗi"}
+                      className={`inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-mono px-2 py-0.5 rounded-full border shadow-xs transition-transform active:scale-90 cursor-pointer backdrop-blur-xs ${
+                        hasTypo
+                          ? "bg-rose-50 text-rose-800 border-rose-300 dark:bg-rose-950/70 dark:text-rose-200"
+                          : count > 0
+                          ? "bg-[#FAF5EE] text-[#E07B4C] border-[#E07B4C] dark:bg-[#25201C] dark:text-[#E07B4C] font-bold"
+                          : "bg-[#FAF5EE] dark:bg-[#25201C] text-[#5C5146] dark:text-[#C4B9AD] border-[#2B2623]/30 hover:border-[#E07B4C] hover:text-[#E07B4C]"
+                      }`}
+                    >
+                      {hasTypo ? (
+                        <Flag className="size-2.5 text-rose-600 dark:text-rose-400" />
+                      ) : (
+                        <MessageSquare className="size-2.5 text-[#E07B4C]" />
+                      )}
+                      <span>
+                        {count > 0 ? count : "+"}
+                      </span>
+                    </button>
+                  </div>
+                </section>
+              );
+            })}
+          </article>
+        )}
 
         {/* 1. Primary Chapter Navigation Bar (PLACED ABOVE COMMENTS, ENLARGED) */}
         <section

@@ -17,8 +17,6 @@ const CATEGORIES: { label: string; value: "ALL" | "BOOKSHELF" | StoryCategory }[
   { label: "🔖 Tủ sách của tôi", value: "BOOKSHELF" },
   { label: "Full", value: "Full" },
   { label: "Đang cook", value: "Đang cook" },
-  { label: "Dịch", value: "Dịch" },
-  { label: "Fanfic", value: "Fanfic" },
 ];
 
 export function StoryList({ initialStories }: StoryListProps) {

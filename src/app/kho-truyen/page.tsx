@@ -3,7 +3,6 @@ import Link from "next/link";
 import { getStories } from "@/lib/data";
 import { StoryList } from "@/components/home/story-list";
 import { Library, ChevronRight, BookOpen } from "lucide-react";
-import { OrangeLogo } from "@/components/layout/orange-logo";
 
 export const metadata: Metadata = {
   title: "Thư Viện | Media naranja",
@@ -49,11 +48,6 @@ export default async function KhoTruyenPage() {
                 <span className="text-xs font-mono text-[#5C5146] dark:text-[#C4B9AD] block font-semibold">Tổng số tác phẩm</span>
                 <span className="font-serif text-xl font-bold text-[#2B2623] dark:text-[#FAF5EE]">{stories.length} bộ truyện</span>
               </div>
-            </div>
-
-            <div className="hidden sm:flex items-center gap-2 pt-2 border-t border-[#2B2623]/20 text-[11px] font-mono text-[#5C5146] dark:text-[#C4B9AD] font-semibold">
-              <OrangeLogo className="size-3.5" />
-              <span>Cập nhật liên tục từ tác giả</span>
             </div>
           </div>
         </div>

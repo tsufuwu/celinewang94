@@ -108,6 +108,7 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
           password: currentCh.password,
           passwordHint: currentCh.passwordHint,
           lockMessage: currentCh.lockMessage,
+          contentHtml: currentCh.contentHtml,
           story: currentStory,
         };
       }
